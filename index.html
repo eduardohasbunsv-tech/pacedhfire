@@ -304,10 +304,11 @@
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
         <div class="controls">
-            Flechas / WASD — Mover<br>
+            Flechas / WASD / Control Remoto — Mover<br>
             Come todos los orbes para ganar<br>
             Evita a los fantasmas<br>
-            Los orbes grandes te dan poder temporal
+            Los orbes grandes te dan poder temporal<br>
+            Compatible con controles USB/Bluetooth
         </div>
         <div class="name-section">
             <label>Ingresa tu nombre de jugador:</label>
@@ -1030,6 +1031,67 @@
     });
     document.addEventListener('keyup', e => { if (!isTyping()) keys[e.key] = false; });
 
+    // ---- GAMEPAD SUPPORT ----
+    let gamepadConnected = false;
+    let gamepadButtonPressed = {}; // track button state for edge detection
+    const GAMEPAD_DEADZONE = 0.5;
+
+    window.addEventListener('gamepadconnected', (e) => {
+        gamepadConnected = true;
+        console.log('Gamepad connected:', e.gamepad.id);
+    });
+    window.addEventListener('gamepaddisconnected', () => {
+        gamepadConnected = false;
+        gamepadButtonPressed = {};
+    });
+
+    function pollGamepad() {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gp = gamepads[0];
+        if (!gp) return;
+
+        // D-pad buttons (standard mapping: 12=up, 13=down, 14=left, 15=right)
+        if (gp.buttons[14] && gp.buttons[14].pressed) player.nextDir = 0; // left
+        if (gp.buttons[15] && gp.buttons[15].pressed) player.nextDir = 1; // right
+        if (gp.buttons[12] && gp.buttons[12].pressed) player.nextDir = 2; // up
+        if (gp.buttons[13] && gp.buttons[13].pressed) player.nextDir = 3; // down
+
+        // Left stick
+        const lx = gp.axes[0] || 0;
+        const ly = gp.axes[1] || 0;
+        if (Math.abs(lx) > Math.abs(ly)) {
+            if (lx < -GAMEPAD_DEADZONE) player.nextDir = 0;
+            else if (lx > GAMEPAD_DEADZONE) player.nextDir = 1;
+        } else {
+            if (ly < -GAMEPAD_DEADZONE) player.nextDir = 2;
+            else if (ly > GAMEPAD_DEADZONE) player.nextDir = 3;
+        }
+
+        // A button (0) or Start button (9) — edge detection for UI actions
+        const aPressed = gp.buttons[0] && gp.buttons[0].pressed;
+        const startPressed = gp.buttons[9] && gp.buttons[9].pressed;
+        const actionNow = aPressed || startPressed;
+        const actionKey = 'action';
+
+        if (actionNow && !gamepadButtonPressed[actionKey]) {
+            if (gameState === 'gameover') {
+                doReplay();
+            } else if (gameState === 'start') {
+                document.getElementById('startBtn').click();
+            }
+        }
+        gamepadButtonPressed[actionKey] = actionNow;
+
+        // B button (1) — change player on game over
+        const bPressed = gp.buttons[1] && gp.buttons[1].pressed;
+        if (bPressed && !gamepadButtonPressed['b']) {
+            if (gameState === 'gameover') {
+                doChangePlayer();
+            }
+        }
+        gamepadButtonPressed['b'] = bPressed;
+    }
+
     // Touch controls
     let touchStartX = 0, touchStartY = 0;
     canvas.addEventListener('touchstart', e => {
@@ -1496,6 +1558,7 @@
 
     function update() {
         animFrame++;
+        pollGamepad();
         if (gameState === 'playing') {
             movePlayer();
             ghosts.forEach((g, i) => moveGhost(g, i));
