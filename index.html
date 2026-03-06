@@ -544,6 +544,7 @@
     let gameState = 'start';
     let powerMode = false;
     let powerTimer = 0;
+    let powerEndTime = 0; // timestamp real en ms
     let ghostsEatenInPower = 0;
     let animFrame = 0;
     let deathTimer = 0;
@@ -1032,8 +1033,10 @@
 
     function activatePowerMode() {
         powerMode = true;
-        powerTimer = 1600 - level * 60;
-        if (powerTimer < 400) powerTimer = 400;
+        // Duración en milisegundos: nivel 1 = 26s, nivel 20 = 7s
+        const durationMs = Math.max(7000, 26000 - (level - 1) * 1000);
+        powerEndTime = Date.now() + durationMs;
+        powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
         ghosts.forEach(g => {
             if (!g.eaten) {
@@ -1221,7 +1224,7 @@
         const cy = ghost.py + TILE / 2;
         const w = TILE - 2; const h = TILE - 2;
         let color = ghost.color;
-        if (ghost.scared) color = (powerTimer < 100 && animFrame % 10 < 5) ? '#fff' : '#22a';
+        if (ghost.scared) color = (powerTimer < 2000 && animFrame % 10 < 5) ? '#fff' : '#22a';
         if (ghost.eaten) { drawGhostEyes(cx, cy, ghost.dir); return; }
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -1335,9 +1338,11 @@
             ghosts.forEach((g, i) => moveGhost(g, i));
             checkCollisions();
             if (powerMode) {
-                powerTimer--;
-                if (powerTimer <= 0) {
+                const remaining = powerEndTime - Date.now();
+                powerTimer = remaining; // para parpadeo visual
+                if (remaining <= 0) {
                     powerMode = false;
+                    powerTimer = 0;
                     ghosts.forEach(g => { g.scared = false; });
                     updateSiren();
                 }
