@@ -970,7 +970,7 @@
     function movePlayer() {
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
-        const rate = Math.max(4, PLAYER_MOVE_RATE - Math.floor((level - 1) * 1));
+        const rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.63));
         if (animFrame % rate !== 0) return;
 
         const nd = DIRS[player.nextDir];
@@ -1032,8 +1032,8 @@
 
     function activatePowerMode() {
         powerMode = true;
-        powerTimer = 400 - level * 25;
-        if (powerTimer < 120) powerTimer = 120;
+        powerTimer = 1600 - level * 60;
+        if (powerTimer < 400) powerTimer = 400;
         ghostsEatenInPower = 0;
         ghosts.forEach(g => {
             if (!g.eaten) {
@@ -1081,7 +1081,7 @@
         let rate;
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) rate = GHOST_SCARED_RATE;
-        else rate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 1));
+        else rate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
         if (animFrame % rate !== 0) return;
 
         const target = getGhostTarget(ghost, idx);
@@ -1416,13 +1416,28 @@
         if (gameState === 'win') {
             winTimer--;
             if (winTimer <= 0) {
-                level++;
-                resetMap();
-                resetPositions();
-                updateHUD();
-                gameState = 'playing';
-                messageText = `¡Nivel ${level}!`;
-                startSiren();
+                if (level >= 20) {
+                    // ¡Victoria total! Completó los 20 niveles
+                    gameState = 'gameover';
+                    messageText = '🏆 ¡COMPLETASTE LOS 20 NIVELES! ¡ERES UNA LEYENDA! 🏆';
+                    stopSiren();
+                    saveScoreToStorage(currentPlayerName, score, level).then(() => {
+                        setTimeout(() => {
+                            renderLeaderboard();
+                            lbOverlay.classList.add('visible');
+                        }, 2000);
+                    });
+                    goButtons.style.display = 'flex';
+                } else {
+                    level++;
+                    resetMap();
+                    resetPositions();
+                    updateHUD();
+                    gameState = 'playing';
+                    messageText = `¡Nivel ${level}!`;
+                    ghostMessages = [];
+                    startSiren();
+                }
             }
         }
         draw();
