@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Muncher — Juego Arcade | suntrader.shop</title>
+    <meta name="description" content="Maze Muncher - Juego arcade de laberintos. Hecho por EDHFIRE, dedicado a Jóvenes Iglesia sobre la Roca.">
+    <meta name="author" content="EDHFIRE">
+    <meta property="og:title" content="Maze Muncher — Juego Arcade">
+    <meta property="og:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 10.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://suntrader.shop">
+    <meta name="theme-color" content="#111111">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👾</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+        #header {
+            display: flex;
+            justify-content: space-between;
+            width: 560px;
+            padding: 10px 0;
+            font-size: 18px;
+        }
+        #header span { color: #0ff; }
+        canvas {
+            border: 2px solid #333;
+            background: #000;
+            image-rendering: pixelated;
+        }
+        #message {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #ff0;
+            height: 24px;
+        }
+        #startScreen {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        #startScreen h1 {
+            font-size: 48px;
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff;
+            margin-bottom: 10px;
+        }
+        #startScreen h2 {
+            font-size: 18px;
+            color: #ff0;
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+        #startScreen .controls {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 2;
+            text-align: center;
+        }
+        #startScreen .start-btn {
+            margin-top: 25px;
+            padding: 12px 40px;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            background: #0ff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #startScreen .start-btn:hover { background: #ff0; }
+        #startScreen .credit {
+            color: #0f0;
+            font-size: 20px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        #startScreen .credit strong {
+            color: #fff;
+            font-size: 24px;
+        }
+        #startScreen .dedication {
+            color: #fa5;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px #fa5;
+        }
+        #topbar {
+            width: 560px;
+            text-align: center;
+            padding: 6px 0;
+        }
+        #topbar .credit-bar {
+            color: #aaa;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        #topbar .credit-bar strong {
+            color: #0f0;
+        }
+        /* ---- USERNAME INPUT ---- */
+        #startScreen .name-section {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        #startScreen .name-section label {
+            color: #aaa;
+            font-size: 14px;
+        }
+        #startScreen .name-section input {
+            padding: 8px 16px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            border: 2px solid #0ff;
+            color: #0ff;
+            text-align: center;
+            outline: none;
+            width: 250px;
+        }
+        #startScreen .name-section input:focus { border-color: #ff0; color: #ff0; }
+        #startScreen .name-error {
+            color: #f55;
+            font-size: 13px;
+            height: 18px;
+        }
+        #playerTag {
+            color: #0f0;
+            font-size: 13px;
+            width: 560px;
+            text-align: right;
+            padding: 2px 0;
+        }
+        /* ---- LEADERBOARD ---- */
+        #leaderboard {
+            width: 560px;
+            margin-top: 15px;
+            background: #0a0a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        #leaderboard h3 {
+            text-align: center;
+            color: #ff0;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255,255,0,0.3);
+        }
+        #leaderboard table { width: 100%; border-collapse: collapse; }
+        #leaderboard th {
+            color: #0ff;
+            font-size: 12px;
+            padding: 6px 4px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        #leaderboard td {
+            padding: 6px 4px;
+            font-size: 13px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        #leaderboard .rank { width: 30px; text-align: center; font-weight: bold; }
+        #leaderboard .rank-1 { color: #ffd700; }
+        #leaderboard .rank-2 { color: #c0c0c0; }
+        #leaderboard .rank-3 { color: #cd7f32; }
+        #leaderboard .score-col { color: #0f0; font-weight: bold; text-align: right; }
+        #leaderboard .level-col { color: #fa5; text-align: center; }
+        #leaderboard .name-col { color: #fff; }
+        #leaderboard .your-row td { background: rgba(0, 255, 255, 0.08); }
+        #leaderboard .empty-msg { text-align: center; color: #555; padding: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>MAZE MUNCHER</h1>
+        <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
+        <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
+        <h2>Un juego arcade de laberintos</h2>
+        <div class="controls">
+            Flechas / WASD — Mover<br>
+            Come todos los orbes para ganar<br>
+            Evita a los fantasmas<br>
+            Los orbes grandes te dan poder temporal
+        </div>
+        <div class="name-section">
+            <label>Ingresa tu nombre de jugador:</label>
+            <input type="text" id="nameInput" maxlength="15" placeholder="Tu nombre..." autocomplete="off">
+            <div class="name-error" id="nameError"></div>
+        </div>
+        <button class="start-btn" id="startBtn">JUGAR</button>
+    </div>
+    <div id="playerTag"></div>
+    <div id="topbar">
+        <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — Dedicado a Jóvenes Iglesia sobre la Roca</div>
+    </div>
+    <div id="header">
+        <div>PUNTAJE: <span id="score">0</span></div>
+        <div>NIVEL: <span id="level">1</span></div>
+        <div>VIDAS: <span id="lives">3</span></div>
+    </div>
+    <canvas id="game" width="560" height="620"></canvas>
+    <div id="message"></div>
+    <div id="leaderboard">
+        <h3>TOP 10 MEJORES PUNTAJES</h3>
+        <table>
+            <thead><tr>
+                <th class="rank">#</th>
+                <th>JUGADOR</th>
+                <th style="text-align:center">NIVEL</th>
+                <th style="text-align:right">PUNTAJE</th>
+            </tr></thead>
+            <tbody id="lbBody">
+                <tr><td colspan="4" class="empty-msg">Aún no hay puntajes</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    // ---- USERNAME & LEADERBOARD (localStorage) ----
+    let currentPlayerName = '';
+    const STORAGE_KEY = 'mazeMuncherScores';
+
+    function getScores() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch { return []; }
+    }
+
+    function saveScoreToStorage(name, finalScore, finalLevel) {
+        const scores = getScores();
+        const existing = scores.find(s => s.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            if (finalScore > existing.score) {
+                existing.score = finalScore;
+                existing.level = finalLevel;
+            }
+        } else {
+            scores.push({ name, score: finalScore, level: finalLevel });
+        }
+        scores.sort((a, b) => b.score - a.score);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 50)));
+        renderLeaderboard();
+    }
+
+    function isNameTaken(name) {
+        const scores = getScores();
+        return scores.some(s => s.name.toLowerCase() === name.toLowerCase());
+    }
+
+    function renderLeaderboard() {
+        const scores = getScores();
+        const tbody = document.getElementById('lbBody');
+        if (scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">Aún no hay puntajes. ¡Sé el primero!</td></tr>';
+            return;
+        }
+        const top10 = scores.slice(0, 10);
+        let html = '';
+        top10.forEach((s, i) => {
+            const rank = i + 1;
+            const rankCls = rank <= 3 ? ` rank-${rank}` : '';
+            const isYou = currentPlayerName && s.name.toLowerCase() === currentPlayerName.toLowerCase();
+            const rowCls = isYou ? ' class="your-row"' : '';
+            const tag = isYou ? ' (Tú)' : '';
+            html += `<tr${rowCls}>
+                <td class="rank${rankCls}">${rank}</td>
+                <td class="name-col">${s.name}${tag}</td>
+                <td class="level-col">${s.level || 1}</td>
+                <td class="score-col">${s.score.toLocaleString()}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    renderLeaderboard();
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const TILE = 20;
+    const COLS = 28;
+    const ROWS = 31;
+
+    // ---- SPEED CONTROL ----
+    const PLAYER_MOVE_RATE = 10;
+    const GHOST_BASE_RATE = 12;
+    const GHOST_SCARED_RATE = 18;
+    const GHOST_EATEN_RATE = 4;
+    const LERP_SPEED = 0.18;
+
+    // 0=empty, 1=wall, 2=dot, 3=power orb, 4=ghost house door
+    const BASE_MAP = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    let map = [];
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let totalDots = 0;
+    let dotsEaten = 0;
+    let gameState = 'start';
+    let powerMode = false;
+    let powerTimer = 0;
+    let ghostsEatenInPower = 0;
+    let animFrame = 0;
+    let deathTimer = 0;
+    let winTimer = 0;
+    let messageText = '';
+
+    // Player
+    const player = {
+        x: 14, y: 23, dir: 0, nextDir: 0,
+        mouthOpen: 0, mouthDir: 1,
+        px: 14 * TILE, py: 23 * TILE,
+        moving: false,
+    };
+
+    const GHOST_COLORS = ['#f55', '#f9b', '#5bf', '#fa5'];
+    const GHOST_NAMES = ['Sombra', 'Espectro', 'Niebla', 'Chispa'];
+    let ghosts = [];
+
+    function createGhosts() {
+        ghosts = [
+            { x: 13, y: 14, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 13*TILE, py: 14*TILE, inHouse: false, houseTimer: 0, scared: false, eaten: false, targetX: 25, targetY: 0 },
+            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 180, scared: false, eaten: false, targetX: 2, targetY: 0 },
+            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 350, scared: false, eaten: false, targetX: 27, targetY: 30 },
+            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 500, scared: false, eaten: false, targetX: 0, targetY: 30 },
+        ];
+    }
+
+    const DIRS = [
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: -1 },
+        { dx: 0, dy: 1 },
+    ];
+
+    // ---- AUDIO ENGINE ----
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let sirenOsc = null;
+    let sirenGain = null;
+    let sirenLfo = null;
+
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new AudioCtx();
+    }
+
+    function playChomp() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        const freq = (dotsEaten % 2 === 0) ? 280 : 350;
+        const t = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.4, t + 0.06);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        osc.start(t);
+        osc.stop(t + 0.06);
+    }
+
+    function playPowerUp() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        for (let i = 0; i < 4; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            const start = t + i * 0.08;
+            osc.frequency.setValueAtTime(200 + i * 150, start);
+            osc.frequency.exponentialRampToValueAtTime(600 + i * 150, start + 0.07);
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.07);
+            osc.start(start);
+            osc.stop(start + 0.08);
+        }
+    }
+
+    function playEatGhost() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(900, t + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(500, t + 0.25);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.25);
+    }
+
+    function playDeath() {
+        if (!audioCtx) return;
+        stopSiren();
+        const t = audioCtx.currentTime;
+        for (let i = 0; i < 6; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            const start = t + i * 0.15;
+            const freq = 600 - i * 80;
+            osc.frequency.setValueAtTime(freq, start);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.3, start + 0.14);
+            gain.gain.setValueAtTime(0.12, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.14);
+            osc.start(start);
+            osc.stop(start + 0.15);
+        }
+    }
+
+    function playLevelComplete() {
+        if (!audioCtx) return;
+        stopSiren();
+        const t = audioCtx.currentTime;
+        const notes = [523, 659, 784, 1047];
+        for (let i = 0; i < notes.length; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            const start = t + i * 0.12;
+            osc.frequency.setValueAtTime(notes[i], start);
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.11);
+            osc.start(start);
+            osc.stop(start + 0.12);
+        }
+    }
+
+    function playGameOver() {
+        if (!audioCtx) return;
+        stopSiren();
+        const t = audioCtx.currentTime;
+        const notes = [400, 350, 300, 250, 200, 150];
+        for (let i = 0; i < notes.length; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            const start = t + i * 0.2;
+            osc.frequency.setValueAtTime(notes[i], start);
+            osc.frequency.exponentialRampToValueAtTime(notes[i] * 0.6, start + 0.19);
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.19);
+            osc.start(start);
+            osc.stop(start + 0.2);
+        }
+    }
+
+    function startSiren() {
+        if (!audioCtx || sirenOsc) return;
+        sirenOsc = audioCtx.createOscillator();
+        sirenGain = audioCtx.createGain();
+        sirenLfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        sirenOsc.type = 'sine';
+        sirenOsc.frequency.setValueAtTime(powerMode ? 150 : 300, audioCtx.currentTime);
+        sirenLfo.type = 'sine';
+        sirenLfo.frequency.setValueAtTime(powerMode ? 6 : 3, audioCtx.currentTime);
+        lfoGain.gain.setValueAtTime(powerMode ? 50 : 80, audioCtx.currentTime);
+        sirenLfo.connect(lfoGain);
+        lfoGain.connect(sirenOsc.frequency);
+        sirenOsc.connect(sirenGain);
+        sirenGain.connect(audioCtx.destination);
+        sirenGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        sirenOsc.start();
+        sirenLfo.start();
+    }
+
+    function stopSiren() {
+        if (sirenOsc) { try { sirenOsc.stop(); } catch(e) {} sirenOsc = null; }
+        if (sirenLfo) { try { sirenLfo.stop(); } catch(e) {} sirenLfo = null; }
+        sirenGain = null;
+    }
+
+    function updateSiren() {
+        if (!sirenOsc || !audioCtx) return;
+        const t = audioCtx.currentTime;
+        if (powerMode) {
+            sirenOsc.frequency.setValueAtTime(150, t);
+            sirenLfo.frequency.setValueAtTime(6, t);
+        } else {
+            sirenOsc.frequency.setValueAtTime(300, t);
+            sirenLfo.frequency.setValueAtTime(3, t);
+        }
+    }
+
+    // ---- GAME LOGIC ----
+    function resetMap() {
+        map = BASE_MAP.map(row => [...row]);
+        totalDots = 0;
+        dotsEaten = 0;
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (map[r][c] === 2 || map[r][c] === 3) totalDots++;
+    }
+
+    function resetPlayer() {
+        player.x = 14; player.y = 23;
+        player.dir = 0; player.nextDir = 0;
+        player.px = 14 * TILE; player.py = 23 * TILE;
+        player.moving = false;
+    }
+
+    function resetPositions() {
+        resetPlayer();
+        createGhosts();
+        powerMode = false;
+        powerTimer = 0;
+    }
+
+    function initGame() {
+        score = 0;
+        lives = 3;
+        level = 1;
+        resetMap();
+        resetPositions();
+        updateHUD();
+    }
+
+    function updateHUD() {
+        document.getElementById('score').textContent = score;
+        document.getElementById('level').textContent = level;
+        document.getElementById('lives').textContent = lives;
+    }
+
+    function canMove(x, y) {
+        if (x < 0 || x >= COLS) return true;
+        if (y < 0 || y >= ROWS) return false;
+        return map[y][x] !== 1;
+    }
+
+    function canGhostMove(x, y, ghost) {
+        if (x < 0 || x >= COLS) return true;
+        if (y < 0 || y >= ROWS) return false;
+        const tile = map[y][x];
+        if (tile === 1) return false;
+        if (tile === 4 && !ghost.inHouse && !ghost.eaten) return false;
+        return true;
+    }
+
+    // Input
+    const keys = {};
+    document.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) e.preventDefault();
+        if (e.key === 'ArrowLeft' || e.key === 'a') player.nextDir = 0;
+        if (e.key === 'ArrowRight' || e.key === 'd') player.nextDir = 1;
+        if (e.key === 'ArrowUp' || e.key === 'w') player.nextDir = 2;
+        if (e.key === 'ArrowDown' || e.key === 's') player.nextDir = 3;
+    });
+    document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+    // Touch controls
+    let touchStartX = 0, touchStartY = 0;
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy)) player.nextDir = dx > 0 ? 1 : 0;
+        else player.nextDir = dy > 0 ? 3 : 2;
+    });
+
+    function movePlayer() {
+        player.px += (player.x * TILE - player.px) * LERP_SPEED;
+        player.py += (player.y * TILE - player.py) * LERP_SPEED;
+        const rate = Math.max(2, PLAYER_MOVE_RATE - Math.floor(level * 0.5));
+        if (animFrame % rate !== 0) return;
+
+        const nd = DIRS[player.nextDir];
+        let nx = player.x + nd.dx;
+        let ny = player.y + nd.dy;
+        if (canMove(nx, ny)) player.dir = player.nextDir;
+
+        const d = DIRS[player.dir];
+        nx = player.x + d.dx;
+        ny = player.y + d.dy;
+
+        if (canMove(nx, ny)) {
+            player.x = nx;
+            player.y = ny;
+            player.moving = true;
+            if (player.x < 0) player.x = COLS - 1;
+            if (player.x >= COLS) player.x = 0;
+
+            const tile = map[player.y][player.x];
+            if (tile === 2) {
+                map[player.y][player.x] = 0;
+                score += 10;
+                dotsEaten++;
+                playChomp();
+            } else if (tile === 3) {
+                map[player.y][player.x] = 0;
+                score += 50;
+                dotsEaten++;
+                activatePowerMode();
+                playPowerUp();
+            }
+
+            if (dotsEaten >= totalDots) {
+                gameState = 'win';
+                winTimer = 120;
+                messageText = '¡NIVEL COMPLETADO!';
+                playLevelComplete();
+                stopSiren();
+            }
+        } else {
+            player.moving = false;
+        }
+    }
+
+    function activatePowerMode() {
+        powerMode = true;
+        powerTimer = 400 - level * 25;
+        if (powerTimer < 120) powerTimer = 120;
+        ghostsEatenInPower = 0;
+        ghosts.forEach(g => {
+            if (!g.eaten) {
+                g.scared = true;
+                g.dir = (g.dir < 2) ? (1 - g.dir) : (5 - g.dir);
+            }
+        });
+        updateSiren();
+    }
+
+    function getGhostTarget(ghost, idx) {
+        if (ghost.eaten) return { x: 14, y: 13 };
+        if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+        const modeTimer = animFrame % 800;
+        const isChase = modeTimer < 550;
+        if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
+        switch(idx) {
+            case 0: return { x: player.x, y: player.y };
+            case 1: const d = DIRS[player.dir]; return { x: player.x + d.dx * 4, y: player.y + d.dy * 4 };
+            case 2: const g0 = ghosts[0]; return { x: player.x + (player.x - g0.x), y: player.y + (player.y - g0.y) };
+            case 3: const dist = Math.abs(ghost.x - player.x) + Math.abs(ghost.y - player.y);
+                    if (dist > 8) return { x: player.x, y: player.y };
+                    return { x: ghost.targetX, y: ghost.targetY };
+        }
+        return { x: player.x, y: player.y };
+    }
+
+    function moveGhost(ghost, idx) {
+        ghost.px += (ghost.x * TILE - ghost.px) * LERP_SPEED;
+        ghost.py += (ghost.y * TILE - ghost.py) * LERP_SPEED;
+
+        if (ghost.inHouse) {
+            ghost.houseTimer--;
+            if (ghost.houseTimer <= 0) {
+                ghost.x = 14; ghost.y = 11;
+                ghost.px = ghost.x * TILE; ghost.py = ghost.y * TILE;
+                ghost.inHouse = false;
+            }
+            return;
+        }
+
+        let rate;
+        if (ghost.eaten) rate = GHOST_EATEN_RATE;
+        else if (ghost.scared) rate = GHOST_SCARED_RATE;
+        else rate = Math.max(4, GHOST_BASE_RATE - Math.floor(level * 0.8));
+        if (animFrame % rate !== 0) return;
+
+        const target = getGhostTarget(ghost, idx);
+        const possible = [];
+        for (let i = 0; i < 4; i++) {
+            if ((i === 0 && ghost.dir === 1) || (i === 1 && ghost.dir === 0) ||
+                (i === 2 && ghost.dir === 3) || (i === 3 && ghost.dir === 2)) continue;
+            const d = DIRS[i];
+            const nx = ghost.x + d.dx;
+            const ny = ghost.y + d.dy;
+            if (canGhostMove(nx, ny, ghost)) {
+                possible.push({ dir: i, dist: (nx - target.x) ** 2 + (ny - target.y) ** 2, nx, ny });
+            }
+        }
+        if (possible.length === 0) {
+            for (let i = 0; i < 4; i++) {
+                const d = DIRS[i];
+                const nx = ghost.x + d.dx;
+                const ny = ghost.y + d.dy;
+                if (canGhostMove(nx, ny, ghost)) possible.push({ dir: i, dist: 0, nx, ny });
+            }
+        }
+        if (possible.length > 0) {
+            possible.sort((a, b) => a.dist - b.dist);
+            ghost.dir = possible[0].dir;
+            ghost.x = possible[0].nx;
+            ghost.y = possible[0].ny;
+            if (ghost.x < 0) ghost.x = COLS - 1;
+            if (ghost.x >= COLS) ghost.x = 0;
+        }
+        if (ghost.eaten && ghost.x === 14 && ghost.y === 13) {
+            ghost.eaten = false;
+            ghost.scared = false;
+        }
+    }
+
+    function checkCollisions() {
+        ghosts.forEach(g => {
+            if (g.inHouse) return;
+            const dx = Math.abs(g.px - player.px);
+            const dy = Math.abs(g.py - player.py);
+            if (dx < TILE * 0.75 && dy < TILE * 0.75) {
+                if (g.scared && !g.eaten) {
+                    g.eaten = true; g.scared = false;
+                    ghostsEatenInPower++;
+                    score += 200 * ghostsEatenInPower;
+                    updateHUD();
+                    playEatGhost();
+                } else if (!g.eaten) {
+                    gameState = 'dying';
+                    deathTimer = 80;
+                    playDeath();
+                }
+            }
+        });
+    }
+
+    // ---- DRAWING ----
+    function drawWall(x, y) {
+        const px = x * TILE; const py = y * TILE;
+        ctx.fillStyle = '#22c';
+        ctx.fillRect(px, py, TILE, TILE);
+        ctx.fillStyle = '#33f';
+        ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+        const hasTop = y > 0 && map[y-1][x] === 1;
+        const hasBottom = y < ROWS-1 && map[y+1][x] === 1;
+        const hasLeft = x > 0 && map[y][x-1] === 1;
+        const hasRight = x < COLS-1 && map[y][x+1] === 1;
+        ctx.fillStyle = '#22c';
+        if (!hasTop) ctx.fillRect(px + 2, py, TILE - 4, 3);
+        if (!hasBottom) ctx.fillRect(px + 2, py + TILE - 3, TILE - 4, 3);
+        if (!hasLeft) ctx.fillRect(px, py + 2, 3, TILE - 4);
+        if (!hasRight) ctx.fillRect(px + TILE - 3, py + 2, 3, TILE - 4);
+    }
+
+    function drawDot(x, y) {
+        ctx.fillStyle = '#ffa';
+        ctx.beginPath();
+        ctx.arc(x * TILE + TILE/2, y * TILE + TILE/2, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawPowerOrb(x, y) {
+        const pulse = Math.sin(animFrame * 0.08) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(255, 255, 150, ${pulse})`;
+        ctx.beginPath();
+        ctx.arc(x * TILE + TILE/2, y * TILE + TILE/2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x * TILE + TILE/2 - 1, y * TILE + TILE/2 - 1, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawPlayer() {
+        const cx = player.px + TILE / 2;
+        const cy = player.py + TILE / 2;
+        const r = TILE / 2 - 1;
+        player.mouthOpen += 0.12 * player.mouthDir;
+        if (player.mouthOpen > 0.8) player.mouthDir = -1;
+        if (player.mouthOpen < 0.05) player.mouthDir = 1;
+        if (!player.moving) player.mouthOpen = 0.1;
+        const mouth = player.mouthOpen;
+        let angle = 0;
+        if (player.dir === 0) angle = Math.PI;
+        else if (player.dir === 1) angle = 0;
+        else if (player.dir === 2) angle = -Math.PI / 2;
+        else if (player.dir === 3) angle = Math.PI / 2;
+        ctx.fillStyle = '#0f0';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, angle + mouth, angle + Math.PI * 2 - mouth);
+        ctx.lineTo(cx, cy);
+        ctx.closePath();
+        ctx.fill();
+        const eyeAngle = angle - 0.5;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(eyeAngle) * r * 0.35, cy + Math.sin(eyeAngle) * r * 0.35, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowColor = '#0f0';
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawGhost(ghost) {
+        const cx = ghost.px + TILE / 2;
+        const cy = ghost.py + TILE / 2;
+        const w = TILE - 2; const h = TILE - 2;
+        let color = ghost.color;
+        if (ghost.scared) color = (powerTimer < 100 && animFrame % 10 < 5) ? '#fff' : '#22a';
+        if (ghost.eaten) { drawGhostEyes(cx, cy, ghost.dir); return; }
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, cy - 2, w / 2, Math.PI, 0);
+        ctx.lineTo(cx + w / 2, cy + h / 2 - 2);
+        const wave = Math.sin(animFrame * 0.15) * 2;
+        for (let i = 0; i < 4; i++) {
+            ctx.lineTo(cx + w / 2 - (i + 1) * (w / 4), cy + h / 2 - 2 + ((i % 2 === 0) ? wave : -wave));
+        }
+        ctx.lineTo(cx - w / 2, cy + h / 2 - 2);
+        ctx.closePath();
+        ctx.fill();
+        if (ghost.scared) {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(cx - 3, cy - 3, 2, 0, Math.PI * 2);
+            ctx.arc(cx + 3, cy - 3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(cx - 5, cy + 3);
+            for (let i = 0; i < 5; i++) ctx.lineTo(cx - 5 + i * 2.5, cy + 3 + (i % 2 === 0 ? 0 : 2));
+            ctx.stroke();
+        } else {
+            drawGhostEyes(cx, cy, ghost.dir);
+        }
+    }
+
+    function drawGhostEyes(cx, cy, dir) {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.ellipse(cx - 4, cy - 3, 4, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx + 4, cy - 3, 4, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        const d = DIRS[dir];
+        ctx.fillStyle = '#22a';
+        ctx.beginPath(); ctx.arc(cx - 4 + d.dx * 2, cy - 3 + d.dy * 2, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 4 + d.dx * 2, cy - 3 + d.dy * 2, 2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const tile = map[r][c];
+                if (tile === 1) drawWall(c, r);
+                else if (tile === 2) drawDot(c, r);
+                else if (tile === 3) drawPowerOrb(c, r);
+                else if (tile === 4) {
+                    ctx.fillStyle = '#f8a';
+                    ctx.fillRect(c * TILE, r * TILE + TILE / 2 - 2, TILE, 4);
+                }
+            }
+        }
+        ghosts.forEach(g => drawGhost(g));
+        if (gameState !== 'dying' || deathTimer > 40) {
+            drawPlayer();
+        } else {
+            const cx = player.px + TILE / 2;
+            const cy = player.py + TILE / 2;
+            const r = TILE / 2 - 1;
+            ctx.fillStyle = '#0f0';
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * (deathTimer / 40), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        if (powerMode) {
+            ctx.fillStyle = `rgba(0, 255, 255, ${Math.sin(animFrame * 0.1) * 0.3 + 0.3})`;
+            ctx.fillRect(0, 0, canvas.width, 3);
+            ctx.fillRect(0, ROWS * TILE - 3, canvas.width, 3);
+        }
+        if (gameState === 'gameover') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f55';
+            ctx.font = 'bold 36px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Courier New';
+            ctx.fillText(`Puntaje Final: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+            ctx.fillStyle = '#0ff';
+            ctx.font = '14px Courier New';
+            ctx.fillText(`Jugador: ${currentPlayerName} — Nivel: ${level}`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillStyle = '#ff0';
+            ctx.font = '15px Courier New';
+            ctx.fillText('ESPACIO = Jugar de nuevo', canvas.width / 2, canvas.height / 2 + 65);
+            ctx.fillStyle = '#888';
+            ctx.font = '12px Courier New';
+            ctx.fillText('ESC = Cambiar jugador', canvas.width / 2, canvas.height / 2 + 85);
+        }
+        if (gameState === 'win' && winTimer > 0) {
+            ctx.fillStyle = `rgba(0,255,0,${Math.sin(animFrame * 0.15) * 0.2 + 0.15})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        document.getElementById('message').textContent = messageText;
+    }
+
+    function update() {
+        animFrame++;
+        if (gameState === 'playing') {
+            movePlayer();
+            ghosts.forEach((g, i) => moveGhost(g, i));
+            checkCollisions();
+            if (powerMode) {
+                powerTimer--;
+                if (powerTimer <= 0) {
+                    powerMode = false;
+                    ghosts.forEach(g => { g.scared = false; });
+                    updateSiren();
+                }
+            }
+            if (!sirenOsc && audioCtx) startSiren();
+            updateHUD();
+            messageText = powerMode ? '¡MODO PODER ACTIVADO!' : '';
+        }
+        if (gameState === 'dying') {
+            deathTimer--;
+            if (deathTimer <= 0) {
+                lives--;
+                updateHUD();
+                if (lives <= 0) {
+                    gameState = 'gameover';
+                    playGameOver();
+                    if (currentPlayerName && score > 0) {
+                        saveScoreToStorage(currentPlayerName, score, level);
+                    }
+                } else {
+                    resetPositions();
+                    gameState = 'playing';
+                    messageText = `¡Quedan ${lives} vidas!`;
+                    startSiren();
+                }
+            }
+        }
+        if (gameState === 'win') {
+            winTimer--;
+            if (winTimer <= 0) {
+                level++;
+                resetMap();
+                resetPositions();
+                updateHUD();
+                gameState = 'playing';
+                messageText = `¡Nivel ${level}!`;
+                startSiren();
+            }
+        }
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    // Space to restart (same player)
+    document.addEventListener('keydown', e => {
+        if (e.key === ' ' && gameState === 'gameover') {
+            e.preventDefault();
+            stopSiren();
+            initGame();
+            gameState = 'playing';
+            startSiren();
+        }
+    });
+
+    // Also allow changing player on game over with Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && gameState === 'gameover') {
+            e.preventDefault();
+            stopSiren();
+            gameState = 'start';
+            document.getElementById('startScreen').style.display = 'flex';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('nameInput').focus();
+        }
+    });
+
+    // Start button with name validation
+    document.getElementById('startBtn').addEventListener('click', () => {
+        const nameInput = document.getElementById('nameInput');
+        const nameError = document.getElementById('nameError');
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            nameError.textContent = 'Escribe tu nombre para jugar';
+            nameInput.focus();
+            return;
+        }
+        if (name.length < 2) {
+            nameError.textContent = 'El nombre debe tener al menos 2 letras';
+            nameInput.focus();
+            return;
+        }
+        if (isNameTaken(name) && !confirm(`"${name}" ya existe en el ranking. ¿Eres tú? Si ganas más puntos se actualizará tu récord.`)) {
+            nameError.textContent = 'Elige otro nombre';
+            nameInput.focus();
+            return;
+        }
+
+        currentPlayerName = name;
+        nameError.textContent = '';
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('playerTag').textContent = 'Jugador: ' + name;
+        renderLeaderboard();
+        initAudio();
+        initGame();
+        gameState = 'playing';
+        startSiren();
+        canvas.focus();
+    });
+
+    // Enter key to start from name input
+    document.getElementById('nameInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('startBtn').click();
+        }
+    });
+
+    // Init
+    initGame();
+    update();
+    </script>
+</body>
+</html>
