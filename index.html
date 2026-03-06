@@ -694,9 +694,14 @@
         return true;
     }
 
-    // Input
+    // Input — ignore when typing in text fields
     const keys = {};
+    function isTyping() {
+        const el = document.activeElement;
+        return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+    }
     document.addEventListener('keydown', e => {
+        if (isTyping()) return;
         keys[e.key] = true;
         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) e.preventDefault();
         if (e.key === 'ArrowLeft' || e.key === 'a') player.nextDir = 0;
@@ -704,7 +709,7 @@
         if (e.key === 'ArrowUp' || e.key === 'w') player.nextDir = 2;
         if (e.key === 'ArrowDown' || e.key === 's') player.nextDir = 3;
     });
-    document.addEventListener('keyup', e => { keys[e.key] = false; });
+    document.addEventListener('keyup', e => { if (!isTyping()) keys[e.key] = false; });
 
     // Touch controls
     let touchStartX = 0, touchStartY = 0;
