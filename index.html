@@ -480,6 +480,21 @@
     let winTimer = 0;
     let messageText = '';
 
+    // ---- FRUIT SYSTEM ----
+    let fruit = null; // { x, y, type, timer }
+    let fruitMsgTimer = 0;
+    let fruitMsg = '';
+    const FRUIT_TYPES = [
+        { name: 'Cereza', color: '#f33', glow: '#f55', shape: 'cherry' },
+        { name: 'Fresa', color: '#f5a', glow: '#f7c', shape: 'straw' },
+        { name: 'Naranja', color: '#fa5', glow: '#fc7', shape: 'round' },
+        { name: 'Manzana', color: '#5f5', glow: '#7f7', shape: 'round' },
+        { name: 'Uva', color: '#a5f', glow: '#c7f', shape: 'grape' },
+        { name: 'Melón', color: '#5fa', glow: '#7fc', shape: 'round' },
+    ];
+    const FRUIT_TIMEOUT = 500;
+    const FRUIT_POINTS = 400;
+
     // Player
     const player = {
         x: 14, y: 23, dir: 0, nextDir: 0,
@@ -673,6 +688,122 @@
         }
     }
 
+    // ---- FRUIT FUNCTIONS ----
+    function spawnFruit() {
+        const candidates = [];
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (map[r][c] !== 0) continue;
+                const dist = Math.abs(c - player.x) + Math.abs(r - player.y);
+                if (dist >= 3 && dist <= 10) {
+                    candidates.push({ x: c, y: r });
+                }
+            }
+        }
+        if (candidates.length === 0) return;
+        const pos = candidates[Math.floor(Math.random() * candidates.length)];
+        const typeIdx = Math.floor(dotsEaten / 30 - 1) % FRUIT_TYPES.length;
+        fruit = {
+            x: pos.x,
+            y: pos.y,
+            type: FRUIT_TYPES[typeIdx >= 0 ? typeIdx : 0],
+            timer: FRUIT_TIMEOUT
+        };
+    }
+
+    function playFruitEat() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const notes = [500, 700, 900, 1100];
+        for (let i = 0; i < notes.length; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            const start = t + i * 0.06;
+            osc.frequency.setValueAtTime(notes[i], start);
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.1);
+            osc.start(start);
+            osc.stop(start + 0.1);
+        }
+    }
+
+    function drawFruit() {
+        if (!fruit) return;
+        const cx = fruit.x * TILE + TILE / 2;
+        const cy = fruit.y * TILE + TILE / 2;
+        const pulse = Math.sin(animFrame * 0.12) * 0.15 + 0.85;
+        const r = (TILE / 2 - 1) * pulse;
+
+        // Blink if about to disappear (last 100 frames)
+        if (fruit.timer < 100 && animFrame % 10 < 5) return;
+
+        // Glow
+        ctx.shadowColor = fruit.type.glow;
+        ctx.shadowBlur = 10;
+
+        // Draw fruit body
+        ctx.fillStyle = fruit.type.color;
+        if (fruit.type.shape === 'cherry') {
+            // Two small circles (cherry pair)
+            ctx.beginPath();
+            ctx.arc(cx - 3, cy + 1, r * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx + 3, cy + 1, r * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            // Stems
+            ctx.strokeStyle = '#0a0';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx - 3, cy - 1);
+            ctx.quadraticCurveTo(cx, cy - r - 2, cx + 1, cy - r - 1);
+            ctx.moveTo(cx + 3, cy - 1);
+            ctx.quadraticCurveTo(cx + 1, cy - r - 2, cx + 1, cy - r - 1);
+            ctx.stroke();
+        } else if (fruit.type.shape === 'grape') {
+            // Cluster of small circles
+            const gr = r * 0.35;
+            const offsets = [[-2,-3],[2,-3],[0,-1],[-3,1],[3,1],[-1,3],[1,3]];
+            offsets.forEach(([ox, oy]) => {
+                ctx.beginPath();
+                ctx.arc(cx + ox, cy + oy, gr, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.strokeStyle = '#0a0';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 4);
+            ctx.lineTo(cx, cy - r - 2);
+            ctx.stroke();
+        } else {
+            // Round fruit (naranja, manzana, melón)
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+            // Shine highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.beginPath();
+            ctx.arc(cx - r * 0.25, cy - r * 0.25, r * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+            // Stem
+            ctx.fillStyle = '#0a0';
+            ctx.beginPath();
+            ctx.ellipse(cx + 1, cy - r - 1, 3, 2, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.shadowBlur = 0;
+
+        // Show points label below fruit
+        ctx.fillStyle = '#ff0';
+        ctx.font = 'bold 9px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(FRUIT_POINTS.toString(), cx, cy + r + 10);
+    }
+
     // ---- GAME LOGIC ----
     function resetMap() {
         map = BASE_MAP.map(row => [...row]);
@@ -703,6 +834,8 @@
         level = 1;
         resetMap();
         resetPositions();
+        fruit = null;
+        fruitMsgTimer = 0;
         updateHUD();
     }
 
@@ -795,7 +928,22 @@
                 playPowerUp();
             }
 
+            // Spawn fruit every 30 dots eaten
+            if (dotsEaten > 0 && dotsEaten % 30 === 0 && !fruit) {
+                spawnFruit();
+            }
+
+            // Check if player eats fruit
+            if (fruit && player.x === fruit.x && player.y === fruit.y) {
+                score += FRUIT_POINTS;
+                fruitMsg = '\u00a1' + fruit.type.name + '! +' + FRUIT_POINTS + ' puntos';
+                fruitMsgTimer = 120;
+                playFruitEat();
+                fruit = null;
+            }
+
             if (dotsEaten >= totalDots) {
+                fruit = null;
                 gameState = 'win';
                 winTimer = 120;
                 messageText = '¡NIVEL COMPLETADO!';
@@ -1042,6 +1190,7 @@
                 }
             }
         }
+        drawFruit();
         ghosts.forEach(g => drawGhost(g));
         if (gameState !== 'dying' || deathTimer > 40) {
             drawPlayer();
@@ -1098,8 +1247,19 @@
                 }
             }
             if (!sirenOsc && audioCtx) startSiren();
+            // Fruit timer
+            if (fruit) {
+                fruit.timer--;
+                if (fruit.timer <= 0) fruit = null;
+            }
+            // Fruit message timer
+            if (fruitMsgTimer > 0) {
+                fruitMsgTimer--;
+                messageText = fruitMsg;
+            } else {
+                messageText = powerMode ? '¡MODO PODER ACTIVADO!' : '';
+            }
             updateHUD();
-            messageText = powerMode ? '¡MODO PODER ACTIVADO!' : '';
         }
         if (gameState === 'dying') {
             deathTimer--;
