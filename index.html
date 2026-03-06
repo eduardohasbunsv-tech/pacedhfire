@@ -634,14 +634,15 @@
         moving: false,
     };
 
-    const GHOST_COLORS = ['#f55', '#f9b', '#5bf', '#fa5', '#fff'];
-    const GHOST_NAMES = ['Sombra', 'Espectro', 'Niebla', 'Chispa', 'SHADOW'];
+    const GHOST_COLORS = ['#f55', '#f9b', '#5bf', '#fa5', '#fff', '#f0f'];
+    const GHOST_NAMES = ['Sombra', 'Espectro', 'Niebla', 'Chispa', 'SHADOW', 'PHANTOM'];
     const GHOST_TAUNTS = [
         ["¡Te atrapé!", "¡Mío!", "¡Directo!"],
         ["¡Emboscada!", "¡Trampa!", "¡Atrás!"],
         ["¡Sorpresa!", "¡Buu!", "¡Impredecible!"],
         ["¡Jaja!", "¡Lento!", "¡Fácil!"],
         ["¡Sombra!", "¡Invisible!", "¡Nadie escapa!"],
+        ["¡Phantasma!", "¡Pesadilla!", "¡Terror!"],
     ];
     let ghosts = [];
 
@@ -651,9 +652,10 @@
             { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 180, scared: false, eaten: false, targetX: 2, targetY: 0 },
             { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 350, scared: false, eaten: false, targetX: 27, targetY: 30 },
             { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 500, scared: false, eaten: false, targetX: 0, targetY: 30 },
+            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 200, scared: false, eaten: false, targetX: 14, targetY: 0 },
         ];
         if (level >= 10) {
-            ghosts.push({ x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 200, scared: false, eaten: false, targetX: 14, targetY: 0 });
+            ghosts.push({ x: 13, y: 13, dir: 1, color: GHOST_COLORS[5], name: GHOST_NAMES[5], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 600, scared: false, eaten: false, targetX: 14, targetY: 30 });
         }
     }
 
@@ -1629,7 +1631,7 @@
     function activatePowerMode() {
         powerMode = true;
         // Duración en milisegundos: nivel 1 = 26s, nivel 20 = 7s
-        const durationMs = Math.max(7000, 26000 - (level - 1) * 1000);
+        const durationMs = Math.max(3500, 13000 - (level - 1) * 500);
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
