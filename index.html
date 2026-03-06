@@ -25,11 +25,18 @@
             overflow-y: auto;
             padding: 10px 0;
         }
+        #gameWrapper {
+            width: 560px;
+            max-width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         #header {
             display: flex;
             justify-content: space-between;
-            width: 560px;
-            padding: 10px 0;
+            width: 100%;
+            padding: 10px 5px;
             font-size: 18px;
         }
         #header span { color: #0ff; }
@@ -37,6 +44,8 @@
             border: 2px solid #333;
             background: #000;
             image-rendering: pixelated;
+            max-width: 100%;
+            height: auto;
         }
         #message {
             margin-top: 15px;
@@ -99,7 +108,7 @@
             text-shadow: 0 0 8px #fa5;
         }
         #topbar {
-            width: 560px;
+            width: 100%;
             text-align: center;
             padding: 6px 0;
         }
@@ -143,41 +152,87 @@
         #playerTag {
             color: #0f0;
             font-size: 13px;
-            width: 560px;
+            width: 100%;
             text-align: right;
-            padding: 2px 0;
+            padding: 2px 5px;
         }
-        /* ---- LEADERBOARD ---- */
+        /* ---- LEADERBOARD TOGGLE BUTTON ---- */
+        #lbToggleBtn {
+            padding: 8px 20px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: transparent;
+            color: #ff0;
+            border: 2px solid #ff0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin: 6px 0;
+            transition: all 0.2s;
+        }
+        #lbToggleBtn:hover { background: #ff0; color: #000; }
+        #lbToggleBtn:active { transform: scale(0.95); }
+        /* ---- LEADERBOARD OVERLAY ---- */
+        #lbOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        #lbOverlay.visible { display: flex; }
         #leaderboard {
-            width: 560px;
+            width: 100%;
+            max-width: 400px;
             background: #0a0a1a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin-bottom: 8px;
+            border: 2px solid #ff0;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            animation: lbSlideIn 0.3s ease;
+        }
+        @keyframes lbSlideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         #leaderboard h3 {
             text-align: center;
             color: #ff0;
-            font-size: 14px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 12px;
             text-shadow: 0 0 10px rgba(255,255,0,0.3);
             letter-spacing: 1px;
         }
+        #lbCloseBtn {
+            position: absolute;
+            top: 10px; right: 14px;
+            background: none;
+            border: none;
+            color: #f55;
+            font-size: 24px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            line-height: 1;
+        }
+        #lbCloseBtn:hover { color: #fff; }
         #leaderboard table { width: 100%; border-collapse: collapse; }
         #leaderboard th {
             color: #0ff;
-            font-size: 10px;
-            padding: 3px 4px;
+            font-size: 12px;
+            padding: 6px 4px;
             text-align: left;
             border-bottom: 1px solid #333;
         }
         #leaderboard td {
-            padding: 2px 4px;
-            font-size: 11px;
+            padding: 8px 4px;
+            font-size: 14px;
             border-bottom: 1px solid #1a1a2e;
         }
-        #leaderboard .rank { width: 24px; text-align: center; font-weight: bold; }
+        #leaderboard .rank { width: 30px; text-align: center; font-weight: bold; }
         #leaderboard .rank-1 { color: #ffd700; }
         #leaderboard .rank-2 { color: #c0c0c0; }
         #leaderboard .rank-3 { color: #cd7f32; }
@@ -185,7 +240,21 @@
         #leaderboard .level-col { color: #fa5; text-align: center; }
         #leaderboard .name-col { color: #fff; }
         #leaderboard .your-row td { background: rgba(0, 255, 255, 0.08); }
-        #leaderboard .empty-msg { text-align: center; color: #555; padding: 8px; font-size: 12px; }
+        #leaderboard .empty-msg { text-align: center; color: #555; padding: 15px; font-size: 14px; }
+        /* ---- MOBILE RESPONSIVE ---- */
+        @media (max-width: 580px) {
+            #startScreen h1 { font-size: 32px; }
+            #startScreen h2 { font-size: 14px; margin-bottom: 15px; }
+            #startScreen .credit { font-size: 16px; }
+            #startScreen .credit strong { font-size: 20px; }
+            #startScreen .dedication { font-size: 13px; }
+            #startScreen .controls { font-size: 12px; }
+            #startScreen .name-section input { width: 200px; font-size: 16px; }
+            #startScreen .start-btn { padding: 10px 30px; font-size: 18px; }
+            #header { font-size: 14px; }
+            #topbar .credit-bar { font-size: 11px; }
+            #message { font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -207,31 +276,39 @@
         </div>
         <button class="start-btn" id="startBtn">JUGAR</button>
     </div>
-    <div id="leaderboard">
-        <h3>🏆 TOP 10 MEJORES PUNTAJES</h3>
-        <table>
-            <thead><tr>
-                <th class="rank">#</th>
-                <th>JUGADOR</th>
-                <th style="text-align:center">NIVEL</th>
-                <th style="text-align:right">PUNTAJE</th>
-            </tr></thead>
-            <tbody id="lbBody">
-                <tr><td colspan="4" class="empty-msg">Aún no hay puntajes</td></tr>
-            </tbody>
-        </table>
+    <!-- LEADERBOARD OVERLAY -->
+    <div id="lbOverlay">
+        <div id="leaderboard">
+            <button id="lbCloseBtn">X</button>
+            <h3>🏆 TOP 10 MEJORES PUNTAJES</h3>
+            <table>
+                <thead><tr>
+                    <th class="rank">#</th>
+                    <th>JUGADOR</th>
+                    <th style="text-align:center">NIVEL</th>
+                    <th style="text-align:right">PUNTAJE</th>
+                </tr></thead>
+                <tbody id="lbBody">
+                    <tr><td colspan="4" class="empty-msg">Aún no hay puntajes</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div id="playerTag"></div>
-    <div id="topbar">
-        <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — Dedicado a Jóvenes Iglesia sobre la Roca</div>
+    <!-- GAME AREA -->
+    <div id="gameWrapper">
+        <button id="lbToggleBtn">🏆 VER TOP 10</button>
+        <div id="playerTag"></div>
+        <div id="topbar">
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — Dedicado a Jóvenes Iglesia sobre la Roca</div>
+        </div>
+        <div id="header">
+            <div>PUNTAJE: <span id="score">0</span></div>
+            <div>NIVEL: <span id="level">1</span></div>
+            <div>VIDAS: <span id="lives">3</span></div>
+        </div>
+        <canvas id="game" width="560" height="620"></canvas>
+        <div id="message"></div>
     </div>
-    <div id="header">
-        <div>PUNTAJE: <span id="score">0</span></div>
-        <div>NIVEL: <span id="level">1</span></div>
-        <div>VIDAS: <span id="lives">3</span></div>
-    </div>
-    <canvas id="game" width="560" height="620"></canvas>
-    <div id="message"></div>
 
     <script>
     // ---- USERNAME & LEADERBOARD (localStorage) ----
@@ -290,6 +367,19 @@
     }
 
     renderLeaderboard();
+
+    // ---- LEADERBOARD TOGGLE ----
+    const lbOverlay = document.getElementById('lbOverlay');
+    document.getElementById('lbToggleBtn').addEventListener('click', () => {
+        renderLeaderboard();
+        lbOverlay.classList.add('visible');
+    });
+    document.getElementById('lbCloseBtn').addEventListener('click', () => {
+        lbOverlay.classList.remove('visible');
+    });
+    lbOverlay.addEventListener('click', (e) => {
+        if (e.target === lbOverlay) lbOverlay.classList.remove('visible');
+    });
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -984,6 +1074,11 @@
                     if (currentPlayerName && score > 0) {
                         saveScoreToStorage(currentPlayerName, score, level);
                     }
+                    // Auto-show leaderboard on game over
+                    setTimeout(() => {
+                        renderLeaderboard();
+                        lbOverlay.classList.add('visible');
+                    }, 1500);
                 } else {
                     resetPositions();
                     gameState = 'playing';
