@@ -244,6 +244,33 @@
         #leaderboard .name-col { color: #fff; }
         #leaderboard .your-row td { background: rgba(0, 255, 255, 0.08); }
         #leaderboard .empty-msg { text-align: center; color: #555; padding: 15px; font-size: 14px; }
+        /* ---- GAME OVER BUTTONS ---- */
+        #goButtons {
+            display: none;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            gap: 10px;
+            flex-direction: column;
+            align-items: center;
+        }
+        #goButtons.visible { display: flex; }
+        #goButtons button {
+            padding: 10px 24px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            min-width: 220px;
+        }
+        #goButtons .btn-replay { background: #0ff; color: #000; }
+        #goButtons .btn-replay:active { background: #0aa; }
+        #goButtons .btn-change { background: transparent; color: #888; border: 1px solid #555; font-size: 13px; }
+        #goButtons .btn-change:active { background: #222; }
         /* ---- MOBILE RESPONSIVE ---- */
         @media (max-width: 580px) {
             #startScreen h1 { font-size: 32px; }
@@ -309,7 +336,13 @@
             <div>NIVEL: <span id="level">1</span></div>
             <div>VIDAS: <span id="lives">3</span></div>
         </div>
-        <canvas id="game" width="560" height="620"></canvas>
+        <div style="position:relative; width:100%; max-width:560px;">
+            <canvas id="game" width="560" height="620"></canvas>
+            <div id="goButtons">
+                <button class="btn-replay" id="btnReplay">JUGAR DE NUEVO</button>
+                <button class="btn-change" id="btnChange">CAMBIAR JUGADOR</button>
+            </div>
+        </div>
         <div id="message"></div>
     </div>
 
@@ -1032,19 +1065,16 @@
             ctx.fillStyle = '#f55';
             ctx.font = 'bold 36px Courier New';
             ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 30);
             ctx.fillStyle = '#fff';
             ctx.font = '18px Courier New';
-            ctx.fillText(`Puntaje Final: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+            ctx.fillText(`Puntaje Final: ${score}`, canvas.width / 2, canvas.height / 2 + 5);
             ctx.fillStyle = '#0ff';
             ctx.font = '14px Courier New';
-            ctx.fillText(`Jugador: ${currentPlayerName} — Nivel: ${level}`, canvas.width / 2, canvas.height / 2 + 40);
-            ctx.fillStyle = '#ff0';
-            ctx.font = '15px Courier New';
-            ctx.fillText('ESPACIO = Jugar de nuevo', canvas.width / 2, canvas.height / 2 + 65);
-            ctx.fillStyle = '#888';
-            ctx.font = '12px Courier New';
-            ctx.fillText('ESC = Cambiar jugador', canvas.width / 2, canvas.height / 2 + 85);
+            ctx.fillText(`Jugador: ${currentPlayerName} — Nivel: ${level}`, canvas.width / 2, canvas.height / 2 + 30);
+            document.getElementById('goButtons').classList.add('visible');
+        } else {
+            document.getElementById('goButtons').classList.remove('visible');
         }
         if (gameState === 'win' && winTimer > 0) {
             ctx.fillStyle = `rgba(0,255,0,${Math.sin(animFrame * 0.15) * 0.2 + 0.15})`;
@@ -1111,26 +1141,40 @@
         requestAnimationFrame(update);
     }
 
-    // Space to restart (same player)
+    // Replay function
+    function doReplay() {
+        stopSiren();
+        lbOverlay.classList.remove('visible');
+        initGame();
+        gameState = 'playing';
+        startSiren();
+    }
+    // Change player function
+    function doChangePlayer() {
+        stopSiren();
+        lbOverlay.classList.remove('visible');
+        gameState = 'start';
+        document.getElementById('goButtons').classList.remove('visible');
+        document.getElementById('startScreen').style.display = 'flex';
+        document.getElementById('nameInput').value = '';
+        document.getElementById('nameInput').focus();
+    }
+
+    // Touch/click buttons for game over
+    document.getElementById('btnReplay').addEventListener('click', doReplay);
+    document.getElementById('btnChange').addEventListener('click', doChangePlayer);
+
+    // Keyboard shortcuts (Space & Escape) still work on desktop
     document.addEventListener('keydown', e => {
         if (e.key === ' ' && gameState === 'gameover') {
             e.preventDefault();
-            stopSiren();
-            initGame();
-            gameState = 'playing';
-            startSiren();
+            doReplay();
         }
     });
-
-    // Also allow changing player on game over with Escape
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && gameState === 'gameover') {
             e.preventDefault();
-            stopSiren();
-            gameState = 'start';
-            document.getElementById('startScreen').style.display = 'flex';
-            document.getElementById('nameInput').value = '';
-            document.getElementById('nameInput').focus();
+            doChangePlayer();
         }
     });
 
