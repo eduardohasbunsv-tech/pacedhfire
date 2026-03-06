@@ -474,13 +474,24 @@
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
-    // ---- GHOST THREAT MESSAGES ----
+    // ---- GHOST & PACMAN MESSAGES ----
     const GHOST_THREATS = [
         "¡Te atrapo!", "¡Corre!", "¡Ven acá!", "¡Miedo!",
         "¡Huye!", "¡Muere!", "¡Jaja!", "¡Aquí voy!",
         "¡Boo!", "¡Ríndete!", "¡Sorpresa!", "¡Hola!",
+        "¡No escapas!", "¡Te veo!", "¡Más cerca!", "¡Tembla!",
+    ];
+    const PACMAN_WORRIES = [
+        "¡Ayuda!", "¡No no no!", "¡Mamá!", "¡Auxilio!",
+        "¡Oh no!", "¡Cuidado!", "¡Yikes!", "¡Gulp!",
+        "¡Aaah!", "¡Socorro!", "¡Nooo!", "¡Huyo!",
     ];
     let ghostMessages = []; // { text, x, y, timer, color }
+    let lastGhostMsgFrame = 0;   // para repetir cada ~5 seg
+    let lastPacmanMsgFrame = 0;  // cooldown mensajes pacman
+    const MSG_INTERVAL = 300;    // ~5 seg a 60fps
+    const PACMAN_MSG_COOLDOWN = 180; // ~3 seg entre mensajes pacman
+    const PACMAN_DANGER_DIST = 5;    // distancia en tiles para preocuparse
 
     // 0=empty, 1=wall, 2=dot, 3=power orb, 4=ghost house door
     const BASE_MAP = [
@@ -891,6 +902,8 @@
         fruit = null;
         fruitMsgTimer = 0;
         ghostMessages = [];
+        lastGhostMsgFrame = 0;
+        lastPacmanMsgFrame = 0;
         updateHUD();
     }
 
@@ -1331,6 +1344,30 @@
             // Ghost message timers
             ghostMessages.forEach(m => { m.timer--; m.y -= 0.3; });
             ghostMessages = ghostMessages.filter(m => m.timer > 0);
+
+            // Fantasmas dicen amenazas cada ~5 seg
+            if (animFrame - lastGhostMsgFrame >= MSG_INTERVAL) {
+                const activeGhosts = ghosts.filter(g => !g.inHouse && !g.eaten && !g.scared);
+                if (activeGhosts.length > 0) {
+                    const g = activeGhosts[Math.floor(Math.random() * activeGhosts.length)];
+                    const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
+                    ghostMessages.push({ text: threat, x: g.px, y: g.py - 10, timer: 90, color: g.color });
+                    lastGhostMsgFrame = animFrame;
+                }
+            }
+
+            // Pacman se preocupa cuando un fantasma está muy cerca
+            if (animFrame - lastPacmanMsgFrame >= PACMAN_MSG_COOLDOWN) {
+                const closestDist = Math.min(...ghosts
+                    .filter(g => !g.inHouse && !g.eaten && !g.scared)
+                    .map(g => Math.abs(g.x - player.x) + Math.abs(g.y - player.y))
+                );
+                if (closestDist <= PACMAN_DANGER_DIST && closestDist > 0) {
+                    const worry = PACMAN_WORRIES[Math.floor(Math.random() * PACMAN_WORRIES.length)];
+                    ghostMessages.push({ text: worry, x: player.px, y: player.py - 10, timer: 70, color: '#0f0' });
+                    lastPacmanMsgFrame = animFrame;
+                }
+            }
             // Fruit message timer
             if (fruitMsgTimer > 0) {
                 fruitMsgTimer--;
