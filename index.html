@@ -467,11 +467,20 @@
     const ROWS = 31;
 
     // ---- SPEED CONTROL ----
-    const PLAYER_MOVE_RATE = 10;
-    const GHOST_BASE_RATE = 12;
-    const GHOST_SCARED_RATE = 18;
+    // Nivel 1 es 50% más lento, se incrementa gradualmente
+    const PLAYER_MOVE_RATE = 15;  // base lento (nivel 1)
+    const GHOST_BASE_RATE = 18;   // base lento (nivel 1)
+    const GHOST_SCARED_RATE = 24;
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
+
+    // ---- GHOST THREAT MESSAGES ----
+    const GHOST_THREATS = [
+        "¡Te atrapo!", "¡Corre!", "¡Ven acá!", "¡Miedo!",
+        "¡Huye!", "¡Muere!", "¡Jaja!", "¡Aquí voy!",
+        "¡Boo!", "¡Ríndete!", "¡Sorpresa!", "¡Hola!",
+    ];
+    let ghostMessages = []; // { text, x, y, timer, color }
 
     // 0=empty, 1=wall, 2=dot, 3=power orb, 4=ghost house door
     const BASE_MAP = [
@@ -881,6 +890,7 @@
         resetPositions();
         fruit = null;
         fruitMsgTimer = 0;
+        ghostMessages = [];
         updateHUD();
     }
 
@@ -940,7 +950,7 @@
     function movePlayer() {
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
-        const rate = Math.max(2, PLAYER_MOVE_RATE - Math.floor(level * 0.5));
+        const rate = Math.max(4, PLAYER_MOVE_RATE - Math.floor((level - 1) * 1));
         if (animFrame % rate !== 0) return;
 
         const nd = DIRS[player.nextDir];
@@ -956,8 +966,8 @@
             player.x = nx;
             player.y = ny;
             player.moving = true;
-            if (player.x < 0) player.x = COLS - 1;
-            if (player.x >= COLS) player.x = 0;
+            if (player.x < 0) { player.x = COLS - 1; player.px = player.x * TILE; }
+            if (player.x >= COLS) { player.x = 0; player.px = player.x * TILE; }
 
             const tile = map[player.y][player.x];
             if (tile === 2) {
@@ -1041,6 +1051,9 @@
                 ghost.x = 14; ghost.y = 11;
                 ghost.px = ghost.x * TILE; ghost.py = ghost.y * TILE;
                 ghost.inHouse = false;
+                // Mensaje de amenaza al salir
+                const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
+                ghostMessages.push({ text: threat, x: ghost.px, y: ghost.py - 10, timer: 90, color: ghost.color });
             }
             return;
         }
@@ -1048,7 +1061,7 @@
         let rate;
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) rate = GHOST_SCARED_RATE;
-        else rate = Math.max(4, GHOST_BASE_RATE - Math.floor(level * 0.8));
+        else rate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 1));
         if (animFrame % rate !== 0) return;
 
         const target = getGhostTarget(ghost, idx);
@@ -1076,12 +1089,17 @@
             ghost.dir = possible[0].dir;
             ghost.x = possible[0].nx;
             ghost.y = possible[0].ny;
-            if (ghost.x < 0) ghost.x = COLS - 1;
-            if (ghost.x >= COLS) ghost.x = 0;
+            if (ghost.x < 0) { ghost.x = COLS - 1; ghost.px = ghost.x * TILE; }
+            if (ghost.x >= COLS) { ghost.x = 0; ghost.px = ghost.x * TILE; }
         }
         if (ghost.eaten && ghost.x === 14 && ghost.y === 13) {
             ghost.eaten = false;
             ghost.scared = false;
+            ghost.inHouse = true;
+            ghost.houseTimer = 60; // sale rápido
+            // Mensaje de amenaza al regresar
+            const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
+            ghostMessages.push({ text: threat, x: ghost.px, y: ghost.py - 10, timer: 90, color: ghost.color });
         }
     }
 
@@ -1237,6 +1255,19 @@
         }
         drawFruit();
         ghosts.forEach(g => drawGhost(g));
+        // Dibujar mensajes de amenaza de fantasmas
+        ghostMessages.forEach(m => {
+            const alpha = Math.min(1, m.timer / 30);
+            ctx.save();
+            ctx.font = 'bold 10px "Courier New", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgba(0,0,0,${alpha * 0.7})`;
+            ctx.fillRect(m.x - 40, m.y - 12, 80, 16);
+            ctx.fillStyle = m.color || '#fff';
+            ctx.globalAlpha = alpha;
+            ctx.fillText(m.text, m.x + TILE / 2, m.y);
+            ctx.restore();
+        });
         if (gameState !== 'dying' || deathTimer > 40) {
             drawPlayer();
         } else {
@@ -1297,6 +1328,9 @@
                 fruit.timer--;
                 if (fruit.timer <= 0) fruit = null;
             }
+            // Ghost message timers
+            ghostMessages.forEach(m => { m.timer--; m.y -= 0.3; });
+            ghostMessages = ghostMessages.filter(m => m.timer > 0);
             // Fruit message timer
             if (fruitMsgTimer > 0) {
                 fruitMsgTimer--;
