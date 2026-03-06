@@ -338,7 +338,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — Dedicado a Jóvenes Iglesia sobre la Roca</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v2.0</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -535,6 +535,50 @@
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ];
 
+    function getMapForLevel(lvl) {
+        const m = BASE_MAP.map(row => [...row]);
+        const group = lvl <= 5 ? 1 : lvl <= 10 ? 2 : lvl <= 15 ? 3 : 4;
+        const openCells = [];
+        if (group === 2) {
+            // Wide corridors: open center wall blocks in rows 2-4 and 21-22
+            for (let r = 2; r <= 4; r++) {
+                for (let c = 7; c <= 11; c++) openCells.push([r, c]);
+                for (let c = 16; c <= 20; c++) openCells.push([r, c]);
+            }
+            for (let r = 21; r <= 22; r++) {
+                for (let c = 7; c <= 11; c++) openCells.push([r, c]);
+                for (let c = 16; c <= 20; c++) openCells.push([r, c]);
+            }
+        } else if (group === 3) {
+            // Side openings
+            for (let r = 6; r <= 7; r++) {
+                for (let c = 2; c <= 5; c++) openCells.push([r, c]);
+                for (let c = 22; c <= 25; c++) openCells.push([r, c]);
+            }
+            for (let r = 24; r <= 25; r++) {
+                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
+            }
+            for (let r = 27; r <= 28; r++) {
+                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
+            }
+        } else if (group === 4) {
+            // Maximum chaos: center + side openings
+            for (let c = 7; c <= 20; c++) openCells.push([3, c]);
+            for (let r = 6; r <= 7; r++) {
+                for (let c = 2; c <= 5; c++) openCells.push([r, c]);
+                for (let c = 22; c <= 25; c++) openCells.push([r, c]);
+            }
+            for (let c = 7; c <= 20; c++) openCells.push([21, c]);
+            for (let r = 27; r <= 28; r++) {
+                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
+            }
+        }
+        openCells.forEach(([r, c]) => {
+            if (m[r][c] === 1) m[r][c] = 2; // wall becomes dot
+        });
+        return m;
+    }
+
     let map = [];
     let score = 0;
     let lives = 3;
@@ -550,6 +594,22 @@
     let deathTimer = 0;
     let winTimer = 0;
     let messageText = '';
+
+    // ---- FURY MODE ----
+    let furyMode = false;
+    let furyEndTime = 0;
+
+    // ---- PLAYER TRAIL ----
+    let playerTrail = [];
+
+    // ---- EXTRA LIVES ----
+    let nextLifeAt = 5000;
+    const LIFE_MILESTONES = [5000, 15000, 30000];
+    let awardedMilestones = [];
+
+    // ---- BONUS FRUIT LEVEL ----
+    let bonusStartTime = 0;
+    let bonusFruitTimer = 0;
 
     // ---- FRUIT SYSTEM ----
     let fruit = null; // { x, y, type, timer }
@@ -574,8 +634,15 @@
         moving: false,
     };
 
-    const GHOST_COLORS = ['#f55', '#f9b', '#5bf', '#fa5'];
-    const GHOST_NAMES = ['Sombra', 'Espectro', 'Niebla', 'Chispa'];
+    const GHOST_COLORS = ['#f55', '#f9b', '#5bf', '#fa5', '#fff'];
+    const GHOST_NAMES = ['Sombra', 'Espectro', 'Niebla', 'Chispa', 'SHADOW'];
+    const GHOST_TAUNTS = [
+        ["¡Te atrapé!", "¡Mío!", "¡Directo!"],
+        ["¡Emboscada!", "¡Trampa!", "¡Atrás!"],
+        ["¡Sorpresa!", "¡Buu!", "¡Impredecible!"],
+        ["¡Jaja!", "¡Lento!", "¡Fácil!"],
+        ["¡Sombra!", "¡Invisible!", "¡Nadie escapa!"],
+    ];
     let ghosts = [];
 
     function createGhosts() {
@@ -585,6 +652,9 @@
             { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 350, scared: false, eaten: false, targetX: 27, targetY: 30 },
             { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 500, scared: false, eaten: false, targetX: 0, targetY: 30 },
         ];
+        if (level >= 10) {
+            ghosts.push({ x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 200, scared: false, eaten: false, targetX: 14, targetY: 0 });
+        }
     }
 
     const DIRS = [
@@ -879,7 +949,7 @@
 
     // ---- GAME LOGIC ----
     function resetMap() {
-        map = BASE_MAP.map(row => [...row]);
+        map = getMapForLevel(level);
         totalDots = 0;
         dotsEaten = 0;
         for (let r = 0; r < ROWS; r++)
@@ -912,6 +982,13 @@
         ghostMessages = [];
         lastGhostMsgFrame = 0;
         lastPacmanMsgFrame = 0;
+        furyMode = false;
+        furyEndTime = 0;
+        playerTrail = [];
+        awardedMilestones = [];
+        nextLifeAt = 5000;
+        bonusStartTime = 0;
+        bonusFruitTimer = 0;
         updateHUD();
     }
 
@@ -984,6 +1061,11 @@
         ny = player.y + d.dy;
 
         if (canMove(nx, ny)) {
+            // Speed trail (level 5+)
+            if (level >= 5) {
+                playerTrail.push({x: player.px, y: player.py, age: 0});
+                if (playerTrail.length > 5) playerTrail.shift();
+            }
             player.x = nx;
             player.y = ny;
             player.moving = true;
@@ -996,12 +1078,14 @@
                 score += 10;
                 dotsEaten++;
                 playChomp();
+                checkLifeMilestone();
             } else if (tile === 3) {
                 map[player.y][player.x] = 0;
                 score += 50;
                 dotsEaten++;
                 activatePowerMode();
                 playPowerUp();
+                checkLifeMilestone();
             }
 
             // Spawn fruit every 30 dots eaten
@@ -1016,12 +1100,14 @@
                 fruitMsgTimer = 120;
                 playFruitEat();
                 fruit = null;
+                checkLifeMilestone();
             }
 
             if (dotsEaten >= totalDots) {
                 fruit = null;
+                furyMode = false;
                 gameState = 'win';
-                winTimer = 120;
+                winTimer = 180;
                 messageText = '¡NIVEL COMPLETADO!';
                 playLevelComplete();
                 stopSiren();
@@ -1060,6 +1146,7 @@
             case 3: const dist = Math.abs(ghost.x - player.x) + Math.abs(ghost.y - player.y);
                     if (dist > 8) return { x: player.x, y: player.y };
                     return { x: ghost.targetX, y: ghost.targetY };
+            case 4: return { x: player.x, y: player.y };
         }
         return { x: player.x, y: player.y };
     }
@@ -1085,6 +1172,7 @@
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) rate = GHOST_SCARED_RATE;
         else rate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
+        if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
         if (animFrame % rate !== 0) return;
 
         const target = getGhostTarget(ghost, idx);
@@ -1126,8 +1214,21 @@
         }
     }
 
+    function checkLifeMilestone() {
+        for (let i = 0; i < LIFE_MILESTONES.length; i++) {
+            if (score >= LIFE_MILESTONES[i] && !awardedMilestones.includes(LIFE_MILESTONES[i])) {
+                awardedMilestones.push(LIFE_MILESTONES[i]);
+                lives++;
+                fruitMsg = '¡VIDA EXTRA!';
+                fruitMsgTimer = 120;
+                playPowerUp();
+                updateHUD();
+            }
+        }
+    }
+
     function checkCollisions() {
-        ghosts.forEach(g => {
+        ghosts.forEach((g, gi) => {
             if (g.inHouse) return;
             const dx = Math.abs(g.px - player.px);
             const dy = Math.abs(g.py - player.py);
@@ -1136,9 +1237,22 @@
                     g.eaten = true; g.scared = false;
                     ghostsEatenInPower++;
                     score += 200 * ghostsEatenInPower;
+                    // Combo chain: check if all active (non-inHouse) ghosts eaten
+                    const activeGhosts = ghosts.filter(gh => !gh.inHouse || gh === g);
+                    const allEaten = activeGhosts.every(gh => gh.eaten || gh.inHouse);
+                    if (allEaten && ghostsEatenInPower >= 2) {
+                        score += 1000;
+                        fruitMsg = '¡COMBO TOTAL! +1000';
+                        fruitMsgTimer = 120;
+                    }
+                    checkLifeMilestone();
                     updateHUD();
                     playEatGhost();
                 } else if (!g.eaten) {
+                    // Ghost personality death message
+                    const ghostIdx = Math.min(gi, GHOST_TAUNTS.length - 1);
+                    const taunts = GHOST_TAUNTS[ghostIdx];
+                    messageText = g.name + ': ' + taunts[Math.floor(Math.random() * taunts.length)];
                     gameState = 'dying';
                     deathTimer = 80;
                     playDeath();
@@ -1277,7 +1391,9 @@
             }
         }
         drawFruit();
-        ghosts.forEach(g => drawGhost(g));
+        if (gameState !== 'bonus') {
+            ghosts.forEach(g => drawGhost(g));
+        }
         // Dibujar mensajes de amenaza de fantasmas
         ghostMessages.forEach(m => {
             const alpha = Math.min(1, m.timer / 30);
@@ -1291,6 +1407,17 @@
             ctx.fillText(m.text, m.x + TILE / 2, m.y);
             ctx.restore();
         });
+        // Draw speed trail
+        if (level >= 5) {
+            playerTrail.forEach((t, i) => {
+                ctx.globalAlpha = 0.1 + (0.1 * (playerTrail.length - i));
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(t.x + TILE/2, t.y + TILE/2, TILE/3, 0, Math.PI*2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
         if (gameState !== 'dying' || deathTimer > 40) {
             drawPlayer();
         } else {
@@ -1306,6 +1433,12 @@
             ctx.fillStyle = `rgba(0, 255, 255, ${Math.sin(animFrame * 0.1) * 0.3 + 0.3})`;
             ctx.fillRect(0, 0, canvas.width, 3);
             ctx.fillRect(0, ROWS * TILE - 3, canvas.width, 3);
+        }
+        if (furyMode) {
+            const flash = Math.sin(animFrame * 0.2) > 0 ? 1 : 0.4;
+            ctx.strokeStyle = `rgba(255, 0, 0, ${flash})`;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
         }
         if (gameState === 'gameover') {
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -1327,6 +1460,36 @@
         if (gameState === 'win' && winTimer > 0) {
             ctx.fillStyle = `rgba(0,255,0,${Math.sin(animFrame * 0.15) * 0.2 + 0.15})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, canvas.height/2 - 60, canvas.width, 120);
+            ctx.textAlign = 'center';
+            if (winTimer > 60) {
+                // First phase: level completed
+                ctx.fillStyle = '#0f0';
+                ctx.font = 'bold 28px Courier New';
+                ctx.fillText('¡NIVEL ' + level + ' COMPLETADO!', canvas.width / 2, canvas.height / 2 - 15);
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Courier New';
+                ctx.fillText('Puntaje: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+            } else {
+                // Second phase: story message
+                ctx.fillStyle = '#ff0';
+                ctx.font = 'bold 20px Courier New';
+                let storyMsg = '';
+                if (level <= 5) storyMsg = 'Los fantasmas se reagrupan...';
+                else if (level <= 10) storyMsg = '¡Nuevos caminos aparecen!';
+                else if (level <= 15) storyMsg = 'Los fantasmas están furiosos...';
+                else storyMsg = '¡El laberinto se transforma!';
+                ctx.fillText(storyMsg, canvas.width / 2, canvas.height / 2 + 5);
+            }
+        }
+        // Bonus level overlay
+        if (gameState === 'bonus') {
+            ctx.fillStyle = '#ff0';
+            ctx.font = 'bold 14px Courier New';
+            ctx.textAlign = 'center';
+            const bonusRemaining = Math.max(0, Math.ceil((bonusStartTime + 15000 - Date.now()) / 1000));
+            ctx.fillText('¡NIVEL BONUS! Tiempo: ' + bonusRemaining + 's', canvas.width / 2, 15);
         }
         document.getElementById('message').textContent = messageText;
     }
@@ -1380,10 +1543,25 @@
                     lastPacmanMsgFrame = animFrame;
                 }
             }
+            // Fury mode: random trigger (~every 30 seconds)
+            if (!powerMode && !furyMode && Math.random() < 1/1800) {
+                furyMode = true;
+                furyEndTime = Date.now() + 8000;
+                fruitMsg = '¡MODO FURIA!';
+                fruitMsgTimer = 120;
+            }
+            if (furyMode && Date.now() >= furyEndTime) {
+                furyMode = false;
+            }
+            // Trail aging
+            playerTrail.forEach(t => t.age++);
+            playerTrail = playerTrail.filter(t => t.age <= 6);
             // Fruit message timer
             if (fruitMsgTimer > 0) {
                 fruitMsgTimer--;
                 messageText = fruitMsg;
+            } else if (furyMode) {
+                messageText = '¡MODO FURIA!';
             } else {
                 messageText = powerMode ? '¡MODO PODER ACTIVADO!' : '';
             }
@@ -1422,9 +1600,9 @@
             winTimer--;
             if (winTimer <= 0) {
                 if (level >= 20) {
-                    // ¡Victoria total! Completó los 20 niveles
+                    // Victoria total
                     gameState = 'gameover';
-                    messageText = '🏆 ¡COMPLETASTE LOS 20 NIVELES! ¡ERES UNA LEYENDA! 🏆';
+                    messageText = '¡COMPLETASTE LOS 20 NIVELES! ¡ERES UNA LEYENDA!';
                     stopSiren();
                     saveScoreToStorage(currentPlayerName, score, level).then(() => {
                         setTimeout(() => {
@@ -1432,7 +1610,21 @@
                             lbOverlay.classList.add('visible');
                         }, 2000);
                     });
-                    goButtons.style.display = 'flex';
+                    document.getElementById('goButtons').classList.add('visible');
+                } else if (level === 5 || level === 10 || level === 15) {
+                    // Bonus fruit level
+                    gameState = 'bonus';
+                    bonusStartTime = Date.now();
+                    bonusFruitTimer = 0;
+                    fruit = null;
+                    messageText = '¡NIVEL BONUS!';
+                    fruitMsg = '¡NIVEL BONUS!';
+                    fruitMsgTimer = 120;
+                    // Keep current map but hide ghosts
+                    level++;
+                    resetMap();
+                    resetPlayer();
+                    updateHUD();
                 } else {
                     level++;
                     resetMap();
@@ -1441,8 +1633,50 @@
                     gameState = 'playing';
                     messageText = `¡Nivel ${level}!`;
                     ghostMessages = [];
+                    playerTrail = [];
                     startSiren();
                 }
+            }
+        }
+        // Bonus level logic
+        if (gameState === 'bonus') {
+            movePlayer();
+            // Spawn fruits rapidly
+            bonusFruitTimer++;
+            if (bonusFruitTimer >= 60) {
+                bonusFruitTimer = 0;
+                if (!fruit) spawnFruit();
+            }
+            // Check fruit pickup
+            if (fruit && player.x === fruit.x && player.y === fruit.y) {
+                score += FRUIT_POINTS;
+                fruitMsg = '¡' + fruit.type.name + '! +' + FRUIT_POINTS;
+                fruitMsgTimer = 60;
+                playFruitEat();
+                fruit = null;
+                checkLifeMilestone();
+            }
+            if (fruitMsgTimer > 0) {
+                fruitMsgTimer--;
+                messageText = fruitMsg;
+            } else {
+                messageText = '¡NIVEL BONUS!';
+            }
+            // Trail aging
+            playerTrail.forEach(t => t.age++);
+            playerTrail = playerTrail.filter(t => t.age <= 6);
+            updateHUD();
+            // End bonus after 15 seconds
+            if (Date.now() - bonusStartTime >= 15000) {
+                fruit = null;
+                resetMap();
+                resetPositions();
+                updateHUD();
+                gameState = 'playing';
+                messageText = `¡Nivel ${level}!`;
+                ghostMessages = [];
+                playerTrail = [];
+                startSiren();
             }
         }
         draw();
