@@ -11,6 +11,13 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://suntrader.shop">
     <meta name="theme-color" content="#111111">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="EDH-PAC">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EDH-PAC — Juego Arcade">
+    <meta name="twitter:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 10.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👾</text></svg>">
     <!-- Firebase SDK (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -281,8 +288,11 @@
         #goButtons .btn-replay:active { background: #0aa; }
         #goButtons .btn-change { background: transparent; color: #888; border: 1px solid #555; font-size: 13px; }
         #goButtons .btn-change:active { background: #222; }
+        #goButtons .btn-share { background: #0f0; color: #000; }
+        #goButtons .btn-share:active { background: #0a0; }
         /* ---- MOBILE RESPONSIVE ---- */
         @media (max-width: 580px) {
+            body { padding: 2px 0; }
             #startScreen h1 { font-size: 32px; }
             #startScreen h2 { font-size: 14px; margin-bottom: 15px; }
             #startScreen .credit { font-size: 16px; }
@@ -291,13 +301,207 @@
             #startScreen .controls { font-size: 12px; }
             #startScreen .name-section input { width: 200px; font-size: 16px; }
             #startScreen .start-btn { padding: 10px 30px; font-size: 18px; }
-            #header { font-size: 14px; }
-            #topbar .credit-bar { font-size: 11px; }
+            #header { font-size: 13px; padding: 6px 2px; }
+            #topbar { display: none; }
             #message { font-size: 13px; }
+            .dpad-btn { width: 54px; height: 54px; font-size: 20px; }
+            .dpad-center { width: 54px; height: 54px; }
+            #gameWrapper { width: 100vw; }
+            canvas { border-width: 1px; }
+        }
+        @media (max-width: 380px) {
+            #startScreen { padding: 15px 10px; }
+            #startScreen h1 { font-size: 26px; }
+            .dpad-btn { width: 46px; height: 46px; font-size: 18px; }
+            .dpad-center { width: 46px; height: 46px; }
+            #header { font-size: 12px; }
+        }
+        @media (max-height: 500px) and (orientation: landscape) {
+            #dpad { display: none !important; }
+            canvas { max-height: 80vh; width: auto !important; }
+        }
+        #statsOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 50;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+        #statsOverlay.visible { display: flex; }
+        #statsPanel {
+            width: 100%;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: #0a0a1a;
+            border: 2px solid #0ff;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            animation: lbSlideIn 0.3s ease;
+        }
+        #statsPanel h3 {
+            text-align: center;
+            color: #0ff;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        #statsCloseBtn {
+            position: absolute;
+            top: 10px; right: 14px;
+            background: none;
+            border: none;
+            color: #f55;
+            font-size: 24px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        #statsContent {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        #statsContent .stat-item {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+        }
+        #statsContent .stat-value { color: #0ff; font-size: 20px; font-weight: bold; }
+        #statsContent .stat-label { color: #888; font-size: 11px; margin-top: 2px; }
+        #achievementsGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        #achievementsGrid .ach-card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+            font-size: 11px;
+        }
+        #achievementsGrid .ach-card.unlocked {
+            border-color: #ffd700;
+            background: #1a1500;
+        }
+        #achievementsGrid .ach-card .ach-icon { font-size: 20px; }
+        #achievementsGrid .ach-card .ach-name { color: #fff; margin-top: 2px; }
+        #achievementsGrid .ach-card .ach-desc { color: #888; font-size: 10px; }
+        #achievementsGrid .ach-card.locked .ach-icon { filter: grayscale(1); opacity: 0.4; }
+        #achievementsGrid .ach-card.locked .ach-name { color: #555; }
+        /* ---- D-PAD ---- */
+        #dpad {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            margin-top: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .dpad-mid { display: flex; gap: 2px; }
+        .dpad-btn {
+            width: 60px; height: 60px;
+            background: rgba(0,255,255,0.12);
+            border: 2px solid rgba(0,255,255,0.35);
+            border-radius: 10px;
+            color: rgba(0,255,255,0.7);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dpad-btn:active { background: rgba(0,255,255,0.35); }
+        .dpad-center { width: 60px; height: 60px; }
+        /* ---- PAUSE BUTTON ---- */
+        #pauseBtn {
+            display: none;
+            position: absolute;
+            top: 5px; right: 5px;
+            z-index: 5;
+            width: 40px; height: 40px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(0,255,255,0.4);
+            border-radius: 8px;
+            color: #0ff;
+            font-size: 14px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #pauseBtn:active { background: rgba(0,255,255,0.2); }
+        /* ---- LOADING SCREEN ---- */
+        #loadingScreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+        #loadingScreen.fade-out { opacity: 0; pointer-events: none; }
+        .loading-logo {
+            font-size: 64px;
+            color: #0ff;
+            text-shadow: 0 0 30px #0ff, 0 0 60px rgba(0,255,255,0.3);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            animation: loadPulse 1.5s ease-in-out infinite;
+        }
+        .loading-sub {
+            color: #0f0;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            margin-top: 5px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        @keyframes loadPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); text-shadow: 0 0 50px #0ff, 0 0 80px rgba(0,255,255,0.5); }
+        }
+        .loading-bar-wrap {
+            width: 200px; height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        .loading-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #0ff, #0f0);
+            transition: width 0.3s;
+            border-radius: 2px;
+        }
+        .loading-text {
+            color: #555;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+    <div id="loadingScreen">
+        <div class="loading-logo">EDH-PAC</div>
+        <div class="loading-sub">por EDHFIRE</div>
+        <div class="loading-bar-wrap">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-text">Cargando...</div>
+    </div>
     <div id="startScreen">
         <h1>EDH-PAC</h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
@@ -315,6 +519,8 @@
             <div class="name-error" id="nameError"></div>
         </div>
         <button class="start-btn" id="startBtn">JUGAR</button>
+        <button class="start-btn" id="continueBtn" style="display:none;background:#0f0;margin-top:8px;font-size:16px;">CONTINUAR</button>
+        <button class="start-btn" id="statsBtn" style="background:transparent;border:2px solid #0ff;color:#0ff;margin-top:8px;font-size:14px;">ESTADISTICAS</button>
     </div>
     <!-- LEADERBOARD OVERLAY -->
     <div id="lbOverlay">
@@ -334,6 +540,15 @@
             </table>
         </div>
     </div>
+    <div id="statsOverlay">
+        <div id="statsPanel">
+            <button id="statsCloseBtn">X</button>
+            <h3>ESTADISTICAS</h3>
+            <div id="statsContent"></div>
+            <h3 style="margin-top:15px;">LOGROS</h3>
+            <div id="achievementsGrid"></div>
+        </div>
+    </div>
     <!-- GAME AREA -->
     <div id="gameWrapper">
         <div id="playerTag"></div>
@@ -346,10 +561,21 @@
             <div>VIDAS: <span id="lives">3</span></div>
         </div>
         <div style="position:relative; width:100%; max-width:560px;">
+            <button id="pauseBtn">&#10074;&#10074;</button>
             <canvas id="game" width="560" height="620"></canvas>
+            <div id="dpad">
+                <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
+                <div class="dpad-mid">
+                    <button class="dpad-btn dpad-left" data-dir="0">&#9664;</button>
+                    <div class="dpad-center"></div>
+                    <button class="dpad-btn dpad-right" data-dir="1">&#9654;</button>
+                </div>
+                <button class="dpad-btn dpad-down" data-dir="3">&#9660;</button>
+            </div>
             <div id="goButtons">
                 <button class="btn-replay" id="btnReplay">JUGAR DE NUEVO</button>
                 <button class="btn-change" id="btnChange">CAMBIAR JUGADOR</button>
+                <button class="btn-share" id="btnShare">COMPARTIR PUNTAJE</button>
             </div>
         </div>
         <div id="message"></div>
@@ -357,6 +583,27 @@
     </div>
 
     <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch(function(){});
+    }
+    // Loading screen
+    (function() {
+        var bar = document.getElementById('loadingBar');
+        var progress = 0;
+        var loadInt = setInterval(function() {
+            progress += 15 + Math.random() * 25;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadInt);
+                setTimeout(function() {
+                    var ls = document.getElementById('loadingScreen');
+                    ls.classList.add('fade-out');
+                    setTimeout(function() { ls.style.display = 'none'; }, 500);
+                }, 300);
+            }
+            bar.style.width = progress + '%';
+        }, 150);
+    })();
     // ==========================================
     // ---- FIREBASE CONFIG ----
     // Ve a Firebase Console > Configuración del proyecto > Tus apps
@@ -466,6 +713,144 @@
     lbOverlay.addEventListener('click', (e) => {
         if (e.target === lbOverlay) lbOverlay.classList.remove('visible');
     });
+
+    // ===== PERSISTENT DATA (localStorage) =====
+    let persistentData = null;
+    let currentLevelDeaths = 0;
+    let gameStartTime = 0;
+    let currentGhostStreak = 0;
+    let levelStartScore = 0;
+    function getDefaultPersistentData() {
+        return { version: 1, savedGame: null, stats: { gamesPlayed: 0, totalGhostsEaten: 0, totalDotsEaten: 0, totalFruitsEaten: 0, totalDeaths: 0, bestScore: 0, bestLevel: 0, bestStreak: 0, perfectLevels: 0, totalPowerModes: 0, levelCompletions: 0, levelsStarRating: {} }, achievements: [] };
+    }
+    function loadPersistentData() {
+        try {
+            const raw = localStorage.getItem('edhpac_data');
+            if (raw) {
+                persistentData = JSON.parse(raw);
+                const defaults = getDefaultPersistentData();
+                for (const key in defaults.stats) { if (persistentData.stats[key] === undefined) persistentData.stats[key] = defaults.stats[key]; }
+                if (!persistentData.achievements) persistentData.achievements = [];
+            } else { persistentData = getDefaultPersistentData(); }
+        } catch(e) { persistentData = getDefaultPersistentData(); }
+    }
+    function savePersistentData() { try { localStorage.setItem('edhpac_data', JSON.stringify(persistentData)); } catch(e) {} }
+    function updateStat(key, value, mode) {
+        if (!persistentData) return;
+        mode = mode || 'add';
+        if (mode === 'add') persistentData.stats[key] = (persistentData.stats[key] || 0) + value;
+        else if (mode === 'max') persistentData.stats[key] = Math.max(persistentData.stats[key] || 0, value);
+        else if (mode === 'set') persistentData.stats[key] = value;
+        savePersistentData();
+    }
+    // ===== SAVE/LOAD GAME PROGRESS =====
+    function saveGameProgress() {
+        if (!persistentData) return;
+        persistentData.savedGame = { level: level, score: score, lives: lives, playerName: currentPlayerName, timestamp: Date.now() };
+        savePersistentData();
+    }
+    function loadGameProgress() {
+        if (!persistentData || !persistentData.savedGame) return false;
+        const sg = persistentData.savedGame;
+        currentPlayerName = sg.playerName; level = sg.level; score = sg.score; lives = sg.lives;
+        applyTheme(); resetMap(); resetPositions();
+        gameStartTime = Date.now(); currentLevelDeaths = 0; levelStartScore = score;
+        updateHUD(); return true;
+    }
+    function clearSavedGame() { if (!persistentData) return; persistentData.savedGame = null; savePersistentData(); }
+    function hasSavedGame(name) { return persistentData && persistentData.savedGame && persistentData.savedGame.playerName === name; }
+    // ===== STAR RATING SYSTEM =====
+    function getStarThresholds(lvl) { const base = 800 + (lvl - 1) * 200; return [base, Math.floor(base * 1.8), base * 3]; }
+    function calculateStars(lvl, levelScore) { const t = getStarThresholds(lvl); if (levelScore >= t[2]) return 3; if (levelScore >= t[1]) return 2; if (levelScore >= t[0]) return 1; return 0; }
+    function drawStars(ctx, x, y, count, size) {
+        for (let i = 0; i < 3; i++) {
+            const sx = x + i * (size * 2.5); const filled = i < count;
+            ctx.fillStyle = filled ? '#ffd700' : '#333'; ctx.strokeStyle = filled ? '#ffa500' : '#555'; ctx.lineWidth = 1.5;
+            drawStarShape(ctx, sx, y, size, 5);
+        }
+    }
+    function drawStarShape(ctx, cx, cy, r, points) {
+        ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? r : r * 0.4;
+            const angle = (i * Math.PI / points) - Math.PI / 2;
+            const x = cx + Math.cos(angle) * radius; const y = cy + Math.sin(angle) * radius;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    // ===== ACHIEVEMENT SYSTEM =====
+    const ACHIEVEMENTS = [
+        { id: 'ghost_10', name: 'Cazafantasmas', desc: 'Come 10 fantasmas', icon: '\uD83D\uDC7B', check: s => s.totalGhostsEaten >= 10 },
+        { id: 'ghost_50', name: 'Exterminador', desc: 'Come 50 fantasmas', icon: '\uD83D\uDC80', check: s => s.totalGhostsEaten >= 50 },
+        { id: 'ghost_200', name: 'Leyenda Fantasmal', desc: 'Come 200 fantasmas', icon: '\uD83D\uDC51', check: s => s.totalGhostsEaten >= 200 },
+        { id: 'combo_king', name: 'Rey del Combo', desc: 'Come 4+ fantasmas en un poder', icon: '\uD83D\uDD25', check: s => s.bestStreak >= 4 },
+        { id: 'dots_500', name: 'Trag\u00f3n', desc: 'Come 500 orbes', icon: '\u26A1', check: s => s.totalDotsEaten >= 500 },
+        { id: 'dots_2000', name: 'Devorador', desc: 'Come 2000 orbes', icon: '\uD83C\uDF1F', check: s => s.totalDotsEaten >= 2000 },
+        { id: 'level_5', name: 'Explorador', desc: 'Llega al nivel 5', icon: '\uD83D\uDDFA', check: s => s.bestLevel >= 5 },
+        { id: 'level_10', name: 'Aventurero', desc: 'Llega al nivel 10', icon: '\u26F0', check: s => s.bestLevel >= 10 },
+        { id: 'level_20', name: 'Campe\u00f3n', desc: 'Completa los 20 niveles', icon: '\uD83C\uDFC6', check: s => s.bestLevel >= 20 },
+        { id: 'score_5k', name: 'Principiante', desc: 'Logra 5,000 puntos', icon: '\uD83C\uDFAF', check: s => s.bestScore >= 5000 },
+        { id: 'score_20k', name: 'Profesional', desc: 'Logra 20,000 puntos', icon: '\uD83D\uDC8E', check: s => s.bestScore >= 20000 },
+        { id: 'score_50k', name: 'Maestro', desc: 'Logra 50,000 puntos', icon: '\uD83C\uDF20', check: s => s.bestScore >= 50000 },
+        { id: 'perfect_1', name: 'Perfecci\u00f3n', desc: 'Completa un nivel sin morir', icon: '\u2728', check: s => s.perfectLevels >= 1 },
+        { id: 'perfect_5', name: 'Invencible', desc: 'Completa 5 niveles sin morir', icon: '\uD83D\uDEE1', check: s => s.perfectLevels >= 5 },
+        { id: 'games_10', name: 'Adicto', desc: 'Juega 10 partidas', icon: '\uD83C\uDFAE', check: s => s.gamesPlayed >= 10 },
+        { id: 'fruit_10', name: 'Frut\u00edvoro', desc: 'Come 10 frutas', icon: '\uD83C\uDF52', check: s => s.totalFruitsEaten >= 10 },
+    ];
+    let achievementPopupQueue = [];
+    let achievementPopupTimer = 0;
+    let currentAchievementPopup = null;
+    function checkAchievements() {
+        if (!persistentData) return;
+        ACHIEVEMENTS.forEach(a => {
+            if (!persistentData.achievements.includes(a.id) && a.check(persistentData.stats)) {
+                persistentData.achievements.push(a.id); achievementPopupQueue.push(a);
+            }
+        });
+        savePersistentData();
+    }
+    function updateAchievementPopup() {
+        if (currentAchievementPopup) { achievementPopupTimer--; if (achievementPopupTimer <= 0) currentAchievementPopup = null; }
+        if (!currentAchievementPopup && achievementPopupQueue.length > 0) { currentAchievementPopup = achievementPopupQueue.shift(); achievementPopupTimer = 180; }
+    }
+    function drawAchievementPopup(ctx) {
+        if (!currentAchievementPopup) return;
+        const a = currentAchievementPopup;
+        const alpha = achievementPopupTimer > 160 ? (180 - achievementPopupTimer) / 20 : achievementPopupTimer < 20 ? achievementPopupTimer / 20 : 1;
+        ctx.save(); ctx.globalAlpha = alpha;
+        const bw = 280, bh = 50;
+        const bx = (ctx.canvas.width - bw) / 2, by = 10;
+        ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, bh);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#ffd700'; ctx.font = 'bold 14px Courier New';
+        ctx.fillText('LOGRO DESBLOQUEADO', ctx.canvas.width / 2, by + 18);
+        ctx.fillStyle = '#fff'; ctx.font = '13px Courier New';
+        ctx.fillText(a.icon + ' ' + a.name, ctx.canvas.width / 2, by + 38);
+        ctx.restore();
+    }
+    function renderStatsScreen() {
+        if (!persistentData) return;
+        const s = persistentData.stats;
+        const sc = document.getElementById('statsContent');
+        sc.innerHTML = [
+            ['Mejor Puntaje', (s.bestScore || 0).toLocaleString()],
+            ['Mejor Nivel', s.bestLevel || 0],
+            ['Partidas Jugadas', s.gamesPlayed || 0],
+            ['Fantasmas Comidos', s.totalGhostsEaten || 0],
+            ['Orbes Comidos', s.totalDotsEaten || 0],
+            ['Frutas Comidas', s.totalFruitsEaten || 0],
+            ['Muertes Totales', s.totalDeaths || 0],
+            ['Niveles Perfectos', s.perfectLevels || 0],
+            ['Mejor Racha', s.bestStreak || 0],
+            ['Power Modes', s.totalPowerModes || 0],
+        ].map(function(pair) { return '<div class="stat-item"><div class="stat-value">' + pair[1] + '</div><div class="stat-label">' + pair[0] + '</div></div>'; }).join('');
+        const ag = document.getElementById('achievementsGrid');
+        ag.innerHTML = ACHIEVEMENTS.map(function(a) {
+            const unlocked = persistentData.achievements.includes(a.id);
+            return '<div class="ach-card ' + (unlocked ? 'unlocked' : 'locked') + '"><div class="ach-icon">' + a.icon + '</div><div class="ach-name">' + a.name + '</div><div class="ach-desc">' + a.desc + '</div></div>';
+        }).join('');
+    }
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -598,6 +983,10 @@
     // ---- FURY MODE ----
     let furyMode = false;
     let furyEndTime = 0;
+
+    // ---- ENDLESS MODE ----
+    let endlessMode = false;
+    let endlessLevel = 0;
 
     // ---- PLAYER TRAIL ----
     let playerTrail = [];
@@ -1462,6 +1851,43 @@
         sh2.start(t + 0.3); sh2.stop(t + 0.5);
     }
 
+    function playCountdownBeep() {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = 880;
+        o.type = 'square';
+        g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        o.start(); o.stop(audioCtx.currentTime + 0.15);
+    }
+
+    function playCountdownGo() {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = 1320;
+        o.type = 'square';
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        o.start(); o.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playWhoosh() {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(200, audioCtx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.15);
+        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        o.start(); o.stop(audioCtx.currentTime + 0.2);
+    }
+
     // ---- FRUIT FUNCTIONS ----
     function spawnFruit() {
         const candidates = [];
@@ -1515,6 +1941,107 @@
         sh1.start(t + 0.1); sh1.stop(t + 0.4);
         sh2.start(t + 0.1); sh2.stop(t + 0.4);
     }
+
+    // ===== PARTICLE SYSTEM =====
+    const MAX_PARTICLES = 200;
+    const particlePool = [];
+    let activeParticleCount = 0;
+
+    function initParticlePool() {
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            particlePool.push({ active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, size: 2, color: '#fff' });
+        }
+    }
+
+    function spawnParticles(x, y, count, color, minSpd, maxSpd, minLife, maxLife, size) {
+        for (let i = 0; i < count; i++) {
+            let p = null;
+            for (let j = 0; j < MAX_PARTICLES; j++) {
+                if (!particlePool[j].active) { p = particlePool[j]; break; }
+            }
+            if (!p) return;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = minSpd + Math.random() * (maxSpd - minSpd);
+            p.active = true;
+            p.x = x; p.y = y;
+            p.vx = Math.cos(angle) * speed;
+            p.vy = Math.sin(angle) * speed;
+            p.life = minLife + Math.random() * (maxLife - minLife) | 0;
+            p.maxLife = p.life;
+            p.size = size || 2;
+            p.color = color;
+        }
+    }
+
+    function updateParticles() {
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            const p = particlePool[i];
+            if (!p.active) continue;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.05;
+            p.life--;
+            if (p.life <= 0) p.active = false;
+        }
+    }
+
+    function drawParticles() {
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            const p = particlePool[i];
+            if (!p.active) continue;
+            const alpha = p.life / p.maxLife;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    initParticlePool();
+
+    // ===== SCREEN SHAKE =====
+    let shakeIntensity = 0;
+    let shakeDuration = 0;
+    let shakeOffsetX = 0;
+    let shakeOffsetY = 0;
+
+    function triggerShake(intensity, duration) {
+        shakeIntensity = intensity;
+        shakeDuration = duration;
+    }
+
+    function updateShake() {
+        if (shakeDuration > 0) {
+            shakeOffsetX = (Math.random() - 0.5) * shakeIntensity * 2;
+            shakeOffsetY = (Math.random() - 0.5) * shakeIntensity * 2;
+            shakeDuration--;
+            shakeIntensity *= 0.92;
+        } else {
+            shakeOffsetX = 0;
+            shakeOffsetY = 0;
+        }
+    }
+
+    // ===== SCREEN FLASH =====
+    let flashActive = false;
+    let flashColor = 'rgba(0,255,255,0.4)';
+    let flashTimer = 0;
+    let flashMaxTimer = 0;
+
+    function triggerFlash(color, duration) {
+        flashActive = true;
+        flashColor = color;
+        flashTimer = duration;
+        flashMaxTimer = duration;
+    }
+
+    // ===== COUNTDOWN & TRANSITIONS =====
+    let countdownTimer = 0;
+    let transitionState = 'none'; // 'fadeout' | 'fadein' | 'none'
+    let transitionTimer = 0;
+    let transitionCallback = null;
 
     function drawFruit() {
         if (!fruit) return;
@@ -1618,6 +2145,11 @@
         score = 0;
         lives = 3;
         level = 1;
+        updateStat('gamesPlayed', 1);
+        gameStartTime = Date.now();
+        currentLevelDeaths = 0;
+        levelStartScore = 0;
+        currentGhostStreak = 0;
         applyTheme();
         resetMap();
         resetPositions();
@@ -1628,6 +2160,8 @@
         lastPacmanMsgFrame = 0;
         furyMode = false;
         furyEndTime = 0;
+        endlessMode = false;
+        endlessLevel = 0;
         playerTrail = [];
         awardedMilestones = [];
         nextLifeAt = 5000;
@@ -1640,6 +2174,29 @@
         document.getElementById('score').textContent = score;
         document.getElementById('level').textContent = level;
         document.getElementById('lives').textContent = lives;
+    }
+
+    function getEndlessTheme(eLvl) {
+        return LEVEL_THEMES[(eLvl * 7 + 3) % 20];
+    }
+
+    function startEndlessMode() {
+        endlessMode = true;
+        endlessLevel = 0;
+        advanceEndlessLevel();
+    }
+
+    function advanceEndlessLevel() {
+        endlessLevel++;
+        level++;
+        currentTheme = getEndlessTheme(endlessLevel);
+        resetMap();
+        resetPositions();
+        gameState = 'countdown';
+        countdownTimer = 210;
+        currentLevelDeaths = 0;
+        levelStartScore = score;
+        updateHUD();
     }
 
     function canMove(x, y) {
@@ -1665,6 +2222,17 @@
     }
     document.addEventListener('keydown', e => {
         if (isTyping()) return;
+        if (e.key === 'Escape') {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                if (typeof stopMusic === 'function') stopMusic();
+                return;
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                if (typeof startMusic === 'function') startMusic();
+                return;
+            }
+        }
         keys[e.key] = true;
         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) e.preventDefault();
         if (e.key === 'ArrowLeft' || e.key === 'a') player.nextDir = 0;
@@ -1687,6 +2255,64 @@
         const dy = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(dx) > Math.abs(dy)) player.nextDir = dx > 0 ? 1 : 0;
         else player.nextDir = dy > 0 ? 3 : 2;
+    });
+
+    // Canvas click handler for endless choice
+    canvas.addEventListener('click', function(e) {
+        if (gameState !== 'endlessChoice') return;
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var cx = (e.clientX - rect.left) * scaleX;
+        var cy = (e.clientY - rect.top) * scaleY;
+        var bw = 200, bx = canvas.width/2 - bw/2;
+        // Endless button: y from canvas.height/2+50 to +86
+        if (cx >= bx && cx <= bx + bw && cy >= canvas.height/2 + 50 && cy <= canvas.height/2 + 86) {
+            startEndlessMode();
+        }
+        // Finish button: y from canvas.height/2+96 to +132
+        if (cx >= bx && cx <= bx + bw && cy >= canvas.height/2 + 96 && cy <= canvas.height/2 + 132) {
+            gameState = 'gameover';
+            messageText = 'COMPLETASTE LOS 20 NIVELES! ERES UNA LEYENDA!';
+            document.getElementById('goButtons').classList.add('visible');
+            setTimeout(function() {
+                renderLeaderboard();
+                lbOverlay.classList.add('visible');
+            }, 1500);
+        }
+    });
+
+    // D-pad for mobile
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        document.getElementById('dpad').style.display = 'flex';
+    }
+    document.querySelectorAll('.dpad-btn[data-dir]').forEach(function(btn) {
+        var dir = parseInt(btn.getAttribute('data-dir'));
+        var interval = null;
+        btn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            player.nextDir = dir;
+            clearInterval(interval);
+            interval = setInterval(function() { player.nextDir = dir; }, 80);
+        });
+        btn.addEventListener('touchend', function() { clearInterval(interval); });
+        btn.addEventListener('touchcancel', function() { clearInterval(interval); });
+        // Also handle mouse for testing on desktop
+        btn.addEventListener('mousedown', function(e) { e.preventDefault(); player.nextDir = dir; });
+    });
+
+    // Pause button
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        document.getElementById('pauseBtn').style.display = 'block';
+    }
+    document.getElementById('pauseBtn').addEventListener('click', function() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+            if (typeof stopMusic === 'function') stopMusic();
+        } else if (gameState === 'paused') {
+            gameState = 'playing';
+            if (typeof startMusic === 'function') startMusic();
+        }
     });
 
     function movePlayer() {
@@ -1721,15 +2347,19 @@
                 map[player.y][player.x] = 0;
                 score += 10;
                 dotsEaten++;
+                updateStat('totalDotsEaten', 1);
                 playChomp();
                 checkLifeMilestone();
+                spawnParticles(player.px + TILE/2, player.py + TILE/2, 3, currentTheme ? currentTheme.dotColor : '#ffa', 0.5, 2, 10, 20, 2);
             } else if (tile === 3) {
                 map[player.y][player.x] = 0;
                 score += 50;
                 dotsEaten++;
+                updateStat('totalDotsEaten', 1);
                 activatePowerMode();
                 playPowerUp();
                 checkLifeMilestone();
+                spawnParticles(player.px + TILE/2, player.py + TILE/2, 8, currentTheme ? currentTheme.orbColor : '#fff', 1, 4, 15, 30, 3);
             }
 
             // Spawn fruit every 30 dots eaten
@@ -1740,6 +2370,7 @@
             // Check if player eats fruit
             if (fruit && player.x === fruit.x && player.y === fruit.y) {
                 score += FRUIT_POINTS;
+                updateStat('totalFruitsEaten', 1);
                 fruitMsg = '\u00a1' + fruit.type.name + '! +' + FRUIT_POINTS + ' puntos';
                 fruitMsgTimer = 120;
                 playFruitEat();
@@ -1762,6 +2393,8 @@
     }
 
     function activatePowerMode() {
+        updateStat('totalPowerModes', 1);
+        currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos: nivel 1 = 26s, nivel 20 = 7s
         const durationMs = Math.max(3500, 13000 - (level - 1) * 500);
@@ -1774,6 +2407,7 @@
                 g.dir = (g.dir < 2) ? (1 - g.dir) : (5 - g.dir);
             }
         });
+        triggerFlash('rgba(0,255,255,0.4)', 15);
     }
 
     function getGhostTarget(ghost, idx) {
@@ -1888,17 +2522,26 @@
                         fruitMsg = '¡COMBO TOTAL! +1000';
                         fruitMsgTimer = 120;
                     }
+                    currentGhostStreak++;
+                    updateStat('totalGhostsEaten', 1);
+                    updateStat('bestStreak', currentGhostStreak, 'max');
                     checkLifeMilestone();
                     updateHUD();
                     playComboHit();
+                    spawnParticles(g.px + TILE/2, g.py + TILE/2, 12, g.color, 1, 5, 20, 40, 3);
+                    triggerShake(3, 8);
                 } else if (!g.eaten) {
                     // Ghost personality death message
                     const ghostIdx = Math.min(gi, GHOST_TAUNTS.length - 1);
                     const taunts = GHOST_TAUNTS[ghostIdx];
                     messageText = g.name + ': ' + taunts[Math.floor(Math.random() * taunts.length)];
+                    currentLevelDeaths++;
+                    updateStat('totalDeaths', 1);
                     gameState = 'dying';
                     deathTimer = 80;
                     playDeath();
+                    spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, currentTheme ? currentTheme.playerColor : '#0f0', 1, 4, 15, 40, 2);
+                    triggerShake(6, 15);
                 }
             }
         });
@@ -1979,8 +2622,13 @@
     }
 
     function drawGhost(ghost) {
-        const cx = ghost.px + TILE / 2;
-        const cy = ghost.py + TILE / 2;
+        let drawOffX = 0, drawOffY = 0;
+        if (ghost.scared && !ghost.eaten) {
+            drawOffX = (Math.random() - 0.5) * 3;
+            drawOffY = (Math.random() - 0.5) * 3;
+        }
+        const cx = ghost.px + TILE / 2 + drawOffX;
+        const cy = ghost.py + TILE / 2 + drawOffY;
         const w = TILE - 2; const h = TILE - 2;
         let color = ghost.color;
         if (ghost.scared) color = (powerTimer < 2000 && animFrame % 10 < 5) ? '#fff' : '#22a';
@@ -2023,6 +2671,9 @@
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateShake();
+        ctx.save();
+        ctx.translate(shakeOffsetX, shakeOffsetY);
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const tile = map[r][c];
@@ -2085,6 +2736,38 @@
             ctx.lineWidth = 4;
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
         }
+        if (gameState === 'endlessChoice') {
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 26px Courier New';
+            ctx.fillText('COMPLETASTE LOS', canvas.width/2, canvas.height/2 - 80);
+            ctx.fillText('20 NIVELES!', canvas.width/2, canvas.height/2 - 50);
+            ctx.fillStyle = '#0ff';
+            ctx.font = '16px Courier New';
+            ctx.fillText('Puntaje: ' + score.toLocaleString(), canvas.width/2, canvas.height/2 - 15);
+            ctx.fillStyle = '#0f0';
+            ctx.font = 'bold 18px Courier New';
+            ctx.fillText('ERES UNA LEYENDA', canvas.width/2, canvas.height/2 + 20);
+            // Draw buttons
+            var bw = 200, bh = 36;
+            var bx = canvas.width/2 - bw/2;
+            // Endless button
+            ctx.fillStyle = '#0ff';
+            ctx.fillRect(bx, canvas.height/2 + 50, bw, bh);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 16px Courier New';
+            ctx.fillText('MODO INFINITO', canvas.width/2, canvas.height/2 + 50 + 24);
+            // Finish button
+            ctx.fillStyle = 'transparent';
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx, canvas.height/2 + 96, bw, bh);
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Courier New';
+            ctx.fillText('TERMINAR', canvas.width/2, canvas.height/2 + 96 + 23);
+        }
         if (gameState === 'gameover') {
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2116,10 +2799,13 @@
                 ctx.fillStyle = '#fff';
                 ctx.font = '16px Courier New';
                 ctx.fillText('Puntaje: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+                const _winLvlScore = score - levelStartScore;
+                const _winStars = calculateStars(level, _winLvlScore);
+                drawStars(ctx, canvas.width / 2 - 35, canvas.height / 2 + 35, _winStars, 12);
                 if (currentTheme) {
                     ctx.fillStyle = currentTheme.wallInner;
                     ctx.font = '14px monospace';
-                    ctx.fillText('"' + currentTheme.name + '"', canvas.width / 2, canvas.height / 2 + 40);
+                    ctx.fillText('"' + currentTheme.name + '"', canvas.width / 2, canvas.height / 2 + 60);
                 }
             } else {
                 // Second phase: story message
@@ -2141,11 +2827,127 @@
             const bonusRemaining = Math.max(0, Math.ceil((bonusStartTime + 15000 - Date.now()) / 1000));
             ctx.fillText('¡NIVEL BONUS! Tiempo: ' + bonusRemaining + 's', canvas.width / 2, 15);
         }
+
+        ctx.restore(); // end shake
+
+        // Draw particles (after restore so they're not shaken)
+        drawParticles();
+
+        // Screen flash
+        if (flashActive) {
+            const alpha = (flashTimer / flashMaxTimer) * 0.4;
+            ctx.fillStyle = flashColor.replace(/[\d.]+\)$/, alpha + ')');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            flashTimer--;
+            if (flashTimer <= 0) flashActive = false;
+        }
+
+        // Transition overlay
+        if (transitionState === 'fadeout') {
+            const alpha = 1 - (transitionTimer / 30);
+            ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (transitionState === 'fadein') {
+            const alpha = transitionTimer / 30;
+            ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Countdown overlay
+        if (gameState === 'countdown') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            if (countdownTimer > 180) {
+                ctx.fillStyle = currentTheme ? currentTheme.wallInner : '#33f';
+                ctx.font = 'bold 28px "Courier New"';
+                ctx.fillText('NIVEL ' + level, canvas.width/2, canvas.height/2 - 30);
+                ctx.fillStyle = '#fff';
+                ctx.font = '20px "Courier New"';
+                ctx.fillText(currentTheme ? currentTheme.name : '', canvas.width/2, canvas.height/2 + 10);
+            } else {
+                const num = Math.ceil(countdownTimer / 60);
+                const scale = 1 + (countdownTimer % 60) / 60 * 0.5;
+                ctx.save();
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.scale(scale, scale);
+                ctx.fillStyle = num > 0 ? '#ff0' : '#0f0';
+                ctx.font = 'bold 72px "Courier New"';
+                ctx.fillText(num > 0 ? num.toString() : 'GO!', 0, 25);
+                ctx.restore();
+            }
+        }
+
+        // Pause overlay
+        if (gameState === 'paused') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0ff';
+            ctx.font = 'bold 36px "Courier New"';
+            ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+            ctx.fillStyle = '#888';
+            ctx.font = '14px "Courier New"';
+            ctx.fillText('Presiona ESC o toca pausa', canvas.width/2, canvas.height/2 + 30);
+        }
+
+        drawAchievementPopup(ctx);
         document.getElementById('message').textContent = messageText;
     }
 
     function update() {
         animFrame++;
+        updateAchievementPopup();
+        updateParticles();
+
+        // Countdown state
+        if (gameState === 'countdown') {
+            countdownTimer--;
+            if (countdownTimer === 180) playCountdownBeep();
+            if (countdownTimer === 120) playCountdownBeep();
+            if (countdownTimer === 60) playCountdownBeep();
+            if (countdownTimer === 0) {
+                playCountdownGo();
+                gameState = 'playing';
+                startMusic();
+            }
+            draw();
+            requestAnimationFrame(update);
+            return;
+        }
+
+        // Transition state
+        if (transitionState !== 'none') {
+            transitionTimer--;
+            if (transitionTimer <= 0) {
+                if (transitionState === 'fadeout' && transitionCallback) {
+                    transitionCallback();
+                    transitionState = 'fadein';
+                    transitionTimer = 30;
+                    transitionCallback = null;
+                } else {
+                    transitionState = 'none';
+                }
+            }
+            draw();
+            requestAnimationFrame(update);
+            return;
+        }
+
+        // Paused state
+        if (gameState === 'paused') {
+            draw();
+            requestAnimationFrame(update);
+            return;
+        }
+
+        // Endless choice state
+        if (gameState === 'endlessChoice') {
+            draw();
+            requestAnimationFrame(update);
+            return;
+        }
+
         if (gameState === 'playing') {
             scheduleBeat();
             updateMusicState();
@@ -2226,6 +3028,10 @@
                 updateHUD();
                 if (lives <= 0) {
                     gameState = 'gameover';
+                    updateStat('bestScore', score, 'max');
+                    updateStat('bestLevel', level, 'max');
+                    clearSavedGame();
+                    checkAchievements();
                     playGameOver();
                     if (currentPlayerName && score > 0) {
                         saveScoreToStorage(currentPlayerName, score, level).then(() => {
@@ -2251,19 +3057,53 @@
         if (gameState === 'win') {
             winTimer--;
             if (winTimer <= 0) {
-                if (level >= 20) {
-                    // Victoria total
-                    gameState = 'gameover';
-                    messageText = '¡COMPLETASTE LOS 20 NIVELES! ¡ERES UNA LEYENDA!';
+                if (level >= 20 && !endlessMode) {
+                    // Level 20 completion stats
+                    const _lvlScore20 = score - levelStartScore;
+                    const _stars20 = calculateStars(level, _lvlScore20);
+                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars20) {
+                        persistentData.stats.levelsStarRating[level] = _stars20;
+                    }
+                    updateStat('levelCompletions', 1);
+                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
+                    updateStat('bestScore', score, 'max');
+                    updateStat('bestLevel', 20, 'max');
+                    clearSavedGame();
+                    checkAchievements();
+                    // Show endless choice
+                    gameState = 'endlessChoice';
                     stopMusic();
-                    saveScoreToStorage(currentPlayerName, score, level).then(() => {
-                        setTimeout(() => {
-                            renderLeaderboard();
-                            lbOverlay.classList.add('visible');
-                        }, 2000);
-                    });
-                    document.getElementById('goButtons').classList.add('visible');
+                    saveScoreToStorage(currentPlayerName, score, level).catch(function(){});
+                } else if (endlessMode) {
+                    // Continue endless mode
+                    updateStat('levelCompletions', 1);
+                    updateStat('bestScore', score, 'max');
+                    updateStat('bestLevel', level, 'max');
+                    checkAchievements();
+                    currentLevelDeaths = 0;
+                    levelStartScore = score;
+                    playWhoosh();
+                    transitionState = 'fadeout';
+                    transitionTimer = 30;
+                    transitionCallback = function() {
+                        advanceEndlessLevel();
+                    };
+                    ghostMessages = [];
+                    playerTrail = [];
                 } else if (level === 5 || level === 10 || level === 15) {
+                    // Level completion stats
+                    const _lvlScore1 = score - levelStartScore;
+                    const _stars1 = calculateStars(level, _lvlScore1);
+                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars1) {
+                        persistentData.stats.levelsStarRating[level] = _stars1;
+                    }
+                    updateStat('levelCompletions', 1);
+                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
+                    updateStat('bestLevel', level, 'max');
+                    saveGameProgress();
+                    checkAchievements();
+                    currentLevelDeaths = 0;
+                    levelStartScore = score;
                     // Bonus fruit level
                     gameState = 'bonus';
                     bonusStartTime = Date.now();
@@ -2279,16 +3119,33 @@
                     resetPlayer();
                     updateHUD();
                 } else {
-                    level++;
-                    applyTheme();
-                    resetMap();
-                    resetPositions();
-                    updateHUD();
-                    gameState = 'playing';
-                    messageText = `¡Nivel ${level}!`;
+                    // Level completion stats
+                    const _lvlScore2 = score - levelStartScore;
+                    const _stars2 = calculateStars(level, _lvlScore2);
+                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars2) {
+                        persistentData.stats.levelsStarRating[level] = _stars2;
+                    }
+                    updateStat('levelCompletions', 1);
+                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
+                    updateStat('bestLevel', level, 'max');
+                    saveGameProgress();
+                    checkAchievements();
+                    currentLevelDeaths = 0;
+                    levelStartScore = score;
+                    playWhoosh();
+                    transitionState = 'fadeout';
+                    transitionTimer = 30;
+                    transitionCallback = function() {
+                        level++;
+                        applyTheme();
+                        resetMap();
+                        resetPositions();
+                        gameState = 'countdown';
+                        countdownTimer = 210;
+                        updateHUD();
+                    };
                     ghostMessages = [];
                     playerTrail = [];
-                    startMusic();
                 }
             }
         }
@@ -2304,6 +3161,7 @@
             // Check fruit pickup
             if (fruit && player.x === fruit.x && player.y === fruit.y) {
                 score += FRUIT_POINTS;
+                updateStat('totalFruitsEaten', 1);
                 fruitMsg = '¡' + fruit.type.name + '! +' + FRUIT_POINTS;
                 fruitMsgTimer = 60;
                 playFruitEat();
@@ -2342,8 +3200,8 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         initGame();
-        gameState = 'playing';
-        startMusic();
+        gameState = 'countdown';
+        countdownTimer = 210;
     }
     // Change player function
     function doChangePlayer() {
@@ -2356,9 +3214,102 @@
         document.getElementById('nameInput').focus();
     }
 
+    // ===== SHARE SCORE =====
+    function generateShareImage() {
+        var c = document.createElement('canvas');
+        c.width = 600; c.height = 315;
+        var s = c.getContext('2d');
+        // Background gradient
+        var grad = s.createLinearGradient(0, 0, 600, 315);
+        grad.addColorStop(0, '#111');
+        grad.addColorStop(1, currentTheme ? currentTheme.wallOuter : '#226');
+        s.fillStyle = grad;
+        s.fillRect(0, 0, 600, 315);
+        // Border
+        s.strokeStyle = '#0ff';
+        s.lineWidth = 3;
+        s.strokeRect(5, 5, 590, 305);
+        // Inner glow line
+        s.strokeStyle = 'rgba(0,255,255,0.2)';
+        s.lineWidth = 1;
+        s.strokeRect(12, 12, 576, 291);
+        // Title
+        s.textAlign = 'center';
+        s.fillStyle = '#0ff';
+        s.font = 'bold 48px "Courier New", monospace';
+        s.shadowColor = '#0ff';
+        s.shadowBlur = 20;
+        s.fillText('EDH-PAC', 300, 60);
+        s.shadowBlur = 0;
+        // Player name
+        s.fillStyle = '#0f0';
+        s.font = 'bold 20px "Courier New", monospace';
+        s.fillText(currentPlayerName || 'Jugador', 300, 100);
+        // Score
+        s.fillStyle = '#ff0';
+        s.font = 'bold 40px "Courier New", monospace';
+        s.fillText(score.toLocaleString() + ' PTS', 300, 160);
+        // Level and theme
+        s.fillStyle = '#fff';
+        s.font = '22px "Courier New", monospace';
+        var themeText = 'Nivel ' + level;
+        if (currentTheme) themeText += ' — ' + currentTheme.name;
+        s.fillText(themeText, 300, 200);
+        // Stars if available
+        if (typeof persistentData !== 'undefined' && persistentData && persistentData.stats) {
+            var totalStars = 0;
+            var sr = persistentData.stats.levelsStarRating || {};
+            for (var k in sr) totalStars += sr[k];
+            if (totalStars > 0) {
+                s.fillStyle = '#ffd700';
+                s.font = '18px "Courier New", monospace';
+                s.fillText(totalStars + ' estrellas totales', 300, 235);
+            }
+        }
+        // Footer
+        s.fillStyle = '#555';
+        s.font = '14px "Courier New", monospace';
+        s.fillText('Juega en: eduardohasbunsv-tech.github.io/pacedhfire', 300, 280);
+        s.fillStyle = '#333';
+        s.font = '11px "Courier New", monospace';
+        s.fillText('Hecho por EDHFIRE', 300, 300);
+        return c;
+    }
+
+    async function shareScore() {
+        var shareCanvas = generateShareImage();
+        try {
+            var blob = await new Promise(function(r) { shareCanvas.toBlob(r, 'image/png'); });
+            if (navigator.share && navigator.canShare) {
+                var file = new File([blob], 'edhpac-score.png', { type: 'image/png' });
+                var shareData = {
+                    title: 'EDH-PAC - Mi Puntaje',
+                    text: 'Logré ' + score.toLocaleString() + ' puntos en nivel ' + level + ' de EDH-PAC!',
+                    files: [file]
+                };
+                if (navigator.canShare(shareData)) {
+                    await navigator.share(shareData);
+                    return;
+                }
+            }
+            // Fallback: download
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'edhpac-puntaje.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch(e) {
+            // User cancelled or error
+        }
+    }
+
     // Touch/click buttons for game over
     document.getElementById('btnReplay').addEventListener('click', doReplay);
     document.getElementById('btnChange').addEventListener('click', doChangePlayer);
+    document.getElementById('btnShare').addEventListener('click', shareScore);
 
     // Keyboard shortcuts (Space & Escape) still work on desktop
     document.addEventListener('keydown', e => {
@@ -2411,8 +3362,8 @@
         renderLeaderboard();
         initAudio();
         initGame();
-        gameState = 'playing';
-        startMusic();
+        gameState = 'countdown';
+        countdownTimer = 210;
         canvas.focus();
     });
 
@@ -2423,6 +3374,43 @@
             document.getElementById('startBtn').click();
         }
     });
+
+    // Stats button
+    document.getElementById('statsBtn').addEventListener('click', function() {
+        renderStatsScreen();
+        document.getElementById('statsOverlay').classList.add('visible');
+    });
+    document.getElementById('statsCloseBtn').addEventListener('click', function() {
+        document.getElementById('statsOverlay').classList.remove('visible');
+    });
+
+    // Continue button
+    document.getElementById('continueBtn').addEventListener('click', function() {
+        const nameVal = document.getElementById('nameInput').value.trim();
+        if (!nameVal) return;
+        currentPlayerName = nameVal;
+        if (loadGameProgress()) {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('playerTag').textContent = 'Jugador: ' + currentPlayerName;
+            initAudio();
+            gameState = 'playing';
+            startMusic();
+        }
+    });
+
+    // Name input -- show/hide continue button
+    document.getElementById('nameInput').addEventListener('input', function() {
+        const btn = document.getElementById('continueBtn');
+        if (hasSavedGame(this.value.trim())) {
+            btn.style.display = 'block';
+            btn.textContent = 'CONTINUAR (Nivel ' + persistentData.savedGame.level + ')';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+
+    // Load persistent data on startup
+    loadPersistentData();
 
     // Init
     initGame();
