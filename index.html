@@ -492,6 +492,7 @@
             transition: width 0.3s;
             border-radius: 2px;
         }
+        .shop-item { cursor: pointer; }
         .loading-text {
             color: #555;
             font-size: 14px;
@@ -510,7 +511,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v2.0</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.0</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -524,6 +525,15 @@
             <label>Ingresa tu nombre de jugador:</label>
             <input type="text" id="nameInput" maxlength="15" placeholder="Tu nombre..." autocomplete="off">
             <div class="name-error" id="nameError"></div>
+        </div>
+        <div id="skinSelector" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+            <button id="skinPrev" style="background:transparent;border:2px solid #0ff;color:#0ff;font-size:18px;cursor:pointer;padding:4px 10px;font-family:'Courier New',monospace;">&lt;</button>
+            <div style="text-align:center;min-width:140px;">
+                <canvas id="skinPreview" width="40" height="40" style="border:1px solid #333;background:#000;display:block;margin:0 auto;"></canvas>
+                <div id="skinName" style="color:#0ff;font-size:12px;margin-top:4px;">Clasico</div>
+                <div id="skinDesc" style="color:#888;font-size:10px;">El original</div>
+            </div>
+            <button id="skinNext" style="background:transparent;border:2px solid #0ff;color:#0ff;font-size:18px;cursor:pointer;padding:4px 10px;font-family:'Courier New',monospace;">&gt;</button>
         </div>
         <button class="start-btn" id="startBtn">JUGAR</button>
         <button class="start-btn" id="continueBtn" style="display:none;background:#0f0;margin-top:8px;font-size:16px;">CONTINUAR</button>
@@ -560,7 +570,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v2.0</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.0</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -728,7 +738,7 @@
     let currentGhostStreak = 0;
     let levelStartScore = 0;
     function getDefaultPersistentData() {
-        return { version: 1, savedGame: null, stats: { gamesPlayed: 0, totalGhostsEaten: 0, totalDotsEaten: 0, totalFruitsEaten: 0, totalDeaths: 0, bestScore: 0, bestLevel: 0, bestStreak: 0, perfectLevels: 0, totalPowerModes: 0, levelCompletions: 0, levelsStarRating: {} }, achievements: [] };
+        return { version: 2, savedGame: null, selectedSkin: 'default', stats: { gamesPlayed: 0, totalGhostsEaten: 0, totalDotsEaten: 0, totalFruitsEaten: 0, totalDeaths: 0, bestScore: 0, bestLevel: 0, bestStreak: 0, perfectLevels: 0, totalPowerModes: 0, levelCompletions: 0, levelsStarRating: {}, bossesDefeated: 0 }, achievements: [] };
     }
     function loadPersistentData() {
         try {
@@ -738,6 +748,10 @@
                 const defaults = getDefaultPersistentData();
                 for (const key in defaults.stats) { if (persistentData.stats[key] === undefined) persistentData.stats[key] = defaults.stats[key]; }
                 if (!persistentData.achievements) persistentData.achievements = [];
+                // v3.0 migration
+                if (persistentData.selectedSkin === undefined) persistentData.selectedSkin = 'default';
+                if (persistentData.stats.bossesDefeated === undefined) persistentData.stats.bossesDefeated = 0;
+                selectedSkin = persistentData.selectedSkin || 'default';
             } else { persistentData = getDefaultPersistentData(); }
         } catch(e) { persistentData = getDefaultPersistentData(); }
     }
@@ -809,6 +823,8 @@
         { id: 'dots_5000', name: 'Aspiradora', desc: 'Come 5000 orbes', icon: '\uD83C\uDF00', check: s => s.totalDotsEaten >= 5000 },
         { id: 'perfect_10', name: 'Intocable', desc: 'Completa 10 niveles sin morir', icon: '\uD83D\uDD31', check: s => s.perfectLevels >= 10 },
         { id: 'games_50', name: 'Veterano', desc: 'Juega 50 partidas', icon: '\uD83C\uDFD6', check: s => s.gamesPlayed >= 50 },
+        { id: 'boss_1', name: 'Caza-Jefes', desc: 'Derrota 1 jefe', icon: '\uD83D\uDDE1', check: s => s.bossesDefeated >= 1 },
+        { id: 'boss_all', name: 'Domador', desc: 'Derrota 4 jefes', icon: '\uD83C\uDFC5', check: s => s.bossesDefeated >= 4 },
     ];
     let achievementPopupQueue = [];
     let achievementPopupTimer = 0;
@@ -859,6 +875,7 @@
             ['Niveles Perfectos', s.perfectLevels || 0],
             ['Mejor Racha', s.bestStreak || 0],
             ['Power Modes', s.totalPowerModes || 0],
+            ['Jefes Derrotados', s.bossesDefeated || 0],
         ].map(function(pair) { return '<div class="stat-item"><div class="stat-value">' + pair[1] + '</div><div class="stat-label">' + pair[0] + '</div></div>'; }).join('');
         const ag = document.getElementById('achievementsGrid');
         ag.innerHTML = ACHIEVEMENTS.map(function(a) {
@@ -900,6 +917,89 @@
     const MSG_INTERVAL = 300;    // ~5 seg a 60fps
     const PACMAN_MSG_COOLDOWN = 180; // ~3 seg entre mensajes pacman
     const PACMAN_DANGER_DIST = 5;    // distancia en tiles para preocuparse
+
+    // ---- COMBO CHAIN SYSTEM ----
+    const COMBO_WINDOW = 15;
+    const COMBO_TIER_1 = 10;
+    const COMBO_TIER_2 = 25;
+    const COMBO_TIER_3 = 50;
+    const COMBO_SOUND_MILESTONES = [10, 25, 50, 75, 100];
+
+    // ---- BOSS LEVELS ----
+    const BOSS_LEVELS = [5, 10, 15, 20];
+    const BOSS_DEFS = [
+        { id: 'guardian', name: 'El Guardian', color: '#f44', glowColor: '#f66', hitsToKill: 3, points: 5000, speed: 12, pattern: 'charge' },
+        { id: 'shadow_queen', name: 'La Sombra Reina', color: '#a0f', glowColor: '#c4f', hitsToKill: 3, points: 10000, speed: 10, pattern: 'teleport' },
+        { id: 'devourer', name: 'El Devorador', color: '#0a0', glowColor: '#0f0', hitsToKill: 3, points: 15000, speed: 10, pattern: 'wallphase' },
+        { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 20000, speed: 8, pattern: 'combined' },
+    ];
+
+    const BOSS_ARENA_MAP = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,1,1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    // ---- SHOP ----
+    const SHOP_LEVELS = [3, 6, 9, 12, 15, 18];
+    const SHOP_ITEMS = [
+        { id: 'speed_up', name: 'Velocidad+', desc: 'Mas rapido 1 nivel', cost: 2000, icon: 'V', color: '#ff0' },
+        { id: 'shield_start', name: 'Escudo', desc: 'Empezar con escudo', cost: 3000, icon: 'E', color: '#5ff' },
+        { id: 'magnet_up', name: 'Iman+', desc: 'Iman dura mas', cost: 2500, icon: 'M', color: '#f55' },
+        { id: 'extra_life', name: 'Vida Extra', desc: '+1 vida', cost: 5000, icon: '+', color: '#0f0' },
+    ];
+    let shopSelectedIdx = 0;
+    let shopPurchasedThisRound = [];
+    let shopSpeedBoost = false;
+    let shopMagnetBoost = false;
+
+    // ---- CUTSCENE ----
+    const CUTSCENE_SCRIPTS = [
+        { title: 'El Guardian Cae', lines: ['El Guardian ha sido derrotado!', 'Pero la oscuridad crece...', 'Nuevos peligros acechan.'], ghostColor: '#f44' },
+        { title: 'La Sombra Se Disipa', lines: ['La Sombra Reina fue vencida!', 'Su magia se desvanece...', 'Pero algo mas grande espera.'], ghostColor: '#a0f' },
+        { title: 'El Devorador Destruido', lines: ['El Devorador no es mas!', 'Los muros tiemblan de miedo...', 'Solo queda el Espectro Final.'], ghostColor: '#0a0' },
+    ];
+    let cutsceneTimer = 0;
+    let cutsceneIdx = 0;
+
+    // ---- PLAYER SKINS ----
+    const PLAYER_SKINS = [
+        { id: 'default', name: 'Clasico', color: '#0f0', glow: '#0f0', trail: '#0f0', unlock: null, desc: 'El original' },
+        { id: 'neon', name: 'Neon', color: '#0af', glow: '#0af', trail: '#08f', unlock: { stat: 'bestLevel', val: 10 }, desc: 'Nivel 10' },
+        { id: 'fuego', name: 'Fuego', color: '#f60', glow: '#f40', trail: '#f00', unlock: { stat: 'totalGhostsEaten', val: 100 }, desc: '100 fantasmas' },
+        { id: 'oro', name: 'Oro', color: '#ffd700', glow: '#ffa500', trail: '#ff0', unlock: { stat: 'bestScore', val: 50000 }, desc: '50,000 pts' },
+        { id: 'pixel', name: 'Pixel', color: '#fff', glow: '#aaa', trail: '#ccc', unlock: { stat: 'gamesPlayed', val: 20 }, desc: '20 partidas' },
+    ];
+    let selectedSkin = 'default';
+    let skinPreviewIdx = 0;
 
     // 0=empty, 1=wall, 2=dot, 3=power orb, 4=ghost house door
     const BASE_MAP = [
@@ -1079,6 +1179,31 @@
     let powerupMsg = '';
     let levelGhostsEaten = 0;
 
+    // ---- COMBO CHAIN STATE ----
+    let comboChain = 0;
+    let comboTimer = 0;
+    let comboMultiplier = 1;
+
+    // ---- FRUIT EFFECT STATE ----
+    let doubleDotTimer = 0;
+    let ghostSlowTimer = 0;
+
+    // ---- BOSS STATE ----
+    let bossActive = false;
+    let boss = null;
+    let bossIdx = 0;
+    let bossOrbTimers = [];
+    let bossDefeated = [];
+    let bossDeathTimer = 0;
+    let miniGhosts = [];
+    let bossPowerMode = false;
+    let bossPowerTimer = 0;
+    let bossChargeState = 'idle'; // idle, pause, charging
+    let bossChargeDir = null;
+    let bossChargePause = 0;
+    let bossTeleportTimer = 0;
+    let bossPhaseTimer = 0;
+
     // ---- FURY MODE ----
     let furyMode = false;
     let furyEndTime = 0;
@@ -1107,12 +1232,12 @@
     // ---- GHOST SCORE POPUPS ----
     let ghostScorePopups = []; // { x, y, text, timer, maxTimer, isCombo }
     const FRUIT_TYPES = [
-        { name: 'Cereza', color: '#f33', glow: '#f55', shape: 'cherry' },
-        { name: 'Fresa', color: '#f5a', glow: '#f7c', shape: 'straw' },
-        { name: 'Naranja', color: '#fa5', glow: '#fc7', shape: 'round' },
-        { name: 'Manzana', color: '#5f5', glow: '#7f7', shape: 'round' },
-        { name: 'Uva', color: '#a5f', glow: '#c7f', shape: 'grape' },
-        { name: 'Melón', color: '#5fa', glow: '#7fc', shape: 'round' },
+        { name: 'Cereza', color: '#f33', glow: '#f55', shape: 'cherry', effect: 'speed', effectDuration: 180, effectDesc: '+Velocidad' },
+        { name: 'Fresa', color: '#f5a', glow: '#f7c', shape: 'straw', effect: 'magnet', effectDuration: 180, effectDesc: 'Iman' },
+        { name: 'Naranja', color: '#fa5', glow: '#fc7', shape: 'round', effect: 'double', effectDuration: 300, effectDesc: 'x2 Orbes' },
+        { name: 'Manzana', color: '#5f5', glow: '#7f7', shape: 'round', effect: 'slow_ghosts', effectDuration: 240, effectDesc: 'Lento' },
+        { name: 'Uva', color: '#a5f', glow: '#c7f', shape: 'grape', effect: 'freeze_one', effectDuration: 180, effectDesc: 'Congela' },
+        { name: 'Melon', color: '#5fa', glow: '#7fc', shape: 'round', effect: 'shield', effectDuration: 0, effectDesc: 'Escudo' },
     ];
     const FRUIT_TIMEOUT = 500;
     const FRUIT_POINTS = 400;
@@ -2053,6 +2178,116 @@
         o.start(); o.stop(audioCtx.currentTime + 0.2);
     }
 
+    // ---- COMBO MILESTONE SOUND ----
+    function playComboMilestone(chain) {
+        if (!audioCtx) return;
+        var t = audioCtx.currentTime;
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(400 + chain * 8, t);
+        osc.frequency.exponentialRampToValueAtTime(800 + chain * 12, t + 0.1);
+        g.gain.setValueAtTime(0.12, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(g); g.connect(sfxGain);
+        osc.start(t); osc.stop(t + 0.2);
+    }
+
+    // ---- BOSS DEFEAT SOUND ----
+    function playBossDefeat() {
+        if (!audioCtx) return;
+        var t = audioCtx.currentTime;
+        var notes = [440, 523, 587, 659, 784, 880, 988, 1047];
+        notes.forEach(function(freq, i) {
+            var osc = audioCtx.createOscillator();
+            var g = audioCtx.createGain();
+            osc.type = 'square';
+            var s = t + i * 0.08;
+            osc.frequency.setValueAtTime(freq, s);
+            g.gain.setValueAtTime(0.12, s);
+            g.gain.exponentialRampToValueAtTime(0.001, s + 0.15);
+            osc.connect(g); g.connect(sfxGain);
+            osc.start(s); osc.stop(s + 0.16);
+        });
+    }
+
+    function playBossHit() {
+        if (!audioCtx) return;
+        var t = audioCtx.currentTime;
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(g); g.connect(sfxGain);
+        osc.start(t); osc.stop(t + 0.2);
+    }
+
+    function playShopBuy() {
+        if (!audioCtx) return;
+        var t = audioCtx.currentTime;
+        [700, 900, 1100].forEach(function(freq, i) {
+            var osc = audioCtx.createOscillator();
+            var g = audioCtx.createGain();
+            osc.type = 'triangle';
+            var s = t + i * 0.06;
+            osc.frequency.setValueAtTime(freq, s);
+            g.gain.setValueAtTime(0.1, s);
+            g.gain.exponentialRampToValueAtTime(0.001, s + 0.1);
+            osc.connect(g); g.connect(sfxGain);
+            osc.start(s); osc.stop(s + 0.11);
+        });
+    }
+
+    // ---- SKIN FUNCTIONS ----
+    function isSkinUnlocked(skin) {
+        if (!skin.unlock) return true;
+        if (!persistentData) return false;
+        var val = persistentData.stats[skin.unlock.stat] || 0;
+        return val >= skin.unlock.val;
+    }
+    function getCurrentSkin() {
+        for (var i = 0; i < PLAYER_SKINS.length; i++) {
+            if (PLAYER_SKINS[i].id === selectedSkin && isSkinUnlocked(PLAYER_SKINS[i])) return PLAYER_SKINS[i];
+        }
+        return PLAYER_SKINS[0];
+    }
+    function updateSkinPreview() {
+        var skin = PLAYER_SKINS[skinPreviewIdx];
+        var unlocked = isSkinUnlocked(skin);
+        document.getElementById('skinName').textContent = unlocked ? skin.name : '???';
+        document.getElementById('skinName').style.color = unlocked ? skin.color : '#555';
+        document.getElementById('skinDesc').textContent = unlocked ? skin.desc : 'Bloqueado: ' + skin.desc;
+        var pc = document.getElementById('skinPreview');
+        var pctx = pc.getContext('2d');
+        pctx.clearRect(0, 0, 40, 40);
+        if (unlocked) {
+            pctx.fillStyle = skin.color;
+            if (skin.id === 'pixel') {
+                pctx.fillRect(10, 10, 20, 20);
+                pctx.fillStyle = '#000';
+                pctx.fillRect(20, 14, 4, 4);
+            } else {
+                pctx.beginPath();
+                pctx.arc(20, 20, 10, 0.3, Math.PI * 2 - 0.3);
+                pctx.lineTo(20, 20);
+                pctx.closePath();
+                pctx.fill();
+                pctx.fillStyle = '#000';
+                pctx.beginPath();
+                pctx.arc(23, 16, 2, 0, Math.PI * 2);
+                pctx.fill();
+            }
+        } else {
+            pctx.fillStyle = '#333';
+            pctx.font = 'bold 20px Courier New';
+            pctx.textAlign = 'center';
+            pctx.fillText('?', 20, 26);
+        }
+    }
+
     // ---- FRUIT FUNCTIONS ----
     function spawnFruit() {
         const candidates = [];
@@ -2198,7 +2433,7 @@
     }
 
     // ===== PARTICLE SYSTEM =====
-    const MAX_PARTICLES = 200;
+    const MAX_PARTICLES = 300;
     const particlePool = [];
     let activeParticleCount = 0;
 
@@ -2493,6 +2728,11 @@
         magnetTimer = 0;
         speedTimer = 0;
         freezeTimer = 0;
+        comboChain = 0;
+        comboTimer = 0;
+        comboMultiplier = 1;
+        doubleDotTimer = 0;
+        ghostSlowTimer = 0;
         // Keep shieldActive across deaths - it's a one-time use
     }
 
@@ -2530,6 +2770,32 @@
         powerupMsgTimer = 0;
         powerupMsg = '';
         levelGhostsEaten = 0;
+        // v3.0 resets
+        comboChain = 0;
+        comboTimer = 0;
+        comboMultiplier = 1;
+        doubleDotTimer = 0;
+        ghostSlowTimer = 0;
+        bossActive = false;
+        boss = null;
+        bossIdx = 0;
+        bossOrbTimers = [];
+        bossDefeated = [];
+        bossDeathTimer = 0;
+        miniGhosts = [];
+        bossPowerMode = false;
+        bossPowerTimer = 0;
+        bossChargeState = 'idle';
+        bossChargeDir = null;
+        bossChargePause = 0;
+        bossTeleportTimer = 0;
+        bossPhaseTimer = 0;
+        cutsceneTimer = 0;
+        cutsceneIdx = 0;
+        shopSelectedIdx = 0;
+        shopPurchasedThisRound = [];
+        shopSpeedBoost = false;
+        shopMagnetBoost = false;
         updateHUD();
     }
 
@@ -2587,15 +2853,34 @@
     document.addEventListener('keydown', e => {
         if (isTyping()) return;
         if (e.key === 'Escape') {
-            if (gameState === 'playing') {
+            if (gameState === 'playing' || gameState === 'bossfight') {
                 gameState = 'paused';
                 if (typeof stopMusic === 'function') stopMusic();
                 return;
             } else if (gameState === 'paused') {
-                gameState = 'playing';
+                gameState = bossActive ? 'bossfight' : 'playing';
                 if (typeof startMusic === 'function') startMusic();
                 return;
+            } else if (gameState === 'shop') {
+                shopClose();
+                return;
+            } else if (gameState === 'cutscene') {
+                // Skip cutscene
+                cutsceneTimer = 0;
+                return;
             }
+        }
+        // Shop keyboard controls
+        if (gameState === 'shop') {
+            if (e.key === 'ArrowUp' || e.key === 'w') { shopSelectedIdx = Math.max(0, shopSelectedIdx - 1); e.preventDefault(); }
+            else if (e.key === 'ArrowDown' || e.key === 's') { shopSelectedIdx = Math.min(SHOP_ITEMS.length - 1, shopSelectedIdx + 1); e.preventDefault(); }
+            else if (e.key === 'Enter') { shopBuy(); e.preventDefault(); }
+            return;
+        }
+        // Cutscene skip
+        if (gameState === 'cutscene') {
+            cutsceneTimer = 0;
+            return;
         }
         keys[e.key] = true;
         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) e.preventDefault();
@@ -2621,8 +2906,27 @@
         else player.nextDir = dy > 0 ? 3 : 2;
     });
 
-    // Canvas click handler for endless choice
+    // Canvas click handler for endless choice and shop
     canvas.addEventListener('click', function(e) {
+        // Shop touch support
+        if (gameState === 'shop') {
+            var rect = canvas.getBoundingClientRect();
+            var scaleY = canvas.height / rect.height;
+            var cy = (e.clientY - rect.top) * scaleY;
+            var startY = 100;
+            var itemH = 70;
+            for (var si = 0; si < SHOP_ITEMS.length; si++) {
+                var iy = startY + si * (itemH + 10);
+                if (cy >= iy && cy <= iy + itemH) {
+                    if (shopSelectedIdx === si) { shopBuy(); }
+                    else { shopSelectedIdx = si; }
+                    return;
+                }
+            }
+            return;
+        }
+        // Cutscene skip on tap
+        if (gameState === 'cutscene') { cutsceneTimer = 0; return; }
         if (gameState !== 'endlessChoice') return;
         var rect = canvas.getBoundingClientRect();
         var scaleX = canvas.width / rect.width;
@@ -2670,11 +2974,11 @@
         document.getElementById('pauseBtn').style.display = 'block';
     }
     document.getElementById('pauseBtn').addEventListener('click', function() {
-        if (gameState === 'playing') {
+        if (gameState === 'playing' || gameState === 'bossfight') {
             gameState = 'paused';
             if (typeof stopMusic === 'function') stopMusic();
         } else if (gameState === 'paused') {
-            gameState = 'playing';
+            gameState = bossActive ? 'bossfight' : 'playing';
             if (typeof startMusic === 'function') startMusic();
         }
     });
@@ -2683,7 +2987,7 @@
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
         let rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.63));
-        if (speedTimer > 0) rate = Math.max(2, Math.floor(rate / 2));
+        if (speedTimer > 0 || shopSpeedBoost) rate = Math.max(2, Math.floor(rate / 2));
         if (animFrame % rate !== 0) return;
 
         const nd = DIRS[player.nextDir];
@@ -2710,7 +3014,17 @@
             const tile = map[player.y][player.x];
             if (tile === 2) {
                 map[player.y][player.x] = 0;
-                score += 10;
+                var dotPts = doubleDotTimer > 0 ? 20 : 10;
+                score += dotPts;
+                // Combo chain
+                if (comboTimer <= COMBO_WINDOW) { comboChain++; } else { comboChain = 1; }
+                comboTimer = 0;
+                if (comboChain >= COMBO_TIER_3) comboMultiplier = 3;
+                else if (comboChain >= COMBO_TIER_2) comboMultiplier = 2;
+                else if (comboChain >= COMBO_TIER_1) comboMultiplier = 1.5;
+                else comboMultiplier = 1;
+                if (comboMultiplier > 1) score += Math.floor(dotPts * (comboMultiplier - 1));
+                if (COMBO_SOUND_MILESTONES.indexOf(comboChain) !== -1) playComboMilestone(comboChain);
                 dotsEaten++;
                 updateStat('totalDotsEaten', 1);
                 playChomp();
@@ -2736,8 +3050,9 @@
                         if (mr < 0 || mr >= ROWS || mc < 0 || mc >= COLS) continue;
                         if (map[mr][mc] === 2 && Math.random() < 0.15) {
                             map[mr][mc] = 0;
-                            score += 10;
+                            score += doubleDotTimer > 0 ? 20 : 10;
                             dotsEaten++;
+                            comboTimer = 0;
                             updateStat('totalDotsEaten', 1);
                             spawnParticles(mc * TILE + TILE/2, mr * TILE + TILE/2, 2, '#f55', 0.5, 1.5, 8, 15, 1);
                         }
@@ -2759,9 +3074,23 @@
             if (fruit && player.x === fruit.x && player.y === fruit.y) {
                 score += FRUIT_POINTS;
                 updateStat('totalFruitsEaten', 1);
-                fruitMsg = '\u00a1' + fruit.type.name + '! +' + FRUIT_POINTS + ' puntos';
+                fruitMsg = '\u00a1' + fruit.type.name + '! +' + FRUIT_POINTS + ' ' + (fruit.type.effectDesc || '');
                 fruitMsgTimer = 120;
                 playFruitEat();
+                // Apply fruit effect
+                var fEff = fruit.type.effect;
+                var fDur = fruit.type.effectDuration || 0;
+                if (fEff === 'speed') speedTimer = Math.max(speedTimer, fDur);
+                else if (fEff === 'magnet') magnetTimer = Math.max(magnetTimer, fDur);
+                else if (fEff === 'double') doubleDotTimer = Math.max(doubleDotTimer, fDur);
+                else if (fEff === 'slow_ghosts') ghostSlowTimer = Math.max(ghostSlowTimer, fDur);
+                else if (fEff === 'freeze_one') {
+                    // Freeze nearest ghost
+                    var nearestG = null, nearestD = 999;
+                    ghosts.forEach(function(g) { if (!g.eaten && !g.inHouse) { var d = Math.abs(g.x - player.x) + Math.abs(g.y - player.y); if (d < nearestD) { nearestD = d; nearestG = g; } } });
+                    if (nearestG) { nearestG.frozen = true; freezeTimer = Math.max(freezeTimer, fDur); playFreezeActivation(); }
+                }
+                else if (fEff === 'shield') shieldActive = true;
                 fruit = null;
                 checkLifeMilestone();
             }
@@ -2920,6 +3249,8 @@
         // Apply per-ghost speed multiplier
         if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
+        // Ghost slow from fruit effect
+        if (ghostSlowTimer > 0 && !ghost.eaten && !ghost.scared) rate = Math.max(4, rate * 2);
         if (animFrame % rate !== 0) return;
 
         const target = getGhostTarget(ghost, idx);
@@ -3043,9 +3374,10 @@
                     currentLevelDeaths++;
                     updateStat('totalDeaths', 1);
                     gameState = 'dying';
-                    deathTimer = 80;
+                    deathTimer = 90;
                     playDeath();
-                    spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, currentTheme ? currentTheme.playerColor : '#0f0', 1, 4, 15, 40, 2);
+                    triggerFlash('rgba(255,0,0,0.5)', 12);
+                    spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, getCurrentSkin().color, 1, 4, 15, 40, 2);
                     triggerShake(6, 15);
                 }
             }
@@ -3092,6 +3424,9 @@
     }
 
     function drawPlayer() {
+        var skin = getCurrentSkin();
+        var pColor = skin.color;
+        var pGlow = skin.glow;
         const cx = player.px + TILE / 2;
         const cy = player.py + TILE / 2;
         const r = TILE / 2 - 1;
@@ -3105,25 +3440,50 @@
         else if (player.dir === 1) angle = 0;
         else if (player.dir === 2) angle = -Math.PI / 2;
         else if (player.dir === 3) angle = Math.PI / 2;
-        ctx.fillStyle = currentTheme ? currentTheme.playerColor : '#0f0';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, angle + mouth, angle + Math.PI * 2 - mouth);
-        ctx.lineTo(cx, cy);
-        ctx.closePath();
-        ctx.fill();
-        const eyeAngle = angle - 0.5;
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(cx + Math.cos(eyeAngle) * r * 0.35, cy + Math.sin(eyeAngle) * r * 0.35, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowColor = currentTheme ? currentTheme.playerGlow : '#0f0';
+        if (skin.id === 'pixel') {
+            // Pixel skin: square shape
+            ctx.fillStyle = pColor;
+            var sz = TILE - 4;
+            ctx.fillRect(cx - sz / 2, cy - sz / 2, sz, sz);
+            // Mouth cut
+            ctx.fillStyle = '#000';
+            if (player.moving) {
+                var mw = sz * mouth * 0.5;
+                if (player.dir === 1) ctx.fillRect(cx + sz / 2 - mw, cy - 2, mw, 4);
+                else if (player.dir === 0) ctx.fillRect(cx - sz / 2, cy - 2, mw, 4);
+                else if (player.dir === 2) ctx.fillRect(cx - 2, cy - sz / 2, 4, mw);
+                else ctx.fillRect(cx - 2, cy + sz / 2 - mw, 4, mw);
+            }
+            // Eye
+            ctx.fillStyle = '#000';
+            ctx.fillRect(cx + 2, cy - 3, 3, 3);
+        } else {
+            ctx.fillStyle = pColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, angle + mouth, angle + Math.PI * 2 - mouth);
+            ctx.lineTo(cx, cy);
+            ctx.closePath();
+            ctx.fill();
+            const eyeAngle = angle - 0.5;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(eyeAngle) * r * 0.35, cy + Math.sin(eyeAngle) * r * 0.35, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.shadowColor = pGlow;
         ctx.shadowBlur = 8;
-        ctx.strokeStyle = currentTheme ? currentTheme.playerGlow : '#0f0';
+        ctx.strokeStyle = pGlow;
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
+        // Skin-specific particle effects
+        if (player.moving && animFrame % 6 === 0) {
+            if (skin.id === 'neon') spawnParticles(cx, cy, 1, '#08f', 0.3, 1, 8, 15, 1);
+            else if (skin.id === 'fuego') spawnParticles(cx, cy, 1, '#f40', 0.3, 1.5, 6, 12, 2);
+            else if (skin.id === 'oro') spawnParticles(cx, cy, 1, '#ffd700', 0.2, 0.8, 10, 18, 1);
+        }
     }
 
     function drawGhost(ghost, gIdx) {
@@ -3206,7 +3566,7 @@
         }
         drawFruit();
         drawPowerup();
-        if (gameState !== 'bonus') {
+        if (gameState !== 'bonus' && gameState !== 'bossfight' && gameState !== 'bossintro' && gameState !== 'bossdeath') {
             ghosts.forEach((g, gi) => drawGhost(g, gi));
         }
         // Dibujar mensajes de amenaza de fantasmas
@@ -3224,25 +3584,46 @@
         });
         // Draw speed trail
         if (level >= 5) {
+            var _trailSkin = getCurrentSkin();
             playerTrail.forEach((t, i) => {
                 ctx.globalAlpha = 0.1 + (0.1 * (playerTrail.length - i));
-                ctx.fillStyle = currentTheme ? currentTheme.trailColor : '#0f0';
+                ctx.fillStyle = _trailSkin.trail;
                 ctx.beginPath();
                 ctx.arc(t.x + TILE/2, t.y + TILE/2, TILE/3, 0, Math.PI*2);
                 ctx.fill();
             });
             ctx.globalAlpha = 1;
         }
-        if (gameState !== 'dying' || deathTimer > 40) {
+        if (gameState !== 'dying' || deathTimer > 45) {
             drawPlayer();
+            // Combo counter near player
+            if (comboChain >= COMBO_TIER_1 && gameState === 'playing') {
+                ctx.save();
+                ctx.font = 'bold 10px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = comboChain >= COMBO_TIER_3 ? '#f55' : comboChain >= COMBO_TIER_2 ? '#ff0' : '#0ff';
+                ctx.fillText('x' + comboChain, player.px + TILE / 2, player.py - 4);
+                ctx.restore();
+            }
         } else {
+            var _dSkin = getCurrentSkin();
             const cx = player.px + TILE / 2;
             const cy = player.py + TILE / 2;
             const r = TILE / 2 - 1;
-            ctx.fillStyle = '#0f0';
+            var deathPhase = deathTimer / 45;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate((1 - deathPhase) * Math.PI * 4); // spin
+            ctx.scale(deathPhase, deathPhase); // shrink
+            ctx.fillStyle = _dSkin.color;
             ctx.beginPath();
-            ctx.arc(cx, cy, r * (deathTimer / 40), 0, Math.PI * 2);
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+            // Explode particles in last frames
+            if (deathTimer === 15) {
+                spawnParticles(cx, cy, 25, _dSkin.color, 2, 6, 15, 30, 3);
+            }
         }
         if (powerMode) {
             ctx.fillStyle = `rgba(0, 255, 255, ${Math.sin(animFrame * 0.1) * 0.3 + 0.3})`;
@@ -3278,6 +3659,16 @@
             if (freezeTimer > 0) {
                 ctx.fillStyle = '#55f';
                 ctx.fillText('FREEZE ' + freezeTimer, 5, hudY);
+                hudY += 11;
+            }
+            if (doubleDotTimer > 0) {
+                ctx.fillStyle = '#fa5';
+                ctx.fillText('x2 ORBES ' + doubleDotTimer, 5, hudY);
+                hudY += 11;
+            }
+            if (ghostSlowTimer > 0) {
+                ctx.fillStyle = '#5f5';
+                ctx.fillText('LENTO ' + ghostSlowTimer, 5, hudY);
                 hudY += 11;
             }
             if (powerupMsgTimer > 0) {
@@ -3339,12 +3730,18 @@
         if (gameState === 'win' && winTimer > 0) {
             ctx.fillStyle = `rgba(0,255,0,${Math.sin(animFrame * 0.15) * 0.2 + 0.15})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // Firework particles throughout win screen
-            if (animFrame % 8 === 0) {
+            // Firework particles throughout win screen (enhanced - every 5 frames)
+            if (animFrame % 5 === 0) {
                 const fwx = Math.random() * canvas.width;
                 const fwy = Math.random() * canvas.height * 0.6;
                 const fwColors = ['#f55','#ff0','#5f5','#5ff','#f5f','#fa5'];
-                spawnParticles(fwx, fwy, 6, fwColors[Math.floor(Math.random() * fwColors.length)], 1, 3, 15, 30, 2);
+                spawnParticles(fwx, fwy, 8, fwColors[Math.floor(Math.random() * fwColors.length)], 1, 4, 15, 35, 2);
+            }
+            // Confetti from top
+            if (animFrame % 3 === 0) {
+                var cfx = Math.random() * canvas.width;
+                var cfColors = ['#f55','#ff0','#5f5','#5ff','#f5f','#fa5','#fff'];
+                spawnParticles(cfx, -5, 1, cfColors[Math.floor(Math.random() * cfColors.length)], 0.2, 1, 40, 80, 2);
             }
             ctx.fillStyle = 'rgba(0,0,0,0.75)';
             ctx.fillRect(0, canvas.height/2 - 90, canvas.width, 180);
@@ -3418,15 +3815,15 @@
             if (flashTimer <= 0) flashActive = false;
         }
 
-        // Transition overlay
+        // Transition overlay (horizontal wipe curtain)
         if (transitionState === 'fadeout') {
-            const alpha = 1 - (transitionTimer / 30);
-            ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            var wipeProgress = 1 - (transitionTimer / 30);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width * wipeProgress, canvas.height);
         } else if (transitionState === 'fadein') {
-            const alpha = transitionTimer / 30;
-            ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            var wipeOut = transitionTimer / 30;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(canvas.width * (1 - wipeOut), 0, canvas.width * wipeOut, canvas.height);
         }
 
         // Countdown overlay
@@ -3435,12 +3832,17 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.textAlign = 'center';
             if (countdownTimer > 180) {
+                // Slide-in animation for level number
+                var slidePhase = (210 - countdownTimer) / 30; // 0 to 1
+                var slideX = slidePhase < 1 ? canvas.width/2 + (1 - slidePhase) * canvas.width * 0.5 : canvas.width/2;
                 ctx.fillStyle = currentTheme ? currentTheme.wallInner : '#33f';
-                ctx.font = 'bold 28px "Courier New"';
-                ctx.fillText('NIVEL ' + level, canvas.width/2, canvas.height/2 - 30);
+                ctx.font = 'bold 36px "Courier New"';
+                ctx.fillText('NIVEL ' + level, slideX, canvas.height/2 - 30);
                 ctx.fillStyle = '#fff';
                 ctx.font = '20px "Courier New"';
+                ctx.globalAlpha = Math.min(1, slidePhase * 2);
                 ctx.fillText(currentTheme ? currentTheme.name : '', canvas.width/2, canvas.height/2 + 10);
+                ctx.globalAlpha = 1;
             } else {
                 const num = Math.ceil(countdownTimer / 60);
                 const scale = 1 + (countdownTimer % 60) / 60 * 0.5;
@@ -3467,8 +3869,519 @@
             ctx.fillText('Presiona ESC o toca pausa', canvas.width/2, canvas.height/2 + 30);
         }
 
+        // Shop overlay
+        if (gameState === 'shop') {
+            drawShop();
+        }
+        // Boss fight overlay
+        if (gameState === 'bossfight' || gameState === 'bossintro') {
+            drawBossOverlay();
+        }
+        // Boss death overlay
+        if (gameState === 'bossdeath') {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 24px Courier New';
+            ctx.fillText('JEFE DERROTADO!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px Courier New';
+            if (boss) ctx.fillText('+' + BOSS_DEFS[bossIdx].points + ' puntos', canvas.width / 2, canvas.height / 2 + 10);
+        }
+        // Cutscene overlay
+        if (gameState === 'cutscene') {
+            drawCutscene();
+        }
         drawAchievementPopup(ctx);
         document.getElementById('message').textContent = messageText;
+    }
+
+    // ===== SHOP FUNCTIONS =====
+    function drawShop() {
+        ctx.fillStyle = 'rgba(0,0,0,0.92)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 24px Courier New';
+        ctx.fillText('TIENDA', canvas.width / 2, 50);
+        ctx.fillStyle = '#0ff';
+        ctx.font = '14px Courier New';
+        ctx.fillText('Puntaje: ' + score.toLocaleString(), canvas.width / 2, 75);
+        var itemH = 70, startY = 100;
+        for (var si = 0; si < SHOP_ITEMS.length; si++) {
+            var item = SHOP_ITEMS[si];
+            var iy = startY + si * (itemH + 10);
+            var bought = shopPurchasedThisRound.indexOf(item.id) !== -1;
+            var canAfford = score >= item.cost && !bought;
+            var selected = si === shopSelectedIdx;
+            // Background
+            ctx.fillStyle = selected ? 'rgba(0,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+            ctx.fillRect(50, iy, canvas.width - 100, itemH);
+            if (selected) { ctx.strokeStyle = '#0ff'; ctx.lineWidth = 2; ctx.strokeRect(50, iy, canvas.width - 100, itemH); }
+            // Icon
+            ctx.fillStyle = item.color;
+            ctx.font = 'bold 28px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(item.icon, 90, iy + 42);
+            // Name & desc
+            ctx.textAlign = 'left';
+            ctx.fillStyle = bought ? '#555' : '#fff';
+            ctx.font = 'bold 16px Courier New';
+            ctx.fillText(item.name, 120, iy + 28);
+            ctx.fillStyle = bought ? '#444' : '#aaa';
+            ctx.font = '12px Courier New';
+            ctx.fillText(item.desc, 120, iy + 48);
+            // Cost
+            ctx.textAlign = 'right';
+            ctx.fillStyle = bought ? '#555' : (canAfford ? '#0f0' : '#f55');
+            ctx.font = 'bold 14px Courier New';
+            ctx.fillText(bought ? 'COMPRADO' : item.cost.toLocaleString() + ' pts', canvas.width - 60, iy + 38);
+        }
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#888';
+        ctx.font = '12px Courier New';
+        ctx.fillText('Flechas: seleccionar | ENTER: comprar | ESC: continuar', canvas.width / 2, canvas.height - 30);
+        ctx.fillText('Toca un item para seleccionar, toca de nuevo para comprar', canvas.width / 2, canvas.height - 15);
+    }
+
+    function shopBuy() {
+        var item = SHOP_ITEMS[shopSelectedIdx];
+        if (shopPurchasedThisRound.indexOf(item.id) !== -1) return;
+        if (score < item.cost) return;
+        score -= item.cost;
+        shopPurchasedThisRound.push(item.id);
+        if (item.id === 'speed_up') shopSpeedBoost = true;
+        else if (item.id === 'shield_start') shieldActive = true;
+        else if (item.id === 'magnet_up') shopMagnetBoost = true;
+        else if (item.id === 'extra_life') { lives++; }
+        playShopBuy();
+        updateHUD();
+    }
+
+    function shopClose() {
+        // Transition to next level
+        level++;
+        applyTheme();
+        resetMap();
+        resetPositions();
+        if (shopSpeedBoost) speedTimer = 300;
+        if (shopMagnetBoost) magnetTimer = 300;
+        gameState = 'countdown';
+        countdownTimer = 210;
+        currentLevelDeaths = 0;
+        levelGhostsEaten = 0;
+        levelStartScore = score;
+        updateHUD();
+    }
+
+    // ===== BOSS FIGHT FUNCTIONS =====
+    function initBossFight(idx) {
+        bossIdx = idx;
+        bossActive = true;
+        var def = BOSS_DEFS[idx];
+        // Load arena
+        map = BOSS_ARENA_MAP.map(function(row) { return row.slice(); });
+        totalDots = 0; dotsEaten = 0;
+        for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) if (map[r][c] === 2 || map[r][c] === 3) totalDots++;
+        // Reset power orb positions in arena (4 corners-ish)
+        bossOrbTimers = [0, 0, 0, 0];
+        // Player start
+        player.x = 14; player.y = 23; player.px = 14 * TILE; player.py = 23 * TILE;
+        player.dir = 2; player.nextDir = 2; player.moving = false;
+        // Create boss
+        boss = { x: 14, y: 8, px: 14 * TILE, py: 8 * TILE, hp: def.hitsToKill, maxHp: def.hitsToKill, scared: false, dir: 3 };
+        // No regular ghosts
+        ghosts = [];
+        miniGhosts = [];
+        bossPowerMode = false;
+        bossPowerTimer = 0;
+        bossChargeState = 'idle';
+        bossChargePause = 60;
+        bossTeleportTimer = 120;
+        bossPhaseTimer = 0;
+        bossDeathTimer = 0;
+        powerMode = false;
+        powerTimer = 0;
+        magnetTimer = 0; speedTimer = 0; freezeTimer = 0;
+        shieldActive = false;
+        fruit = null;
+        activePowerup = null;
+        ghostMessages = [];
+        playerTrail = [];
+        gameState = 'bossintro';
+        countdownTimer = 180;
+        fruitMsg = 'JEFE: ' + def.name;
+        fruitMsgTimer = 180;
+        updateHUD();
+    }
+
+    function updateBoss() {
+        if (!boss || boss.hp <= 0) return;
+        bossPhaseTimer++;
+        // Lerp boss position
+        boss.px += (boss.x * TILE - boss.px) * 0.1;
+        boss.py += (boss.y * TILE - boss.py) * 0.1;
+        var def = BOSS_DEFS[bossIdx];
+        var rate = boss.scared ? def.speed * 2 : def.speed;
+        if (animFrame % rate !== 0) return;
+        switch(def.pattern) {
+            case 'charge': updateBossCharge(); break;
+            case 'teleport': updateBossTeleport(); break;
+            case 'wallphase': updateBossWallPhase(); break;
+            case 'combined':
+                // Cycle through patterns
+                var phase = Math.floor(bossPhaseTimer / 300) % 3;
+                if (phase === 0) updateBossCharge();
+                else if (phase === 1) updateBossTeleport();
+                else updateBossWallPhase();
+                break;
+        }
+    }
+
+    function updateBossCharge() {
+        if (bossChargeState === 'idle') {
+            bossChargePause--;
+            if (bossChargePause <= 0) {
+                // Choose direction toward player
+                var dx = player.x - boss.x;
+                var dy = player.y - boss.y;
+                if (Math.abs(dx) > Math.abs(dy)) bossChargeDir = dx > 0 ? 1 : 0;
+                else bossChargeDir = dy > 0 ? 3 : 2;
+                bossChargeState = 'charging';
+                boss.dir = bossChargeDir;
+            }
+        } else if (bossChargeState === 'charging') {
+            var d = DIRS[bossChargeDir];
+            var nx = boss.x + d.dx;
+            var ny = boss.y + d.dy;
+            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && map[ny][nx] !== 1) {
+                boss.x = nx; boss.y = ny;
+                if (boss.x < 0) boss.x = COLS - 1;
+                if (boss.x >= COLS) boss.x = 0;
+            } else {
+                bossChargeState = 'idle';
+                bossChargePause = 40 + Math.floor(Math.random() * 30);
+                triggerShake(3, 8);
+            }
+        }
+    }
+
+    function updateBossTeleport() {
+        bossTeleportTimer--;
+        if (bossTeleportTimer <= 0) {
+            // Teleport to random position
+            var tries = 0;
+            while (tries < 50) {
+                var tx = 2 + Math.floor(Math.random() * (COLS - 4));
+                var ty = 2 + Math.floor(Math.random() * (ROWS - 4));
+                if (map[ty][tx] !== 1 && (Math.abs(tx - player.x) + Math.abs(ty - player.y)) > 5) {
+                    boss.x = tx; boss.y = ty;
+                    boss.px = tx * TILE; boss.py = ty * TILE;
+                    spawnParticles(boss.px + TILE, boss.py + TILE, 10, BOSS_DEFS[bossIdx].color, 1, 3, 10, 20, 2);
+                    break;
+                }
+                tries++;
+            }
+            // Spawn mini ghost (max 3)
+            if (miniGhosts.length < 3) {
+                miniGhosts.push({ x: boss.x, y: boss.y, px: boss.x * TILE, py: boss.y * TILE, dir: Math.floor(Math.random() * 4), timer: 300, scared: false });
+            }
+            bossTeleportTimer = 90 + Math.floor(Math.random() * 60);
+        }
+        moveBossTowardPlayer();
+    }
+
+    function updateBossWallPhase() {
+        // Boss moves toward player, can pass through walls
+        var dx = player.x - boss.x;
+        var dy = player.y - boss.y;
+        if (dx !== 0 || dy !== 0) {
+            if (Math.abs(dx) > Math.abs(dy)) {
+                boss.x += dx > 0 ? 1 : -1;
+                boss.dir = dx > 0 ? 1 : 0;
+            } else {
+                boss.y += dy > 0 ? 1 : -1;
+                boss.dir = dy > 0 ? 3 : 2;
+            }
+            // Clamp to map bounds
+            if (boss.x < 0) boss.x = COLS - 1;
+            if (boss.x >= COLS) boss.x = 0;
+            if (boss.y < 0) boss.y = 0;
+            if (boss.y >= ROWS) boss.y = ROWS - 1;
+        }
+    }
+
+    function moveBossTowardPlayer() {
+        var dx = player.x - boss.x;
+        var dy = player.y - boss.y;
+        var dirs = [];
+        if (dx > 0) dirs.push(1);
+        if (dx < 0) dirs.push(0);
+        if (dy > 0) dirs.push(3);
+        if (dy < 0) dirs.push(2);
+        // Try preferred direction first
+        for (var di = 0; di < dirs.length; di++) {
+            var d = DIRS[dirs[di]];
+            var nx = boss.x + d.dx;
+            var ny = boss.y + d.dy;
+            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && map[ny][nx] !== 1) {
+                boss.x = nx; boss.y = ny;
+                boss.dir = dirs[di];
+                return;
+            }
+        }
+        // Random fallback
+        var rDir = Math.floor(Math.random() * 4);
+        var rd = DIRS[rDir];
+        var rnx = boss.x + rd.dx;
+        var rny = boss.y + rd.dy;
+        if (rnx >= 0 && rnx < COLS && rny >= 0 && rny < ROWS && map[rny][rnx] !== 1) {
+            boss.x = rnx; boss.y = rny;
+            boss.dir = rDir;
+        }
+    }
+
+    function checkBossCollision() {
+        if (!boss || boss.hp <= 0) return;
+        var dx = Math.abs(boss.px - player.px);
+        var dy = Math.abs(boss.py - player.py);
+        if (dx < TILE * 1.2 && dy < TILE * 1.2) {
+            if (boss.scared) {
+                // Hit boss
+                boss.hp--;
+                boss.scared = false;
+                bossPowerMode = false;
+                bossPowerTimer = 0;
+                playBossHit();
+                triggerShake(6, 15);
+                spawnParticles(boss.px + TILE, boss.py + TILE, 20, BOSS_DEFS[bossIdx].color, 2, 6, 15, 30, 3);
+                ghostScorePopups.push({ x: boss.px + TILE, y: boss.py, text: '-1 HP!', timer: 60, maxTimer: 60, isCombo: true });
+                if (boss.hp <= 0) {
+                    // Boss defeated!
+                    gameState = 'bossdeath';
+                    bossDeathTimer = 120;
+                    score += BOSS_DEFS[bossIdx].points;
+                    updateStat('bossesDefeated', 1);
+                    bossDefeated.push(bossIdx);
+                    playBossDefeat();
+                    triggerShake(10, 30);
+                    spawnParticles(boss.px + TILE, boss.py + TILE, 40, BOSS_DEFS[bossIdx].color, 2, 8, 20, 50, 4);
+                    lives++;
+                    updateHUD();
+                    checkAchievements();
+                } else {
+                    // Teleport boss away
+                    boss.x = 14; boss.y = 8; boss.px = 14 * TILE; boss.py = 8 * TILE;
+                    bossChargeState = 'idle';
+                    bossChargePause = 60;
+                }
+            } else {
+                // Player hit by boss
+                if (shieldActive) {
+                    shieldActive = false;
+                    playShieldBreak();
+                    triggerFlash('rgba(0,255,255,0.5)', 15);
+                    return;
+                }
+                currentLevelDeaths++;
+                updateStat('totalDeaths', 1);
+                gameState = 'dying';
+                deathTimer = 90;
+                playDeath();
+                triggerFlash('rgba(255,0,0,0.5)', 12);
+                spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, getCurrentSkin().color, 1, 4, 15, 40, 2);
+                triggerShake(6, 15);
+            }
+        }
+    }
+
+    function activateBossPowerMode() {
+        bossPowerMode = true;
+        bossPowerTimer = 360; // 6 seconds at 60fps
+        if (boss) boss.scared = true;
+        miniGhosts.forEach(function(mg) { mg.scared = true; });
+        triggerFlash('rgba(0,255,255,0.4)', 15);
+        playPowerUp();
+    }
+
+    function updateMiniGhosts() {
+        for (var i = miniGhosts.length - 1; i >= 0; i--) {
+            var mg = miniGhosts[i];
+            mg.px += (mg.x * TILE - mg.px) * LERP_SPEED;
+            mg.py += (mg.y * TILE - mg.py) * LERP_SPEED;
+            mg.timer--;
+            if (mg.timer <= 0) { miniGhosts.splice(i, 1); continue; }
+            if (animFrame % 12 !== 0) continue;
+            // Move randomly toward player
+            var possible = [];
+            for (var d = 0; d < 4; d++) {
+                var dd = DIRS[d];
+                var nx = mg.x + dd.dx;
+                var ny = mg.y + dd.dy;
+                if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && map[ny][nx] !== 1) {
+                    possible.push({ dir: d, nx: nx, ny: ny, dist: Math.pow(nx - player.x, 2) + Math.pow(ny - player.y, 2) });
+                }
+            }
+            if (possible.length > 0) {
+                if (mg.scared) {
+                    var pick = possible[Math.floor(Math.random() * possible.length)];
+                    mg.x = pick.nx; mg.y = pick.ny; mg.dir = pick.dir;
+                } else {
+                    possible.sort(function(a, b) { return a.dist - b.dist; });
+                    mg.x = possible[0].nx; mg.y = possible[0].ny; mg.dir = possible[0].dir;
+                }
+            }
+            // Check collision with player
+            var mdx = Math.abs(mg.px - player.px);
+            var mdy = Math.abs(mg.py - player.py);
+            if (mdx < TILE * 0.7 && mdy < TILE * 0.7) {
+                if (mg.scared) {
+                    miniGhosts.splice(i, 1);
+                    score += 400;
+                    spawnParticles(mg.px + TILE/2, mg.py + TILE/2, 8, BOSS_DEFS[bossIdx].color, 1, 3, 10, 20, 2);
+                    playComboHit();
+                } else {
+                    if (shieldActive) { shieldActive = false; playShieldBreak(); continue; }
+                    currentLevelDeaths++;
+                    updateStat('totalDeaths', 1);
+                    gameState = 'dying';
+                    deathTimer = 90;
+                    playDeath();
+                    triggerFlash('rgba(255,0,0,0.5)', 12);
+                    spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, getCurrentSkin().color, 1, 4, 15, 40, 2);
+                    triggerShake(6, 15);
+                    return;
+                }
+            }
+        }
+    }
+
+    function drawBossOverlay() {
+        if (!boss) return;
+        var def = BOSS_DEFS[bossIdx];
+        var bcx = boss.px + TILE;
+        var bcy = boss.py + TILE;
+        // Boss is 2x size ghost
+        var bw = TILE * 2 - 4;
+        var bh = TILE * 2 - 4;
+        // Glow
+        ctx.shadowColor = boss.scared ? '#22a' : def.glowColor;
+        ctx.shadowBlur = 15;
+        // Body
+        ctx.fillStyle = boss.scared ? ((bossPowerTimer < 120 && animFrame % 10 < 5) ? '#fff' : '#22a') : def.color;
+        ctx.beginPath();
+        ctx.arc(bcx, bcy - 4, bw / 2, Math.PI, 0);
+        ctx.lineTo(bcx + bw / 2, bcy + bh / 2 - 4);
+        var wave = Math.sin(animFrame * 0.12) * 3;
+        for (var bi = 0; bi < 5; bi++) {
+            ctx.lineTo(bcx + bw / 2 - (bi + 1) * (bw / 5), bcy + bh / 2 - 4 + ((bi % 2 === 0) ? wave : -wave));
+        }
+        ctx.lineTo(bcx - bw / 2, bcy + bh / 2 - 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Eyes (red for boss)
+        if (!boss.scared) {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(bcx - 6, bcy - 6, 5, 6, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(bcx + 6, bcy - 6, 5, 6, 0, 0, Math.PI * 2); ctx.fill();
+            var ed = DIRS[boss.dir];
+            ctx.fillStyle = '#f00';
+            ctx.beginPath(); ctx.arc(bcx - 6 + ed.dx * 2.5, bcy - 6 + ed.dy * 2.5, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(bcx + 6 + ed.dx * 2.5, bcy - 6 + ed.dy * 2.5, 3, 0, Math.PI * 2); ctx.fill();
+        } else {
+            // Scared eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(bcx - 5, bcy - 5, 3, 0, Math.PI * 2); ctx.arc(bcx + 5, bcy - 5, 3, 0, Math.PI * 2); ctx.fill();
+        }
+        // Health bar above boss
+        var hbW = 40, hbH = 5;
+        var hbX = bcx - hbW / 2, hbY = bcy - bh / 2 - 14;
+        ctx.fillStyle = '#333'; ctx.fillRect(hbX, hbY, hbW, hbH);
+        ctx.fillStyle = boss.hp > 1 ? '#0f0' : '#f00';
+        ctx.fillRect(hbX, hbY, hbW * (boss.hp / boss.maxHp), hbH);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(hbX, hbY, hbW, hbH);
+        // Boss name
+        ctx.fillStyle = def.glowColor;
+        ctx.font = 'bold 10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(def.name, bcx, hbY - 4);
+        // Draw mini ghosts
+        miniGhosts.forEach(function(mg) {
+            var mcx = mg.px + TILE / 2;
+            var mcy = mg.py + TILE / 2;
+            ctx.fillStyle = mg.scared ? '#22a' : def.color;
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.arc(mcx, mcy - 2, TILE / 2 - 2, Math.PI, 0);
+            ctx.lineTo(mcx + TILE / 2 - 2, mcy + TILE / 2 - 4);
+            ctx.lineTo(mcx - TILE / 2 + 2, mcy + TILE / 2 - 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            // Mini eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(mcx - 2, mcy - 3, 1.5, 0, Math.PI * 2); ctx.arc(mcx + 2, mcy - 3, 1.5, 0, Math.PI * 2); ctx.fill();
+        });
+        // Boss intro overlay
+        if (gameState === 'bossintro') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = def.glowColor;
+            ctx.font = 'bold 28px Courier New';
+            ctx.fillText('JEFE: ' + def.name, canvas.width / 2, canvas.height / 2 - 30);
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Courier New';
+            ctx.fillText('Golpea ' + def.hitsToKill + ' veces con poder!', canvas.width / 2, canvas.height / 2 + 5);
+            var introNum = Math.ceil(countdownTimer / 60);
+            if (countdownTimer <= 180) {
+                ctx.fillStyle = '#ff0';
+                ctx.font = 'bold 48px Courier New';
+                ctx.fillText(introNum > 0 ? introNum.toString() : 'PELEA!', canvas.width / 2, canvas.height / 2 + 60);
+            }
+        }
+    }
+
+    // ===== CUTSCENE FUNCTIONS =====
+    function drawCutscene() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var sc = CUTSCENE_SCRIPTS[cutsceneIdx] || CUTSCENE_SCRIPTS[0];
+        var progress = Math.min(1, (210 - cutsceneTimer) / 210);
+        // Animated ghost moving across screen
+        var ghostX = -40 + progress * (canvas.width + 80);
+        var ghostY = canvas.height / 2 - 60;
+        ctx.fillStyle = sc.ghostColor;
+        ctx.beginPath();
+        ctx.arc(ghostX, ghostY, 20, Math.PI, 0);
+        ctx.lineTo(ghostX + 20, ghostY + 20);
+        ctx.lineTo(ghostX - 20, ghostY + 20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(ghostX - 5, ghostY - 3, 4, 0, Math.PI * 2); ctx.arc(ghostX + 5, ghostY - 3, 4, 0, Math.PI * 2); ctx.fill();
+        // Title
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 24px Courier New';
+        ctx.fillText(sc.title, canvas.width / 2, canvas.height / 2 + 20);
+        // Story lines fade in one by one
+        for (var li = 0; li < sc.lines.length; li++) {
+            var lineProgress = progress * 3 - li;
+            if (lineProgress > 0) {
+                ctx.globalAlpha = Math.min(1, lineProgress);
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Courier New';
+                ctx.fillText(sc.lines[li], canvas.width / 2, canvas.height / 2 + 55 + li * 22);
+            }
+        }
+        ctx.globalAlpha = 1;
+        // Skip hint
+        ctx.fillStyle = '#555';
+        ctx.font = '11px Courier New';
+        ctx.fillText('Presiona cualquier tecla para saltar', canvas.width / 2, canvas.height - 20);
     }
 
     function update() {
@@ -3598,6 +4511,12 @@
             if (furyMode && Date.now() >= furyEndTime) {
                 furyMode = false;
             }
+            // Combo timer
+            comboTimer++;
+            if (comboTimer > COMBO_WINDOW && comboChain > 0) { comboChain = 0; comboMultiplier = 1; }
+            // Fruit effect timers
+            if (doubleDotTimer > 0) doubleDotTimer--;
+            if (ghostSlowTimer > 0) ghostSlowTimer--;
             // Trail aging
             playerTrail.forEach(t => t.age++);
             playerTrail = playerTrail.filter(t => t.age <= 6);
@@ -3637,10 +4556,17 @@
                             lbOverlay.classList.add('visible');
                         }, 1500);
                     }
+                } else if (bossActive) {
+                    // Boss fight: only reset player position, keep boss state
+                    player.x = 14; player.y = 23; player.px = 14 * TILE; player.py = 23 * TILE;
+                    player.dir = 2; player.nextDir = 2; player.moving = false;
+                    gameState = 'bossfight';
+                    messageText = '!Quedan ' + lives + ' vidas!';
+                    startMusic();
                 } else {
                     resetPositions();
                     gameState = 'playing';
-                    messageText = `¡Quedan ${lives} vidas!`;
+                    messageText = '!Quedan ' + lives + ' vidas!';
                     startMusic();
                 }
             }
@@ -3648,84 +4574,48 @@
         if (gameState === 'win') {
             winTimer--;
             if (winTimer <= 0) {
-                if (level >= 20 && !endlessMode) {
-                    // Level 20 completion stats
-                    const _lvlScore20 = score - levelStartScore;
-                    const _stars20 = calculateStars(level, _lvlScore20);
-                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars20) {
-                        persistentData.stats.levelsStarRating[level] = _stars20;
-                    }
-                    updateStat('levelCompletions', 1);
-                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
-                    updateStat('bestScore', score, 'max');
-                    updateStat('bestLevel', 20, 'max');
-                    clearSavedGame();
-                    checkAchievements();
-                    // Show endless choice
-                    gameState = 'endlessChoice';
-                    stopMusic();
-                    saveScoreToStorage(currentPlayerName, score, level).catch(function(){});
-                } else if (endlessMode) {
+                // Level completion stats (common)
+                var _lvlScoreW = score - levelStartScore;
+                var _starsW = calculateStars(level, _lvlScoreW);
+                if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _starsW) {
+                    persistentData.stats.levelsStarRating[level] = _starsW;
+                }
+                updateStat('levelCompletions', 1);
+                if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
+                updateStat('bestLevel', level, 'max');
+                updateStat('bestScore', score, 'max');
+                saveGameProgress();
+                checkAchievements();
+                currentLevelDeaths = 0;
+                levelGhostsEaten = 0;
+                levelStartScore = score;
+
+                if (endlessMode) {
                     // Continue endless mode
-                    updateStat('levelCompletions', 1);
-                    updateStat('bestScore', score, 'max');
-                    updateStat('bestLevel', level, 'max');
-                    checkAchievements();
-                    currentLevelDeaths = 0;
-                    levelGhostsEaten = 0;
-                    levelStartScore = score;
                     playWhoosh();
                     transitionState = 'fadeout';
                     transitionTimer = 30;
-                    transitionCallback = function() {
-                        advanceEndlessLevel();
-                    };
+                    transitionCallback = function() { advanceEndlessLevel(); };
                     ghostMessages = [];
                     playerTrail = [];
-                } else if (level === 5 || level === 10 || level === 15) {
-                    // Level completion stats
-                    const _lvlScore1 = score - levelStartScore;
-                    const _stars1 = calculateStars(level, _lvlScore1);
-                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars1) {
-                        persistentData.stats.levelsStarRating[level] = _stars1;
-                    }
-                    updateStat('levelCompletions', 1);
-                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
-                    updateStat('bestLevel', level, 'max');
-                    saveGameProgress();
-                    checkAchievements();
-                    currentLevelDeaths = 0;
-                    levelGhostsEaten = 0;
-                    levelStartScore = score;
-                    // Bonus fruit level
-                    gameState = 'bonus';
-                    bonusStartTime = Date.now();
-                    bonusFruitTimer = 0;
-                    fruit = null;
-                    messageText = '¡NIVEL BONUS!';
-                    fruitMsg = '¡NIVEL BONUS!';
-                    fruitMsgTimer = 120;
-                    // Keep current map but hide ghosts
-                    level++;
-                    applyTheme();
-                    resetMap();
-                    resetPlayer();
-                    updateHUD();
+                } else if (BOSS_LEVELS.indexOf(level) !== -1) {
+                    // Go to boss fight
+                    var bIdx = BOSS_LEVELS.indexOf(level);
+                    stopMusic();
+                    playWhoosh();
+                    transitionState = 'fadeout';
+                    transitionTimer = 30;
+                    transitionCallback = function() { initBossFight(bIdx); };
+                    ghostMessages = [];
+                    playerTrail = [];
+                } else if (SHOP_LEVELS.indexOf(level) !== -1 && BOSS_LEVELS.indexOf(level) === -1) {
+                    // Go to shop
+                    stopMusic();
+                    gameState = 'shop';
+                    shopSelectedIdx = 0;
+                    shopPurchasedThisRound = [];
                 } else {
-                    // Level completion stats
-                    const _lvlScore2 = score - levelStartScore;
-                    const _stars2 = calculateStars(level, _lvlScore2);
-                    if (!persistentData.stats.levelsStarRating[level] || persistentData.stats.levelsStarRating[level] < _stars2) {
-                        persistentData.stats.levelsStarRating[level] = _stars2;
-                    }
-                    updateStat('levelCompletions', 1);
-                    if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
-                    updateStat('bestLevel', level, 'max');
-                    saveGameProgress();
-                    checkAchievements();
-                    currentLevelDeaths = 0;
-                    levelGhostsEaten = 0;
-                    levelStartScore = score;
+                    // Normal level transition
                     playWhoosh();
                     transitionState = 'fadeout';
                     transitionTimer = 30;
@@ -3742,6 +4632,103 @@
                     playerTrail = [];
                 }
             }
+        }
+        // Boss intro state
+        if (gameState === 'bossintro') {
+            countdownTimer--;
+            if (countdownTimer === 120) playCountdownBeep();
+            if (countdownTimer === 60) playCountdownBeep();
+            if (countdownTimer <= 0) {
+                playCountdownGo();
+                gameState = 'bossfight';
+                startMusic();
+            }
+            draw();
+            requestAnimationFrame(update);
+            return;
+        }
+        // Boss fight state
+        if (gameState === 'bossfight') {
+            scheduleBeat();
+            updateMusicState();
+            movePlayer();
+            // Eat dots for points in arena
+            var btile = map[player.y] && map[player.y][player.x];
+            if (btile === 3) {
+                map[player.y][player.x] = 0;
+                activateBossPowerMode();
+                playPowerUp();
+            }
+            updateBoss();
+            updateMiniGhosts();
+            checkBossCollision();
+            // Boss power mode timer
+            if (bossPowerMode) {
+                bossPowerTimer--;
+                if (bossPowerTimer <= 0) {
+                    bossPowerMode = false;
+                    if (boss) boss.scared = false;
+                    miniGhosts.forEach(function(mg) { mg.scared = false; });
+                }
+            }
+            // Respawn power orbs on a timer
+            var orbPositions = [[6,8],[21,8],[6,22],[21,22]];
+            for (var oi = 0; oi < 4; oi++) {
+                if (map[orbPositions[oi][1]] && map[orbPositions[oi][1]][orbPositions[oi][0]] === 0 && !bossPowerMode) {
+                    bossOrbTimers[oi] = (bossOrbTimers[oi] || 0) + 1;
+                    if (bossOrbTimers[oi] >= 300) {
+                        map[orbPositions[oi][1]][orbPositions[oi][0]] = 3;
+                        bossOrbTimers[oi] = 0;
+                    }
+                }
+            }
+            // Trail
+            playerTrail.forEach(function(t) { t.age++; });
+            playerTrail = playerTrail.filter(function(t) { return t.age <= 6; });
+            updateHUD();
+        }
+        // Boss death state
+        if (gameState === 'bossdeath') {
+            bossDeathTimer--;
+            if (animFrame % 4 === 0 && boss) {
+                spawnParticles(boss.px + TILE + (Math.random() - 0.5) * 40, boss.py + TILE + (Math.random() - 0.5) * 40, 5, BOSS_DEFS[bossIdx].color, 1, 4, 10, 25, 3);
+            }
+            if (bossDeathTimer <= 0) {
+                bossActive = false;
+                if (bossIdx < 3) {
+                    // Cutscene after boss 0,1,2
+                    gameState = 'cutscene';
+                    cutsceneIdx = bossIdx;
+                    cutsceneTimer = 210;
+                } else {
+                    // After final boss (level 20) -> endlessChoice
+                    updateStat('bestScore', score, 'max');
+                    updateStat('bestLevel', 20, 'max');
+                    clearSavedGame();
+                    checkAchievements();
+                    gameState = 'endlessChoice';
+                    stopMusic();
+                    saveScoreToStorage(currentPlayerName, score, level).catch(function(){});
+                }
+            }
+        }
+        // Cutscene state
+        if (gameState === 'cutscene') {
+            cutsceneTimer--;
+            if (cutsceneTimer <= 0) {
+                // After cutscene, go to next level
+                level++;
+                applyTheme();
+                resetMap();
+                resetPositions();
+                gameState = 'countdown';
+                countdownTimer = 210;
+                updateHUD();
+            }
+        }
+        // Shop state (just draw, handled by input)
+        if (gameState === 'shop') {
+            // Nothing to update, draw handles it
         }
         // Bonus level logic
         if (gameState === 'bonus') {
@@ -3951,6 +4938,12 @@
 
         currentPlayerName = name;
         nameError.textContent = '';
+        // Save selected skin
+        var _skinSel = PLAYER_SKINS[skinPreviewIdx];
+        if (isSkinUnlocked(_skinSel)) {
+            selectedSkin = _skinSel.id;
+            if (persistentData) { persistentData.selectedSkin = selectedSkin; savePersistentData(); }
+        }
         document.getElementById('startScreen').style.display = 'none';
         document.getElementById('playerTag').textContent = 'Jugador: ' + name;
         renderLeaderboard();
@@ -4003,8 +4996,25 @@
         }
     });
 
+    // ---- SKIN SELECTOR EVENT LISTENERS ----
+    document.getElementById('skinPrev').addEventListener('click', function() {
+        skinPreviewIdx--;
+        if (skinPreviewIdx < 0) skinPreviewIdx = PLAYER_SKINS.length - 1;
+        updateSkinPreview();
+    });
+    document.getElementById('skinNext').addEventListener('click', function() {
+        skinPreviewIdx++;
+        if (skinPreviewIdx >= PLAYER_SKINS.length) skinPreviewIdx = 0;
+        updateSkinPreview();
+    });
+
     // Load persistent data on startup
     loadPersistentData();
+    // Set skin preview to saved skin
+    for (var _si = 0; _si < PLAYER_SKINS.length; _si++) {
+        if (PLAYER_SKINS[_si].id === selectedSkin) { skinPreviewIdx = _si; break; }
+    }
+    updateSkinPreview();
 
     // Init
     initGame();
