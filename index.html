@@ -511,7 +511,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.0</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.1</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -570,7 +570,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.0</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.1</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -1272,15 +1272,17 @@
     let ghosts = [];
 
     function createGhosts() {
-        // 5 fantasmas en todos los niveles (1-20). TODOS empiezan inHouse: true
-        // y salen por teleport a (14, 11) para evitar bloqueo con puerta tile 4
+        // Niveles 1-10: 4 fantasmas. Niveles 11-20: 5 fantasmas (se agrega SHADOW)
         ghosts = [
             { x: 14, y: 13, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 1, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 25, targetY: 0 },
             { x: 13, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 5, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 2, targetY: 0 },
             { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 10, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 27, targetY: 30 },
             { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 15, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 0, targetY: 30 },
-            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 8, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 14, targetY: 0 },
         ];
+        // SHADOW solo aparece del nivel 11 en adelante
+        if (level >= 11) {
+            ghosts.push({ x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 8, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 14, targetY: 0 });
+        }
     }
 
     const DIRS = [
