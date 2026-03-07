@@ -2447,7 +2447,11 @@
 
         let rate;
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
-        else if (ghost.scared) rate = GHOST_SCARED_RATE;
+        else if (ghost.scared) {
+            // 30% más lento que su velocidad normal en el nivel actual
+            const normalRate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
+            rate = Math.round(normalRate * 1.3);
+        }
         else rate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
         if (animFrame % rate !== 0) return;
@@ -2473,10 +2477,18 @@
             }
         }
         if (possible.length > 0) {
-            possible.sort((a, b) => a.dist - b.dist);
-            ghost.dir = possible[0].dir;
-            ghost.x = possible[0].nx;
-            ghost.y = possible[0].ny;
+            // Fantasmas asustados eligen dirección al azar (más tontos)
+            if (ghost.scared && !ghost.eaten && possible.length > 1) {
+                const pick = possible[Math.floor(Math.random() * possible.length)];
+                ghost.dir = pick.dir;
+                ghost.x = pick.nx;
+                ghost.y = pick.ny;
+            } else {
+                possible.sort((a, b) => a.dist - b.dist);
+                ghost.dir = possible[0].dir;
+                ghost.x = possible[0].nx;
+                ghost.y = possible[0].ny;
+            }
             if (ghost.x < 0) { ghost.x = COLS - 1; ghost.px = ghost.x * TILE; }
             if (ghost.x >= COLS) { ghost.x = 0; ghost.px = ghost.x * TILE; }
         }
