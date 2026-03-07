@@ -2925,6 +2925,9 @@
                     return;
                 }
             }
+            // Boton CONTINUAR (parte inferior)
+            var btnY = canvas.height - 65;
+            if (cy >= btnY && cy <= btnY + 40) { shopClose(); return; }
             return;
         }
         // Cutscene skip on tap
@@ -3140,8 +3143,8 @@
         updateStat('totalPowerModes', 1);
         currentGhostStreak = 0;
         powerMode = true;
-        // Duración en milisegundos: nivel 1 = 26s, nivel 20 = 7s
-        const durationMs = Math.max(3500, 13000 - (level - 1) * 500);
+        // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
+        const durationMs = Math.max(5250, 19500 - (level - 1) * 750);
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -3948,10 +3951,15 @@
             ctx.fillText(bought ? 'COMPRADO' : item.cost.toLocaleString() + ' pts', canvas.width - 60, iy + 38);
         }
         ctx.textAlign = 'center';
+        // Boton CONTINUAR (visible y tocable en mobile)
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(canvas.width / 2 - 100, canvas.height - 65, 200, 40);
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 16px Courier New';
+        ctx.fillText('CONTINUAR', canvas.width / 2, canvas.height - 40);
         ctx.fillStyle = '#888';
-        ctx.font = '12px Courier New';
-        ctx.fillText('Flechas: seleccionar | ENTER: comprar | ESC: continuar', canvas.width / 2, canvas.height - 30);
-        ctx.fillText('Toca un item para seleccionar, toca de nuevo para comprar', canvas.width / 2, canvas.height - 15);
+        ctx.font = '11px Courier New';
+        ctx.fillText('Toca un item para seleccionar, toca de nuevo para comprar', canvas.width / 2, canvas.height - 5);
     }
 
     function shopBuy() {
