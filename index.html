@@ -1041,13 +1041,13 @@
     function createGhosts() {
         ghosts = [
             { x: 13, y: 14, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 13*TILE, py: 14*TILE, inHouse: false, houseTimer: 0, scared: false, eaten: false, targetX: 25, targetY: 0 },
-            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 45, scared: false, eaten: false, targetX: 2, targetY: 0 },
-            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 88, scared: false, eaten: false, targetX: 27, targetY: 30 },
-            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 125, scared: false, eaten: false, targetX: 0, targetY: 30 },
-            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 50, scared: false, eaten: false, targetX: 14, targetY: 0 },
+            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 30, scared: false, eaten: false, targetX: 2, targetY: 0 },
+            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 50, scared: false, eaten: false, targetX: 27, targetY: 30 },
+            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 70, scared: false, eaten: false, targetX: 0, targetY: 30 },
+            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 35, scared: false, eaten: false, targetX: 14, targetY: 0 },
         ];
         if (level >= 10) {
-            ghosts.push({ x: 13, y: 13, dir: 1, color: GHOST_COLORS[5], name: GHOST_NAMES[5], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 150, scared: false, eaten: false, targetX: 14, targetY: 30 });
+            ghosts.push({ x: 13, y: 13, dir: 1, color: GHOST_COLORS[5], name: GHOST_NAMES[5], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 90, scared: false, eaten: false, targetX: 14, targetY: 30 });
         }
     }
 
@@ -2520,6 +2520,10 @@
                 g.scared = true;
                 g.dir = (g.dir < 2) ? (1 - g.dir) : (5 - g.dir);
             }
+            // Forzar salida inmediata de la guarida durante power mode
+            if (g.inHouse) {
+                g.houseTimer = 0;
+            }
         });
         triggerFlash('rgba(0,255,255,0.4)', 15);
     }
@@ -2554,6 +2558,10 @@
                 ghost.x = 14; ghost.y = 11;
                 ghost.px = ghost.x * TILE; ghost.py = ghost.y * TILE;
                 ghost.inHouse = false;
+                // Si sale durante power mode, sale asustado
+                if (powerMode) {
+                    ghost.scared = true;
+                }
                 // Mensaje de amenaza al salir
                 const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
                 ghostMessages.push({ text: threat, x: ghost.px, y: ghost.py - 10, timer: 90, color: ghost.color });
@@ -2610,9 +2618,14 @@
         }
         if (ghost.eaten && ghost.x === 14 && ghost.y === 13) {
             ghost.eaten = false;
-            ghost.scared = false;
             ghost.inHouse = true;
-            ghost.houseTimer = 60; // sale rápido
+            if (powerMode) {
+                ghost.houseTimer = 0; // sale inmediato durante power mode
+                ghost.scared = true;
+            } else {
+                ghost.scared = false;
+                ghost.houseTimer = 60; // sale rápido
+            }
             // Mensaje de amenaza al regresar
             const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
             ghostMessages.push({ text: threat, x: ghost.px, y: ghost.py - 10, timer: 90, color: ghost.color });
