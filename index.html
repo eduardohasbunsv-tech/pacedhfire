@@ -2555,10 +2555,14 @@
             // Durante power mode, salir inmediatamente de la guarida
             if (powerMode) ghost.houseTimer = 0;
             else ghost.houseTimer--;
-            // Si quedan 2 o menos fantasmas en la guarida, forzar salida
-            const ghostsStillInHouse = ghosts.filter(g => g.inHouse);
-            if (ghostsStillInHouse.length <= 2) {
-                ghost.houseTimer = 0;
+            // Forzar salida: nunca dejar un fantasma atrapado
+            if (ghost.houseTimer > 0) {
+                const othersOutside = ghosts.filter(g => !g.inHouse && !g.eaten).length;
+                const inHouseCount = ghosts.filter(g => g.inHouse).length;
+                // Si la mayoría ya salió, forzar a los que quedan
+                if (othersOutside >= 3 || inHouseCount <= 2) {
+                    ghost.houseTimer = 0;
+                }
             }
             if (ghost.houseTimer <= 0) {
                 ghost.x = 14; ghost.y = 11;
@@ -2629,7 +2633,7 @@
             if (powerMode) {
                 ghost.houseTimer = 0; // sale inmediato durante power mode
             } else {
-                ghost.houseTimer = 60; // sale rápido
+                ghost.houseTimer = 10; // sale muy rápido después de ser comido
             }
             // Mensaje de amenaza al regresar
             const threat = GHOST_THREATS[Math.floor(Math.random() * GHOST_THREATS.length)];
