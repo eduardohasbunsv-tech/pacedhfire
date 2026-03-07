@@ -510,7 +510,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v1.0</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v2.0</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -560,7 +560,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v1.0</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v2.0</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -761,7 +761,7 @@
         const sg = persistentData.savedGame;
         currentPlayerName = sg.playerName; level = sg.level; score = sg.score; lives = sg.lives;
         applyTheme(); resetMap(); resetPositions();
-        gameStartTime = Date.now(); currentLevelDeaths = 0; levelStartScore = score;
+        gameStartTime = Date.now(); currentLevelDeaths = 0; levelStartScore = score; levelGhostsEaten = 0;
         updateHUD(); return true;
     }
     function clearSavedGame() { if (!persistentData) return; persistentData.savedGame = null; savePersistentData(); }
@@ -804,17 +804,25 @@
         { id: 'perfect_5', name: 'Invencible', desc: 'Completa 5 niveles sin morir', icon: '\uD83D\uDEE1', check: s => s.perfectLevels >= 5 },
         { id: 'games_10', name: 'Adicto', desc: 'Juega 10 partidas', icon: '\uD83C\uDFAE', check: s => s.gamesPlayed >= 10 },
         { id: 'fruit_10', name: 'Frut\u00edvoro', desc: 'Come 10 frutas', icon: '\uD83C\uDF52', check: s => s.totalFruitsEaten >= 10 },
+        { id: 'score_100k', name: 'Supremo', desc: 'Logra 100,000 puntos', icon: '\uD83D\uDCAB', check: s => s.bestScore >= 100000 },
+        { id: 'ghost_500', name: 'Cazador Supremo', desc: 'Come 500 fantasmas', icon: '\uD83E\uDDB4', check: s => s.totalGhostsEaten >= 500 },
+        { id: 'dots_5000', name: 'Aspiradora', desc: 'Come 5000 orbes', icon: '\uD83C\uDF00', check: s => s.totalDotsEaten >= 5000 },
+        { id: 'perfect_10', name: 'Intocable', desc: 'Completa 10 niveles sin morir', icon: '\uD83D\uDD31', check: s => s.perfectLevels >= 10 },
+        { id: 'games_50', name: 'Veterano', desc: 'Juega 50 partidas', icon: '\uD83C\uDFD6', check: s => s.gamesPlayed >= 50 },
     ];
     let achievementPopupQueue = [];
     let achievementPopupTimer = 0;
     let currentAchievementPopup = null;
     function checkAchievements() {
         if (!persistentData) return;
+        let newUnlock = false;
         ACHIEVEMENTS.forEach(a => {
             if (!persistentData.achievements.includes(a.id) && a.check(persistentData.stats)) {
                 persistentData.achievements.push(a.id); achievementPopupQueue.push(a);
+                newUnlock = true;
             }
         });
+        if (newUnlock) playAchievementUnlock();
         savePersistentData();
     }
     function updateAchievementPopup() {
@@ -869,6 +877,7 @@
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 15;  // base lento (nivel 1)
     const GHOST_BASE_RATE = 18;   // base lento (nivel 1)
+    const GHOST_SPEED_MULT = [1.1, 1.0, 0.85, 1.05, 0.95];
     const GHOST_SCARED_RATE = 24;
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
@@ -927,48 +936,121 @@
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ];
 
+    // MAP_B: Open Arena (levels 6-10) - more open spaces, fewer corridors
+    const MAP_B = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1,2,2,1],
+        [1,3,1,1,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1,2,3,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,1,1,2,1,1,2,2,2,2,2,2,2,2,2,2,1,1,2,1,1,2,2,2,1],
+        [1,2,2,2,1,1,2,1,1,2,2,2,2,2,2,2,2,2,2,1,1,2,1,1,2,2,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,3,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,3,1],
+        [1,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    // MAP_C: Maze Heavy (levels 11-15) - more corridors, more dead ends
+    const MAP_C = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1],
+        [1,2,1,1,2,1,2,1,1,2,1,2,1,1,1,1,2,1,2,1,1,2,1,2,1,1,2,1],
+        [1,3,1,1,2,2,2,1,1,2,2,2,1,1,1,1,2,2,2,1,1,2,2,2,1,1,3,1],
+        [1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1],
+        [1,1,2,1,2,1,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,1,2,1,2,1,1],
+        [1,2,2,1,2,2,2,2,1,2,2,2,2,1,1,2,2,2,2,1,2,2,2,2,1,2,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,2,1,1,2,1,1,1,1,2,1,1,2,1,1,1,1,2,1,1,2,1,1,2,1],
+        [1,2,1,1,2,1,1,2,1,1,1,1,2,1,1,2,1,1,1,1,2,1,1,2,1,1,2,1],
+        [1,3,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,3,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    // MAP_D: Symmetric Cross (levels 16-20) - central cross open area with 4 quadrant mazes
+    const MAP_D = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,1],
+        [1,2,1,1,2,1,2,1,1,1,2,1,2,2,2,2,1,2,1,1,1,2,1,2,1,1,2,1],
+        [1,3,1,1,2,2,2,1,2,1,2,1,2,2,2,2,1,2,1,2,1,2,2,2,1,1,3,1],
+        [1,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,1],
+        [1,1,2,1,1,1,2,1,2,1,1,1,2,2,2,2,1,1,1,2,1,2,1,1,1,2,1,1],
+        [1,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,1],
+        [1,2,1,1,2,1,2,1,1,2,1,2,2,2,2,2,2,1,2,1,1,2,1,2,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,2,1,2,1,2,2,1,2,2,2,2,2,2,1,2,2,1,2,1,2,1,1,2,1],
+        [1,2,1,1,2,1,2,1,2,1,1,2,1,1,1,1,2,1,1,2,1,2,1,2,1,1,2,1],
+        [1,3,2,2,2,2,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,2,2,2,2,3,1],
+        [1,1,1,2,1,1,2,1,2,1,2,1,2,2,2,2,1,2,1,2,1,2,1,1,2,1,1,1],
+        [1,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,1],
+        [1,2,1,2,2,2,2,1,1,2,1,2,2,1,1,2,2,1,2,1,1,2,2,2,2,1,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    const MAP_LAYOUTS = [BASE_MAP, MAP_B, MAP_C, MAP_D];
+
     function getMapForLevel(lvl) {
-        const m = BASE_MAP.map(row => [...row]);
-        const group = lvl <= 5 ? 1 : lvl <= 10 ? 2 : lvl <= 15 ? 3 : 4;
-        const openCells = [];
-        if (group === 2) {
-            // Wide corridors: open center wall blocks in rows 2-4 and 21-22
-            for (let r = 2; r <= 4; r++) {
-                for (let c = 7; c <= 11; c++) openCells.push([r, c]);
-                for (let c = 16; c <= 20; c++) openCells.push([r, c]);
-            }
-            for (let r = 21; r <= 22; r++) {
-                for (let c = 7; c <= 11; c++) openCells.push([r, c]);
-                for (let c = 16; c <= 20; c++) openCells.push([r, c]);
-            }
-        } else if (group === 3) {
-            // Side openings
-            for (let r = 6; r <= 7; r++) {
-                for (let c = 2; c <= 5; c++) openCells.push([r, c]);
-                for (let c = 22; c <= 25; c++) openCells.push([r, c]);
-            }
-            for (let r = 24; r <= 25; r++) {
-                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
-            }
-            for (let r = 27; r <= 28; r++) {
-                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
-            }
-        } else if (group === 4) {
-            // Maximum chaos: center + side openings
-            for (let c = 7; c <= 20; c++) openCells.push([3, c]);
-            for (let r = 6; r <= 7; r++) {
-                for (let c = 2; c <= 5; c++) openCells.push([r, c]);
-                for (let c = 22; c <= 25; c++) openCells.push([r, c]);
-            }
-            for (let c = 7; c <= 20; c++) openCells.push([21, c]);
-            for (let r = 27; r <= 28; r++) {
-                for (let c = 2; c <= 25; c++) openCells.push([r, c]);
-            }
-        }
-        openCells.forEach(([r, c]) => {
-            if (m[r][c] === 1) m[r][c] = 2; // wall becomes dot
-        });
-        return m;
+        let layoutIdx;
+        if (lvl <= 5) layoutIdx = 0;
+        else if (lvl <= 10) layoutIdx = 1;
+        else if (lvl <= 15) layoutIdx = 2;
+        else layoutIdx = 3;
+        const base = MAP_LAYOUTS[layoutIdx];
+        return base.map(row => [...row]);
     }
 
     let map = [];
@@ -986,6 +1068,16 @@
     let deathTimer = 0;
     let winTimer = 0;
     let messageText = '';
+
+    // ---- POWERUP STATE ----
+    let activePowerup = null;
+    let magnetTimer = 0;
+    let speedTimer = 0;
+    let shieldActive = false;
+    let freezeTimer = 0;
+    let powerupMsgTimer = 0;
+    let powerupMsg = '';
+    let levelGhostsEaten = 0;
 
     // ---- FURY MODE ----
     let furyMode = false;
@@ -1025,6 +1117,15 @@
     const FRUIT_TIMEOUT = 500;
     const FRUIT_POINTS = 400;
 
+    const POWERUP_TYPES = [
+        { id: 'magnet', name: 'Iman', color: '#f55', glow: '#f77', icon: 'M', duration: 300 },
+        { id: 'speed', name: 'Velocidad', color: '#ff0', glow: '#ff5', icon: 'V', duration: 300 },
+        { id: 'shield', name: 'Escudo', color: '#5ff', glow: '#7ff', icon: 'E', duration: 0 },
+        { id: 'freeze', name: 'Freeze', color: '#55f', glow: '#77f', icon: 'F', duration: 180 },
+    ];
+    const POWERUP_SPAWN_DOTS = 50;
+    const POWERUP_POINTS = 200;
+
     // Player
     const player = {
         x: 14, y: 23, dir: 0, nextDir: 0,
@@ -1049,11 +1150,11 @@
         // 5 fantasmas en todos los niveles (1-20). TODOS empiezan inHouse: true
         // y salen por teleport a (14, 11) para evitar bloqueo con puerta tile 4
         ghosts = [
-            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 1, scared: false, eaten: false, eatenThisPower: false, targetX: 25, targetY: 0 },
-            { x: 13, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 5, scared: false, eaten: false, eatenThisPower: false, targetX: 2, targetY: 0 },
-            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 10, scared: false, eaten: false, eatenThisPower: false, targetX: 27, targetY: 30 },
-            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 15, scared: false, eaten: false, eatenThisPower: false, targetX: 0, targetY: 30 },
-            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 8, scared: false, eaten: false, eatenThisPower: false, targetX: 14, targetY: 0 },
+            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 1, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 25, targetY: 0 },
+            { x: 13, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 5, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 2, targetY: 0 },
+            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 10, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 27, targetY: 30 },
+            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 15, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 0, targetY: 30 },
+            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 8, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 14, targetY: 0 },
         ];
     }
 
@@ -1957,9 +2058,8 @@
         const candidates = [];
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
-                // Solo en caminos donde había dots/power pellets (accesibles por pacman)
-                const base = BASE_MAP[r][c];
-                if (base !== 2 && base !== 3) continue;
+                // Spawn on empty tiles (dots already eaten) or remaining dot/power tiles
+                if (map[r][c] !== 0 && map[r][c] !== 2 && map[r][c] !== 3) continue;
                 const dist = Math.abs(c - player.x) + Math.abs(r - player.y);
                 if (dist >= 3 && dist <= 10) {
                     candidates.push({ x: c, y: r });
@@ -1975,6 +2075,97 @@
             type: FRUIT_TYPES[typeIdx >= 0 ? typeIdx : 0],
             timer: FRUIT_TIMEOUT
         };
+    }
+
+    function spawnPowerup() {
+        if (activePowerup) return;
+        const candidates = [];
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (map[r][c] !== 0) continue;
+                const dist = Math.abs(c - player.x) + Math.abs(r - player.y);
+                if (dist >= 4 && dist <= 12) candidates.push({ x: c, y: r });
+            }
+        }
+        if (candidates.length === 0) return;
+        const pos = candidates[Math.floor(Math.random() * candidates.length)];
+        const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+        activePowerup = { x: pos.x, y: pos.y, type: type, timer: 400 };
+    }
+
+    function playAchievementUnlock() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        // Ascending major chord arpeggio: C5, E5, G5, C6
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'triangle';
+            const s = t + i * 0.08;
+            osc.frequency.setValueAtTime(freq, s);
+            g.gain.setValueAtTime(0.08, s);
+            g.gain.exponentialRampToValueAtTime(0.001, s + 0.25);
+            osc.connect(g); g.connect(sfxGain);
+            osc.start(s); osc.stop(s + 0.26);
+        });
+        // Held chord at the end
+        const chordFreqs = [523, 659, 784, 1047];
+        const cs = t + 0.32;
+        chordFreqs.forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, cs);
+            g.gain.setValueAtTime(0.04, cs);
+            g.gain.exponentialRampToValueAtTime(0.001, cs + 0.5);
+            osc.connect(g); g.connect(sfxGain);
+            osc.start(cs); osc.stop(cs + 0.51);
+        });
+    }
+
+    function playPowerupPickup() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        [600, 900, 1200].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'triangle';
+            const s = t + i * 0.06;
+            osc.frequency.setValueAtTime(freq, s);
+            g.gain.setValueAtTime(0.1, s);
+            g.gain.exponentialRampToValueAtTime(0.001, s + 0.12);
+            osc.connect(g); g.connect(sfxGain);
+            osc.start(s); osc.stop(s + 0.13);
+        });
+    }
+
+    function playShieldBreak() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1200, t);
+        osc.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+        g.gain.setValueAtTime(0.12, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(g); g.connect(sfxGain);
+        osc.start(t); osc.stop(t + 0.36);
+    }
+
+    function playFreezeActivation() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2000, t);
+        osc.frequency.exponentialRampToValueAtTime(400, t + 0.2);
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(g); g.connect(sfxGain);
+        osc.start(t); osc.stop(t + 0.26);
     }
 
     function playFruitEat() {
@@ -2237,6 +2428,45 @@
         ctx.fillText(FRUIT_POINTS.toString(), cx, cy + r + 10);
     }
 
+    function drawPowerup() {
+        if (!activePowerup) return;
+        const cx = activePowerup.x * TILE + TILE / 2;
+        const cy = activePowerup.y * TILE + TILE / 2;
+        const pulse = Math.sin(animFrame * 0.15) * 0.2 + 0.8;
+        const r = (TILE / 2) * pulse;
+        // Blink when timer < 80
+        if (activePowerup.timer < 80 && animFrame % 8 < 4) return;
+        // Glow
+        ctx.shadowColor = activePowerup.type.glow;
+        ctx.shadowBlur = 12;
+        // Draw hexagon
+        ctx.fillStyle = activePowerup.type.color;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i - Math.PI / 6;
+            const hx = cx + r * Math.cos(angle);
+            const hy = cy + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        // Icon letter
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(activePowerup.type.icon, cx, cy);
+        // Name below
+        ctx.fillStyle = activePowerup.type.color;
+        ctx.font = '8px Courier New';
+        ctx.textBaseline = 'top';
+        ctx.fillText(activePowerup.type.name, cx, cy + r + 2);
+        ctx.textBaseline = 'alphabetic';
+        ctx.shadowBlur = 0;
+    }
+
     // ---- GAME LOGIC ----
     function resetMap() {
         map = getMapForLevel(level);
@@ -2259,6 +2489,11 @@
         createGhosts();
         powerMode = false;
         powerTimer = 0;
+        activePowerup = null;
+        magnetTimer = 0;
+        speedTimer = 0;
+        freezeTimer = 0;
+        // Keep shieldActive across deaths - it's a one-time use
     }
 
     function initGame() {
@@ -2287,6 +2522,14 @@
         nextLifeAt = 5000;
         bonusStartTime = 0;
         bonusFruitTimer = 0;
+        activePowerup = null;
+        magnetTimer = 0;
+        speedTimer = 0;
+        shieldActive = false;
+        freezeTimer = 0;
+        powerupMsgTimer = 0;
+        powerupMsg = '';
+        levelGhostsEaten = 0;
         updateHUD();
     }
 
@@ -2315,6 +2558,7 @@
         gameState = 'countdown';
         countdownTimer = 210;
         currentLevelDeaths = 0;
+        levelGhostsEaten = 0;
         levelStartScore = score;
         updateHUD();
     }
@@ -2438,7 +2682,8 @@
     function movePlayer() {
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
-        const rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.63));
+        let rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.63));
+        if (speedTimer > 0) rate = Math.max(2, Math.floor(rate / 2));
         if (animFrame % rate !== 0) return;
 
         const nd = DIRS[player.nextDir];
@@ -2482,9 +2727,32 @@
                 spawnParticles(player.px + TILE/2, player.py + TILE/2, 8, currentTheme ? currentTheme.orbColor : '#fff', 1, 4, 15, 30, 3);
             }
 
+            // Magnet effect: collect nearby dots
+            if (magnetTimer > 0) {
+                for (let dr = -3; dr <= 3; dr++) {
+                    for (let dc = -3; dc <= 3; dc++) {
+                        const mr = player.y + dr;
+                        const mc = player.x + dc;
+                        if (mr < 0 || mr >= ROWS || mc < 0 || mc >= COLS) continue;
+                        if (map[mr][mc] === 2 && Math.random() < 0.15) {
+                            map[mr][mc] = 0;
+                            score += 10;
+                            dotsEaten++;
+                            updateStat('totalDotsEaten', 1);
+                            spawnParticles(mc * TILE + TILE/2, mr * TILE + TILE/2, 2, '#f55', 0.5, 1.5, 8, 15, 1);
+                        }
+                    }
+                }
+            }
+
             // Spawn fruit every 30 dots eaten
             if (dotsEaten > 0 && dotsEaten % 30 === 0 && !fruit) {
                 spawnFruit();
+            }
+
+            // Spawn powerup every 50 dots with 60% chance
+            if (dotsEaten > 0 && dotsEaten % POWERUP_SPAWN_DOTS === 0 && !activePowerup && Math.random() < 0.6) {
+                spawnPowerup();
             }
 
             // Check if player eats fruit
@@ -2498,11 +2766,36 @@
                 checkLifeMilestone();
             }
 
+            // Check if player picks up powerup
+            if (activePowerup && player.x === activePowerup.x && player.y === activePowerup.y) {
+                score += POWERUP_POINTS;
+                const pType = activePowerup.type;
+                powerupMsg = '!' + pType.name + '! +' + POWERUP_POINTS;
+                powerupMsgTimer = 120;
+                playPowerupPickup();
+                spawnParticles(player.px + TILE/2, player.py + TILE/2, 10, pType.color, 1, 4, 15, 30, 3);
+                if (pType.id === 'magnet') {
+                    magnetTimer = pType.duration;
+                } else if (pType.id === 'speed') {
+                    speedTimer = pType.duration;
+                } else if (pType.id === 'shield') {
+                    shieldActive = true;
+                } else if (pType.id === 'freeze') {
+                    freezeTimer = pType.duration;
+                    playFreezeActivation();
+                    ghosts.forEach(g => {
+                        if (!g.eaten && !g.inHouse) g.frozen = true;
+                    });
+                }
+                activePowerup = null;
+                checkLifeMilestone();
+            }
+
             if (dotsEaten >= totalDots) {
                 fruit = null;
                 furyMode = false;
                 gameState = 'win';
-                winTimer = 180;
+                winTimer = 240;
                 messageText = '¡NIVEL COMPLETADO!';
                 playLevelComplete();
                 stopMusic();
@@ -2543,12 +2836,44 @@
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
-            case 1: const d = DIRS[player.dir]; return { x: player.x + d.dx * 4, y: player.y + d.dy * 4 };
-            case 2: const g0 = ghosts[0]; return { x: player.x + (player.x - g0.x), y: player.y + (player.y - g0.y) };
-            case 3: const dist = Math.abs(ghost.x - player.x) + Math.abs(ghost.y - player.y);
-                    if (dist > 8) return { x: player.x, y: player.y };
-                    return { x: ghost.targetX, y: ghost.targetY };
-            case 4: return { x: player.x, y: player.y };
+            case 1: {
+                const d = DIRS[player.dir];
+                return { x: player.x + d.dx * 4, y: player.y + d.dy * 4 };
+            }
+            case 2: {
+                // Niebla: Zone patrol - cycles through 4 quadrant targets
+                const quadrants = [
+                    { x: 5, y: 5 }, { x: 22, y: 5 },
+                    { x: 5, y: 25 }, { x: 22, y: 25 }
+                ];
+                const quadIdx = Math.floor(animFrame / 400) % 4;
+                const playerQuadX = player.x < 14 ? 0 : 1;
+                const playerQuadY = player.y < 15 ? 0 : 1;
+                const playerQuad = playerQuadY * 2 + playerQuadX;
+                const ghostQuadX = ghost.x < 14 ? 0 : 1;
+                const ghostQuadY = ghost.y < 15 ? 0 : 1;
+                const ghostQuad = ghostQuadY * 2 + ghostQuadX;
+                // Chase if in the same quadrant as player
+                if (ghostQuad === playerQuad) return { x: player.x, y: player.y };
+                return quadrants[quadIdx];
+            }
+            case 3: {
+                // Chispa: Flanker - targets behind the player
+                const opp = player.dir < 2 ? (1 - player.dir) : (5 - player.dir);
+                const bd = DIRS[opp];
+                return { x: player.x + bd.dx * 4, y: player.y + bd.dy * 4 };
+            }
+            case 4: {
+                // SHADOW: Copycat - copies the closest ghost's targeting
+                let closestIdx = 0;
+                let closestDist = 999;
+                for (let i = 0; i < Math.min(4, ghosts.length); i++) {
+                    const gd = Math.abs(ghosts[i].x - player.x) + Math.abs(ghosts[i].y - player.y);
+                    if (gd < closestDist) { closestDist = gd; closestIdx = i; }
+                }
+                ghost._copyingIdx = closestIdx;
+                return getGhostTarget(ghosts[closestIdx], closestIdx);
+            }
         }
         return { x: player.x, y: player.y };
     }
@@ -2556,6 +2881,12 @@
     function moveGhost(ghost, idx) {
         ghost.px += (ghost.x * TILE - ghost.px) * LERP_SPEED;
         ghost.py += (ghost.y * TILE - ghost.py) * LERP_SPEED;
+
+        // Freeze powerup check
+        if (ghost.frozen && freezeTimer > 0) {
+            return;
+        }
+        if (ghost.frozen && freezeTimer <= 0) ghost.frozen = false;
 
         if (ghost.inHouse) {
             // Durante power mode, salir inmediatamente de la guarida
@@ -2586,6 +2917,8 @@
             rate = Math.round(normalRate * 2);
         }
         else rate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
+        // Apply per-ghost speed multiplier
+        if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
         if (animFrame % rate !== 0) return;
 
@@ -2683,6 +3016,7 @@
                     }
                     currentGhostStreak++;
                     updateStat('totalGhostsEaten', 1);
+                    levelGhostsEaten++;
                     updateStat('bestStreak', currentGhostStreak, 'max');
                     checkLifeMilestone();
                     updateHUD();
@@ -2691,6 +3025,17 @@
                     spawnParticles(g.px + TILE/2, g.py + TILE/2, isCombo ? 20 : 12, g.color, 1, 5, 20, 40, 3);
                     triggerShake(isCombo ? 5 : 3, isCombo ? 12 : 8);
                 } else if (!g.eaten) {
+                    // Shield protection
+                    if (shieldActive) {
+                        shieldActive = false;
+                        playShieldBreak();
+                        triggerFlash('rgba(0,255,255,0.5)', 15);
+                        spawnParticles(player.px + TILE/2, player.py + TILE/2, 15, '#5ff', 1, 4, 15, 30, 3);
+                        g.dir = (g.dir < 2) ? (1 - g.dir) : (5 - g.dir);
+                        powerupMsg = 'ESCUDO ROTO!';
+                        powerupMsgTimer = 90;
+                        return;
+                    }
                     // Ghost personality death message
                     const ghostIdx = Math.min(gi, GHOST_TAUNTS.length - 1);
                     const taunts = GHOST_TAUNTS[ghostIdx];
@@ -2781,23 +3126,28 @@
         ctx.shadowBlur = 0;
     }
 
-    function drawGhost(ghost) {
+    function drawGhost(ghost, gIdx) {
         let drawOffX = 0, drawOffY = 0;
         if (ghost.scared && !ghost.eaten) {
             drawOffX = (Math.random() - 0.5) * 3;
             drawOffY = (Math.random() - 0.5) * 3;
         }
+        // Frozen visual: blue tint overlay
+        if (ghost.frozen && freezeTimer > 0 && !ghost.eaten) {
+            drawOffX = 0; drawOffY = 0;
+        }
         const cx = ghost.px + TILE / 2 + drawOffX;
         const cy = ghost.py + TILE / 2 + drawOffY;
         const w = TILE - 2; const h = TILE - 2;
         let color = ghost.color;
-        if (ghost.scared) color = (powerTimer < 2000 && animFrame % 10 < 5) ? '#fff' : '#22a';
+        if (ghost.frozen && freezeTimer > 0 && !ghost.eaten) color = '#55f';
+        else if (ghost.scared) color = (powerTimer < 2000 && animFrame % 10 < 5) ? '#fff' : '#22a';
         if (ghost.eaten) { drawGhostEyes(cx, cy, ghost.dir); return; }
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(cx, cy - 2, w / 2, Math.PI, 0);
         ctx.lineTo(cx + w / 2, cy + h / 2 - 2);
-        const wave = Math.sin(animFrame * 0.15) * 2;
+        const wave = (ghost.frozen && freezeTimer > 0) ? 0 : Math.sin(animFrame * 0.15) * 2;
         for (let i = 0; i < 4; i++) {
             ctx.lineTo(cx + w / 2 - (i + 1) * (w / 4), cy + h / 2 - 2 + ((i % 2 === 0) ? wave : -wave));
         }
@@ -2816,6 +3166,14 @@
             ctx.stroke();
         } else {
             drawGhostEyes(cx, cy, ghost.dir);
+        }
+        // Feature 3E: Ghost 4 (SHADOW) shows dot of copied ghost
+        if (gIdx === 4 && ghost._copyingIdx !== undefined && !ghost.scared && !ghost.eaten) {
+            const copiedColor = GHOST_COLORS[ghost._copyingIdx] || '#fff';
+            ctx.fillStyle = copiedColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy + h / 2 + 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
@@ -2847,8 +3205,9 @@
             }
         }
         drawFruit();
+        drawPowerup();
         if (gameState !== 'bonus') {
-            ghosts.forEach(g => drawGhost(g));
+            ghosts.forEach((g, gi) => drawGhost(g, gi));
         }
         // Dibujar mensajes de amenaza de fantasmas
         ghostMessages.forEach(m => {
@@ -2895,6 +3254,38 @@
             ctx.strokeStyle = `rgba(255, 0, 0, ${flash})`;
             ctx.lineWidth = 4;
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        }
+        // Powerup HUD indicators
+        {
+            let hudY = 22;
+            ctx.font = 'bold 9px Courier New';
+            ctx.textAlign = 'left';
+            if (magnetTimer > 0) {
+                ctx.fillStyle = '#f55';
+                ctx.fillText('IMAN ' + magnetTimer, 5, hudY);
+                hudY += 11;
+            }
+            if (speedTimer > 0) {
+                ctx.fillStyle = '#ff0';
+                ctx.fillText('VELOZ ' + speedTimer, 5, hudY);
+                hudY += 11;
+            }
+            if (shieldActive) {
+                ctx.fillStyle = '#5ff';
+                ctx.fillText('ESCUDO', 5, hudY);
+                hudY += 11;
+            }
+            if (freezeTimer > 0) {
+                ctx.fillStyle = '#55f';
+                ctx.fillText('FREEZE ' + freezeTimer, 5, hudY);
+                hudY += 11;
+            }
+            if (powerupMsgTimer > 0) {
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#ff0';
+                ctx.font = 'bold 12px Courier New';
+                ctx.fillText(powerupMsg, canvas.width / 2, ROWS * TILE - 8);
+            }
         }
         if (gameState === 'endlessChoice') {
             ctx.fillStyle = 'rgba(0,0,0,0.85)';
@@ -2948,34 +3339,56 @@
         if (gameState === 'win' && winTimer > 0) {
             ctx.fillStyle = `rgba(0,255,0,${Math.sin(animFrame * 0.15) * 0.2 + 0.15})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(0, canvas.height/2 - 60, canvas.width, 120);
+            // Firework particles throughout win screen
+            if (animFrame % 8 === 0) {
+                const fwx = Math.random() * canvas.width;
+                const fwy = Math.random() * canvas.height * 0.6;
+                const fwColors = ['#f55','#ff0','#5f5','#5ff','#f5f','#fa5'];
+                spawnParticles(fwx, fwy, 6, fwColors[Math.floor(Math.random() * fwColors.length)], 1, 3, 15, 30, 2);
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.75)';
+            ctx.fillRect(0, canvas.height/2 - 90, canvas.width, 180);
             ctx.textAlign = 'center';
-            if (winTimer > 60) {
-                // First phase: level completed
+            if (winTimer > 160) {
+                // Phase 1: Title with stars
                 ctx.fillStyle = '#0f0';
                 ctx.font = 'bold 28px Courier New';
-                ctx.fillText('¡NIVEL ' + level + ' COMPLETADO!', canvas.width / 2, canvas.height / 2 - 15);
-                ctx.fillStyle = '#fff';
-                ctx.font = '16px Courier New';
-                ctx.fillText('Puntaje: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+                ctx.fillText('NIVEL ' + level + ' COMPLETADO!', canvas.width / 2, canvas.height / 2 - 50);
+                // Animated stars
                 const _winLvlScore = score - levelStartScore;
                 const _winStars = calculateStars(level, _winLvlScore);
-                drawStars(ctx, canvas.width / 2 - 35, canvas.height / 2 + 35, _winStars, 12);
+                drawStars(ctx, canvas.width / 2 - 35, canvas.height / 2 - 25, _winStars, 14);
                 if (currentTheme) {
                     ctx.fillStyle = currentTheme.wallInner;
                     ctx.font = '14px monospace';
-                    ctx.fillText('"' + currentTheme.name + '"', canvas.width / 2, canvas.height / 2 + 60);
+                    ctx.fillText('"' + currentTheme.name + '"', canvas.width / 2, canvas.height / 2 + 10);
+                }
+            } else if (winTimer > 80) {
+                // Phase 2: Stats panel
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 18px Courier New';
+                ctx.fillText('ESTADISTICAS', canvas.width / 2, canvas.height / 2 - 60);
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Courier New';
+                ctx.fillText('Puntaje: ' + score.toLocaleString(), canvas.width / 2, canvas.height / 2 - 30);
+                ctx.fillText('Fantasmas comidos: ' + levelGhostsEaten, canvas.width / 2, canvas.height / 2 - 10);
+                ctx.fillText('Muertes: ' + currentLevelDeaths, canvas.width / 2, canvas.height / 2 + 10);
+                const dotsPct = totalDots > 0 ? Math.round((dotsEaten / totalDots) * 100) : 100;
+                ctx.fillText('Orbes: ' + dotsPct + '%', canvas.width / 2, canvas.height / 2 + 30);
+                if (currentLevelDeaths === 0) {
+                    ctx.fillStyle = '#ffd700';
+                    ctx.font = 'bold 12px Courier New';
+                    ctx.fillText('PERFECTO!', canvas.width / 2, canvas.height / 2 + 55);
                 }
             } else {
-                // Second phase: story message
+                // Phase 3: Story message
                 ctx.fillStyle = '#ff0';
                 ctx.font = 'bold 20px Courier New';
                 let storyMsg = '';
                 if (level <= 5) storyMsg = 'Los fantasmas se reagrupan...';
-                else if (level <= 10) storyMsg = '¡Nuevos caminos aparecen!';
-                else if (level <= 15) storyMsg = 'Los fantasmas están furiosos...';
-                else storyMsg = '¡El laberinto se transforma!';
+                else if (level <= 10) storyMsg = 'Nuevos caminos aparecen!';
+                else if (level <= 15) storyMsg = 'Los fantasmas estan furiosos...';
+                else storyMsg = 'El laberinto se transforma!';
                 ctx.fillText(storyMsg, canvas.width / 2, canvas.height / 2 + 5);
             }
         }
@@ -3133,6 +3546,20 @@
                 fruit.timer--;
                 if (fruit.timer <= 0) fruit = null;
             }
+            // Powerup timers
+            if (activePowerup) {
+                activePowerup.timer--;
+                if (activePowerup.timer <= 0) activePowerup = null;
+            }
+            if (magnetTimer > 0) magnetTimer--;
+            if (speedTimer > 0) speedTimer--;
+            if (freezeTimer > 0) {
+                freezeTimer--;
+                if (freezeTimer <= 0) {
+                    ghosts.forEach(g => { g.frozen = false; });
+                }
+            }
+            if (powerupMsgTimer > 0) powerupMsgTimer--;
             // Ghost message timers
             ghostMessages.forEach(m => { m.timer--; m.y -= 0.3; });
             ghostMessages = ghostMessages.filter(m => m.timer > 0);
@@ -3245,6 +3672,7 @@
                     updateStat('bestLevel', level, 'max');
                     checkAchievements();
                     currentLevelDeaths = 0;
+                    levelGhostsEaten = 0;
                     levelStartScore = score;
                     playWhoosh();
                     transitionState = 'fadeout';
@@ -3267,6 +3695,7 @@
                     saveGameProgress();
                     checkAchievements();
                     currentLevelDeaths = 0;
+                    levelGhostsEaten = 0;
                     levelStartScore = score;
                     // Bonus fruit level
                     gameState = 'bonus';
@@ -3295,6 +3724,7 @@
                     saveGameProgress();
                     checkAchievements();
                     currentLevelDeaths = 0;
+                    levelGhostsEaten = 0;
                     levelStartScore = score;
                     playWhoosh();
                     transitionState = 'fadeout';
