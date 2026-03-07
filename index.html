@@ -1038,13 +1038,13 @@
     function createGhosts() {
         ghosts = [
             { x: 13, y: 14, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 13*TILE, py: 14*TILE, inHouse: false, houseTimer: 0, scared: false, eaten: false, targetX: 25, targetY: 0 },
-            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 180, scared: false, eaten: false, targetX: 2, targetY: 0 },
-            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 350, scared: false, eaten: false, targetX: 27, targetY: 30 },
-            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 500, scared: false, eaten: false, targetX: 0, targetY: 30 },
-            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 200, scared: false, eaten: false, targetX: 14, targetY: 0 },
+            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 90, scared: false, eaten: false, targetX: 2, targetY: 0 },
+            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 175, scared: false, eaten: false, targetX: 27, targetY: 30 },
+            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 250, scared: false, eaten: false, targetX: 0, targetY: 30 },
+            { x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 100, scared: false, eaten: false, targetX: 14, targetY: 0 },
         ];
         if (level >= 10) {
-            ghosts.push({ x: 13, y: 13, dir: 1, color: GHOST_COLORS[5], name: GHOST_NAMES[5], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 600, scared: false, eaten: false, targetX: 14, targetY: 30 });
+            ghosts.push({ x: 13, y: 13, dir: 1, color: GHOST_COLORS[5], name: GHOST_NAMES[5], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 300, scared: false, eaten: false, targetX: 14, targetY: 30 });
         }
     }
 
