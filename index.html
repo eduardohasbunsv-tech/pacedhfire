@@ -692,6 +692,135 @@
     const HIHAT_NORMAL= [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,2];
     const HIHAT_POWER = [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,2];
 
+    let currentTheme = null;
+
+    const LEVEL_THEMES = [
+      { name:'Genesis Chill', wallOuter:'#22c', wallInner:'#33f', dotColor:'#ffa', orbColor:'#ffff96', doorColor:'#f8a', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,0,0,82,98,0,110,0,82,0,123,0,98,0,82,0], bassPower:[82,82,98,82,110,123,147,110,82,98,82,110,123,82,98,110],
+        melodyA:[329,0,392,0,440,392,329,0,294,0,329,0,392,0,0,0], melodyB:[440,0,494,0,523,494,440,0,392,0,329,0,294,0,329,0],
+        kick:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'square', melodyWave:'square', kickStart:150, kickEnd:40, melodyDetune:3 },
+      { name:'Neon Drift', wallOuter:'#066', wallInner:'#0aa', dotColor:'#aff', orbColor:'#ccffff', doorColor:'#0cc', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[65,0,0,65,82,0,98,0,65,0,82,0,98,0,65,0], bassPower:[65,65,82,65,98,110,123,98,65,82,65,98,110,65,82,98],
+        melodyA:[392,0,440,0,494,440,392,0,329,0,392,0,440,0,0,0], melodyB:[494,0,523,0,587,523,494,0,440,0,392,0,329,0,392,0],
+        kick:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,2], hihatPower:[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,2],
+        bassWave:'triangle', melodyWave:'sine', kickStart:130, kickEnd:35, melodyDetune:2 },
+      { name:'Purple Haze', wallOuter:'#606', wallInner:'#a0a', dotColor:'#faf', orbColor:'#ffccff', doorColor:'#f0f', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[98,0,82,0,0,98,0,82,110,0,98,0,0,82,0,98], bassPower:[98,82,98,82,110,98,123,110,98,82,98,110,123,98,82,110],
+        melodyA:[440,0,0,392,0,440,0,329,392,0,0,440,0,329,0,0], melodyB:[523,0,0,494,0,523,0,440,494,0,0,523,0,440,0,0],
+        kick:[1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0], kickPower:[1,0,1,0,0,1,1,0,1,0,1,0,0,1,1,0],
+        hihat:[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,2], hihatPower:[1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,2],
+        bassWave:'sine', melodyWave:'triangle', kickStart:140, kickEnd:38, melodyDetune:5 },
+      { name:'Forest Echo', wallOuter:'#060', wallInner:'#0a0', dotColor:'#cfc', orbColor:'#ddffdd', doorColor:'#0f0', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[110,0,0,0,82,0,0,110,0,0,82,0,110,0,0,82], bassPower:[110,82,110,82,82,110,123,82,110,82,110,82,123,110,82,110],
+        melodyA:[294,0,329,0,392,0,329,294,0,329,0,392,329,0,294,0], melodyB:[392,0,440,0,494,0,440,392,0,440,0,494,440,0,392,0],
+        kick:[1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0], kickPower:[1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1],
+        hihat:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,2], hihatPower:[1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,2],
+        bassWave:'triangle', melodyWave:'square', kickStart:120, kickEnd:30, melodyDetune:4 },
+      { name:'Sunset Wave', wallOuter:'#640', wallInner:'#a80', dotColor:'#fea', orbColor:'#ffffcc', doorColor:'#fa0', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,0,98,0,110,0,82,0,98,0,123,0,82,0,98,0], bassPower:[82,98,110,82,123,147,110,98,82,110,82,123,147,82,98,110],
+        melodyA:[523,0,494,0,440,0,392,0,440,0,494,0,523,0,0,0], melodyB:[587,0,523,0,494,0,440,0,494,0,523,0,587,0,0,0],
+        kick:[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0], kickPower:[1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0],
+        hihat:[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,2], hihatPower:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,2],
+        bassWave:'square', melodyWave:'triangle', kickStart:160, kickEnd:42, melodyDetune:6 },
+      { name:'Bass Drop', wallOuter:'#600', wallInner:'#a22', dotColor:'#fcc', orbColor:'#ffdddd', doorColor:'#f44', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[55,0,55,0,0,55,0,82,55,0,55,0,82,0,55,0], bassPower:[55,55,82,55,82,110,82,55,55,82,55,82,110,55,82,55],
+        melodyA:[329,0,0,329,0,392,0,0,329,0,0,329,392,0,0,0], melodyB:[440,0,0,440,0,494,0,0,440,0,0,440,494,0,0,0],
+        kick:[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1], kickPower:[1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1],
+        hihat:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'square', kickStart:170, kickEnd:30, melodyDetune:8 },
+      { name:'Cyber Pulse', wallOuter:'#066', wallInner:'#0cc', dotColor:'#cff', orbColor:'#eeffff', doorColor:'#0ff', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,82,0,0,98,98,0,0,110,110,0,0,82,82,0,0], bassPower:[82,82,98,98,110,110,123,123,82,82,98,98,110,110,123,123],
+        melodyA:[392,440,0,0,494,440,0,0,392,329,0,0,440,0,0,0], melodyB:[523,587,0,0,659,587,0,0,523,494,0,0,587,0,0,0],
+        kick:[1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], kickPower:[1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1],
+        hihat:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,2], hihatPower:[1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,2],
+        bassWave:'square', melodyWave:'sawtooth', kickStart:155, kickEnd:35, melodyDetune:10 },
+      { name:'Pink Fury', wallOuter:'#606', wallInner:'#f6f', dotColor:'#fdf', orbColor:'#ffeeff', doorColor:'#f9f', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[65,0,82,65,0,98,0,65,82,0,65,82,98,0,65,0], bassPower:[65,82,98,65,82,110,82,65,98,82,65,98,110,82,65,82],
+        melodyA:[587,0,523,0,494,0,523,587,0,494,0,440,494,0,0,0], melodyB:[659,0,587,0,523,0,587,659,0,523,0,494,523,0,0,0],
+        kick:[1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'square', kickStart:180, kickEnd:28, melodyDetune:7 },
+      { name:'Lava Flow', wallOuter:'#630', wallInner:'#f60', dotColor:'#fda', orbColor:'#ffeecc', doorColor:'#f80', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[55,0,0,55,82,0,0,55,98,0,0,82,55,0,0,98], bassPower:[55,55,82,55,82,82,98,82,98,98,110,98,55,82,98,110],
+        melodyA:[440,392,0,329,0,392,440,0,494,440,0,392,0,440,0,0], melodyB:[523,494,0,440,0,494,523,0,587,523,0,494,0,523,0,0],
+        kick:[1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0], kickPower:[1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1],
+        hihat:[1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,2], hihatPower:[1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,2],
+        bassWave:'square', melodyWave:'sawtooth', kickStart:190, kickEnd:32, melodyDetune:12 },
+      { name:'Electric Storm', wallOuter:'#006', wallInner:'#00f', dotColor:'#aaf', orbColor:'#ccccff', doorColor:'#44f', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,98,0,82,110,0,82,0,123,82,0,98,82,0,110,0], bassPower:[82,98,110,82,123,110,82,98,82,110,123,82,147,82,98,110],
+        melodyA:[659,0,587,0,523,0,587,659,523,0,494,0,440,0,0,0], melodyB:[784,0,659,0,587,0,659,784,587,0,523,0,494,0,0,0],
+        kick:[1,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,1,0,1,0,1,1,0,1,1,0,1,0,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'square', kickStart:200, kickEnd:25, melodyDetune:15 },
+      { name:'Lime Rush', wallOuter:'#060', wallInner:'#6f0', dotColor:'#cfa', orbColor:'#ddffcc', doorColor:'#8f0', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,0,82,0,98,0,98,0,110,0,110,0,82,0,82,0], bassPower:[82,82,98,82,98,110,110,98,110,123,123,110,82,98,82,98],
+        melodyA:[329,392,440,392,329,392,440,494,523,494,440,392,329,0,0,0], melodyB:[440,494,523,494,440,494,523,587,659,587,523,494,440,0,0,0],
+        kick:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'square', melodyWave:'sawtooth', kickStart:160, kickEnd:38, melodyDetune:5 },
+      { name:'Magenta Trance', wallOuter:'#606', wallInner:'#f0f', dotColor:'#faf', orbColor:'#ffccff', doorColor:'#f6f', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[98,0,0,98,0,0,110,0,98,0,0,110,0,0,98,0], bassPower:[98,98,110,98,123,110,98,110,98,110,123,110,147,110,98,110],
+        melodyA:[440,494,523,494,440,0,440,494,523,587,523,494,440,0,0,0], melodyB:[523,587,659,587,523,0,523,587,659,784,659,587,523,0,0,0],
+        kick:[1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'triangle', melodyWave:'sawtooth', kickStart:150, kickEnd:35, melodyDetune:8 },
+      { name:'Ice Cathedral', wallOuter:'#046', wallInner:'#08f', dotColor:'#bdf', orbColor:'#ddeeff', doorColor:'#4af', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,0,0,0,110,0,0,0,82,0,0,0,123,0,0,0], bassPower:[82,82,110,82,110,110,123,110,82,82,110,82,123,123,147,123],
+        melodyA:[523,587,659,587,523,494,440,494,523,587,659,784,659,0,0,0], melodyB:[659,784,880,784,659,587,523,587,659,784,880,988,880,0,0,0],
+        kick:[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0], kickPower:[1,0,0,1,0,0,1,0,1,0,0,1,1,0,0,0],
+        hihat:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,2], hihatPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,2],
+        bassWave:'sine', melodyWave:'triangle', kickStart:130, kickEnd:30, melodyDetune:3 },
+      { name:'Amber Ascent', wallOuter:'#630', wallInner:'#fa0', dotColor:'#fda', orbColor:'#ffeecc', doorColor:'#fc0', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,98,110,123,82,98,110,123,82,98,110,123,82,98,110,123], bassPower:[82,98,110,123,147,123,110,98,82,98,110,123,147,123,110,98],
+        melodyA:[392,440,494,523,587,523,494,440,392,440,494,523,587,0,0,0], melodyB:[494,523,587,659,784,659,587,523,494,523,587,659,784,0,0,0],
+        kick:[1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'square', melodyWave:'sawtooth', kickStart:170, kickEnd:40, melodyDetune:10 },
+      { name:'Violet Euphoria', wallOuter:'#306', wallInner:'#60f', dotColor:'#caf', orbColor:'#ddbbff', doorColor:'#80f', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[98,110,0,98,123,0,98,110,0,123,98,0,110,0,123,0], bassPower:[98,110,123,98,123,147,98,110,123,147,98,123,147,123,110,98],
+        melodyA:[659,587,523,587,659,784,659,587,523,587,659,784,880,0,0,0], melodyB:[784,659,587,659,784,880,784,659,587,659,784,880,988,0,0,0],
+        kick:[1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0], kickPower:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        hihat:[1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'sawtooth', kickStart:180, kickEnd:32, melodyDetune:12 },
+      { name:'Crimson Blaze', wallOuter:'#600', wallInner:'#f00', dotColor:'#faa', orbColor:'#ffcccc', doorColor:'#f44', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[55,82,55,82,98,55,82,55,110,82,55,82,98,55,82,55], bassPower:[55,82,98,55,82,110,55,82,98,82,110,55,123,82,55,98],
+        melodyA:[440,0,440,0,523,0,440,0,587,0,523,0,440,0,0,0], melodyB:[587,0,587,0,659,0,587,0,784,0,659,0,587,0,0,0],
+        kick:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], kickPower:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+        hihat:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'square', kickStart:200, kickEnd:25, melodyDetune:15 },
+      { name:'Emerald Fury', wallOuter:'#030', wallInner:'#0f6', dotColor:'#afc', orbColor:'#ccffee', doorColor:'#0f8', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,0,110,82,0,123,0,82,110,0,82,110,123,0,82,0], bassPower:[82,110,123,82,110,147,110,82,123,110,82,123,147,110,82,110],
+        melodyA:[523,587,0,523,659,0,587,523,0,659,587,0,523,0,0,0], melodyB:[659,784,0,659,880,0,784,659,0,880,784,0,659,0,0,0],
+        kick:[1,0,1,0,0,1,1,0,1,0,1,0,0,1,1,0], kickPower:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+        hihat:[1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'square', melodyWave:'sawtooth', kickStart:210, kickEnd:22, melodyDetune:18 },
+      { name:'Neon Inferno', wallOuter:'#603', wallInner:'#f06', dotColor:'#fad', orbColor:'#ffccee', doorColor:'#f48', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[98,82,98,82,110,98,110,98,123,110,123,110,98,82,98,82], bassPower:[98,82,110,98,123,110,98,82,110,98,123,110,147,123,110,98],
+        melodyA:[784,0,659,0,784,880,0,659,784,0,659,0,587,0,0,0], melodyB:[880,0,784,0,880,988,0,784,880,0,784,0,659,0,0,0],
+        kick:[1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0], kickPower:[1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1],
+        hihat:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'sawtooth', kickStart:220, kickEnd:20, melodyDetune:20 },
+      { name:'Silver Ghost', wallOuter:'#444', wallInner:'#aaa', dotColor:'#ddd', orbColor:'#ffffff', doorColor:'#888', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,110,82,110,123,82,123,82,147,110,147,110,82,123,82,123], bassPower:[82,110,123,82,110,147,110,82,123,147,123,110,147,123,110,82],
+        melodyA:[659,784,880,784,659,0,659,784,880,784,659,587,523,0,0,0], melodyB:[880,988,1047,988,880,0,880,988,1047,988,880,784,659,0,0,0],
+        kick:[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0], kickPower:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+        hihat:[0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'square', melodyWave:'square', kickStart:200, kickEnd:18, melodyDetune:22 },
+      { name:'Golden Legend', wallOuter:'#640', wallInner:'#ff0', dotColor:'#ffa', orbColor:'#ffffff', doorColor:'#fa0', playerColor:'#0f0', playerGlow:'#0f0', trailColor:'#0f0',
+        bass:[82,98,110,123,147,123,110,98,82,110,123,147,165,147,123,110], bassPower:[82,98,110,123,147,165,147,123,110,123,147,165,196,165,147,123],
+        melodyA:[880,784,659,784,880,988,880,784,659,784,880,988,1047,0,0,0], melodyB:[988,880,784,880,988,1047,988,880,784,880,988,1047,1175,0,0,0],
+        kick:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], kickPower:[1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1],
+        hihat:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2], hihatPower:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+        bassWave:'sawtooth', melodyWave:'sawtooth', kickStart:230, kickEnd:15, melodyDetune:25 },
+    ];
+
+    function applyTheme() {
+        currentTheme = LEVEL_THEMES[Math.min(level - 1, 19)];
+    }
+
     function makeDistCurve(amount) {
         const n = 256, curve = new Float32Array(n);
         for (let i = 0; i < n; i++) {
@@ -755,8 +884,10 @@
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(150, time);
-        osc.frequency.exponentialRampToValueAtTime(40, time + 0.05);
+        const kS = currentTheme ? currentTheme.kickStart : 150;
+        const kE = currentTheme ? currentTheme.kickEnd : 40;
+        osc.frequency.setValueAtTime(kS, time);
+        osc.frequency.exponentialRampToValueAtTime(kE, time + 0.05);
         g.gain.setValueAtTime(0.35, time);
         g.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
         osc.connect(g); g.connect(musicLayers.kick);
@@ -777,7 +908,7 @@
         if (!audioCtx || !freq) return;
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        osc.type = 'square';
+        osc.type = currentTheme ? currentTheme.bassWave : 'square';
         osc.frequency.setValueAtTime(freq, time);
         g.gain.setValueAtTime(0.1, time);
         g.gain.setValueAtTime(0.1, time + dur * 0.7);
@@ -805,10 +936,11 @@
     function playMelodyNote(freq, time, dur) {
         if (!audioCtx || !freq) return;
         // Two detuned oscillators for thickness
-        for (let det = -3; det <= 3; det += 6) {
+        const _md = currentTheme ? currentTheme.melodyDetune : 3;
+        for (let det = -_md; det <= _md; det += _md * 2) {
             const osc = audioCtx.createOscillator();
             const g = audioCtx.createGain();
-            osc.type = 'square';
+            osc.type = currentTheme ? currentTheme.melodyWave : 'square';
             osc.detune.setValueAtTime(det, time);
             osc.frequency.setValueAtTime(freq, time);
             g.gain.setValueAtTime(0.04, time);
@@ -895,21 +1027,21 @@
         const isDanger = musicState === 'danger';
 
         // Kick
-        const kickPat = isPower || isFury ? KICK_POWER : KICK_NORMAL;
+        const kickPat = currentTheme ? (isPower || isFury ? currentTheme.kickPower : currentTheme.kick) : (isPower || isFury ? KICK_POWER : KICK_NORMAL);
         if (kickPat[beat]) playKick(time);
 
         // Bass
-        const bassPat = isPower ? BASS_POWER : BASS_NORMAL;
+        const bassPat = currentTheme ? (isPower ? currentTheme.bassPower : currentTheme.bass) : (isPower ? BASS_POWER : BASS_NORMAL);
         if (bassPat[beat]) playBassNote(bassPat[beat], time, stepDur * 0.8);
 
         // Hi-hat
-        const hatPat = isPower || isFury ? HIHAT_POWER : HIHAT_NORMAL;
+        const hatPat = currentTheme ? (isPower || isFury ? currentTheme.hihatPower : currentTheme.hihat) : (isPower || isFury ? HIHAT_POWER : HIHAT_NORMAL);
         if (hatPat[beat] === 1) playHiHat(time, false);
         else if (hatPat[beat] === 2) playHiHat(time, true);
 
         // Melody (only in normal/danger/bonus)
         if (!isFury) {
-            const mel = (currentBeat < 16) ? MELODY_A : MELODY_B;
+            const mel = currentTheme ? ((currentBeat < 16) ? currentTheme.melodyA : currentTheme.melodyB) : ((currentBeat < 16) ? MELODY_A : MELODY_B);
             const note = mel[beat];
             if (note) playMelodyNote(note, time, stepDur * 0.9);
         }
@@ -1486,6 +1618,7 @@
         score = 0;
         lives = 3;
         level = 1;
+        applyTheme();
         resetMap();
         resetPositions();
         fruit = null;
@@ -1774,15 +1907,15 @@
     // ---- DRAWING ----
     function drawWall(x, y) {
         const px = x * TILE; const py = y * TILE;
-        ctx.fillStyle = '#22c';
+        ctx.fillStyle = currentTheme ? currentTheme.wallOuter : '#22c';
         ctx.fillRect(px, py, TILE, TILE);
-        ctx.fillStyle = '#33f';
+        ctx.fillStyle = currentTheme ? currentTheme.wallInner : '#33f';
         ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
         const hasTop = y > 0 && map[y-1][x] === 1;
         const hasBottom = y < ROWS-1 && map[y+1][x] === 1;
         const hasLeft = x > 0 && map[y][x-1] === 1;
         const hasRight = x < COLS-1 && map[y][x+1] === 1;
-        ctx.fillStyle = '#22c';
+        ctx.fillStyle = currentTheme ? currentTheme.wallOuter : '#22c';
         if (!hasTop) ctx.fillRect(px + 2, py, TILE - 4, 3);
         if (!hasBottom) ctx.fillRect(px + 2, py + TILE - 3, TILE - 4, 3);
         if (!hasLeft) ctx.fillRect(px, py + 2, 3, TILE - 4);
@@ -1790,7 +1923,7 @@
     }
 
     function drawDot(x, y) {
-        ctx.fillStyle = '#ffa';
+        ctx.fillStyle = currentTheme ? currentTheme.dotColor : '#ffa';
         ctx.beginPath();
         ctx.arc(x * TILE + TILE/2, y * TILE + TILE/2, 2, 0, Math.PI * 2);
         ctx.fill();
@@ -1798,7 +1931,9 @@
 
     function drawPowerOrb(x, y) {
         const pulse = Math.sin(animFrame * 0.08) * 0.3 + 0.7;
-        ctx.fillStyle = `rgba(255, 255, 150, ${pulse})`;
+        const _oh = currentTheme ? currentTheme.orbColor : '#ffff96';
+        const _or = parseInt(_oh.substr(1,2),16)||255, _og = parseInt(_oh.substr(3,2),16)||255, _ob = parseInt(_oh.substr(5,2),16)||150;
+        ctx.fillStyle = `rgba(${_or}, ${_og}, ${_ob}, ${pulse})`;
         ctx.beginPath();
         ctx.arc(x * TILE + TILE/2, y * TILE + TILE/2, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -1822,7 +1957,7 @@
         else if (player.dir === 1) angle = 0;
         else if (player.dir === 2) angle = -Math.PI / 2;
         else if (player.dir === 3) angle = Math.PI / 2;
-        ctx.fillStyle = '#0f0';
+        ctx.fillStyle = currentTheme ? currentTheme.playerColor : '#0f0';
         ctx.beginPath();
         ctx.arc(cx, cy, r, angle + mouth, angle + Math.PI * 2 - mouth);
         ctx.lineTo(cx, cy);
@@ -1833,9 +1968,9 @@
         ctx.beginPath();
         ctx.arc(cx + Math.cos(eyeAngle) * r * 0.35, cy + Math.sin(eyeAngle) * r * 0.35, 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowColor = '#0f0';
+        ctx.shadowColor = currentTheme ? currentTheme.playerGlow : '#0f0';
         ctx.shadowBlur = 8;
-        ctx.strokeStyle = '#0f0';
+        ctx.strokeStyle = currentTheme ? currentTheme.playerGlow : '#0f0';
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
@@ -1895,7 +2030,7 @@
                 else if (tile === 2) drawDot(c, r);
                 else if (tile === 3) drawPowerOrb(c, r);
                 else if (tile === 4) {
-                    ctx.fillStyle = '#f8a';
+                    ctx.fillStyle = currentTheme ? currentTheme.doorColor : '#f8a';
                     ctx.fillRect(c * TILE, r * TILE + TILE / 2 - 2, TILE, 4);
                 }
             }
@@ -1921,7 +2056,7 @@
         if (level >= 5) {
             playerTrail.forEach((t, i) => {
                 ctx.globalAlpha = 0.1 + (0.1 * (playerTrail.length - i));
-                ctx.fillStyle = '#0f0';
+                ctx.fillStyle = currentTheme ? currentTheme.trailColor : '#0f0';
                 ctx.beginPath();
                 ctx.arc(t.x + TILE/2, t.y + TILE/2, TILE/3, 0, Math.PI*2);
                 ctx.fill();
@@ -1981,6 +2116,11 @@
                 ctx.fillStyle = '#fff';
                 ctx.font = '16px Courier New';
                 ctx.fillText('Puntaje: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+                if (currentTheme) {
+                    ctx.fillStyle = currentTheme.wallInner;
+                    ctx.font = '14px monospace';
+                    ctx.fillText('"' + currentTheme.name + '"', canvas.width / 2, canvas.height / 2 + 40);
+                }
             } else {
                 // Second phase: story message
                 ctx.fillStyle = '#ff0';
@@ -2134,11 +2274,13 @@
                     fruitMsgTimer = 120;
                     // Keep current map but hide ghosts
                     level++;
+                    applyTheme();
                     resetMap();
                     resetPlayer();
                     updateHUD();
                 } else {
                     level++;
+                    applyTheme();
                     resetMap();
                     resetPositions();
                     updateHUD();
