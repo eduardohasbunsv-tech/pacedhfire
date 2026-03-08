@@ -509,7 +509,6 @@
             transition: width 0.3s;
             border-radius: 2px;
         }
-        .shop-item { cursor: pointer; }
         .loading-text {
             color: #555;
             font-size: 14px;
@@ -528,7 +527,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.2</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.4</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -587,7 +586,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.2</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.4</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -994,18 +993,7 @@
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ];
 
-    // ---- SHOP ----
-    const SHOP_LEVELS = [3, 6, 9, 12, 15, 18];
-    const SHOP_ITEMS = [
-        { id: 'speed_up', name: 'Velocidad+', desc: 'Mas rapido 1 nivel', cost: 8500, icon: 'V', color: '#ff0' },
-        { id: 'shield_start', name: 'Escudo', desc: 'Empezar con escudo', cost: 13000, icon: 'E', color: '#5ff' },
-        { id: 'magnet_up', name: 'Iman+', desc: 'Iman dura mas', cost: 11000, icon: 'M', color: '#f55' },
-        { id: 'extra_life', name: 'Vida Extra', desc: '+1 vida', cost: 22000, icon: '+', color: '#0f0' },
-    ];
-    let shopSelectedIdx = 0;
-    let shopPurchasedThisRound = [];
-    let shopSpeedBoost = false;
-    let shopMagnetBoost = false;
+    // ---- SHOP (eliminado v3.4) ----
 
     // ---- CUTSCENE ----
     const CUTSCENE_SCRIPTS = [
@@ -2253,22 +2241,6 @@
         osc.start(t); osc.stop(t + 0.2);
     }
 
-    function playShopBuy() {
-        if (!audioCtx) return;
-        var t = audioCtx.currentTime;
-        [700, 900, 1100].forEach(function(freq, i) {
-            var osc = audioCtx.createOscillator();
-            var g = audioCtx.createGain();
-            osc.type = 'triangle';
-            var s = t + i * 0.06;
-            osc.frequency.setValueAtTime(freq, s);
-            g.gain.setValueAtTime(0.1, s);
-            g.gain.exponentialRampToValueAtTime(0.001, s + 0.1);
-            osc.connect(g); g.connect(sfxGain);
-            osc.start(s); osc.stop(s + 0.11);
-        });
-    }
-
     // ---- SKIN FUNCTIONS ----
     function isSkinUnlocked(skin) {
         if (!skin.unlock) return true;
@@ -2820,10 +2792,6 @@
         bossPhaseTimer = 0;
         cutsceneTimer = 0;
         cutsceneIdx = 0;
-        shopSelectedIdx = 0;
-        shopPurchasedThisRound = [];
-        shopSpeedBoost = false;
-        shopMagnetBoost = false;
         updateHUD();
     }
 
@@ -2889,21 +2857,11 @@
                 gameState = bossActive ? 'bossfight' : 'playing';
                 if (typeof startMusic === 'function') startMusic();
                 return;
-            } else if (gameState === 'shop') {
-                shopClose();
-                return;
             } else if (gameState === 'cutscene') {
                 // Skip cutscene
                 cutsceneTimer = 0;
                 return;
             }
-        }
-        // Shop keyboard controls
-        if (gameState === 'shop') {
-            if (e.key === 'ArrowUp' || e.key === 'w') { shopSelectedIdx = Math.max(0, shopSelectedIdx - 1); e.preventDefault(); }
-            else if (e.key === 'ArrowDown' || e.key === 's') { shopSelectedIdx = Math.min(SHOP_ITEMS.length - 1, shopSelectedIdx + 1); e.preventDefault(); }
-            else if (e.key === 'Enter') { shopBuy(); e.preventDefault(); }
-            return;
         }
         // Cutscene skip
         if (gameState === 'cutscene') {
@@ -2934,28 +2892,8 @@
         else player.nextDir = dy > 0 ? 3 : 2;
     });
 
-    // Canvas click handler for endless choice and shop
+    // Canvas click handler for endless choice
     canvas.addEventListener('click', function(e) {
-        // Shop touch support
-        if (gameState === 'shop') {
-            var rect = canvas.getBoundingClientRect();
-            var scaleY = canvas.height / rect.height;
-            var cy = (e.clientY - rect.top) * scaleY;
-            var startY = 100;
-            var itemH = 70;
-            for (var si = 0; si < SHOP_ITEMS.length; si++) {
-                var iy = startY + si * (itemH + 10);
-                if (cy >= iy && cy <= iy + itemH) {
-                    if (shopSelectedIdx === si) { shopBuy(); }
-                    else { shopSelectedIdx = si; }
-                    return;
-                }
-            }
-            // Boton CONTINUAR (parte inferior)
-            var btnY = canvas.height - 65;
-            if (cy >= btnY && cy <= btnY + 40) { shopClose(); return; }
-            return;
-        }
         // Cutscene skip on tap
         if (gameState === 'cutscene') { cutsceneTimer = 0; return; }
         if (gameState !== 'endlessChoice') return;
@@ -3018,7 +2956,7 @@
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
         let rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.56));
-        if (speedTimer > 0 || shopSpeedBoost) rate = Math.max(2, Math.floor(rate / 2));
+        if (speedTimer > 0) rate = Math.max(2, Math.floor(rate / 2));
         if (animFrame % rate !== 0) return;
 
         const nd = DIRS[player.nextDir];
@@ -3916,10 +3854,6 @@
             ctx.fillText('Presiona ESC o toca pausa', canvas.width/2, canvas.height/2 + 30);
         }
 
-        // Shop overlay
-        if (gameState === 'shop') {
-            drawShop();
-        }
         // Boss fight overlay
         if (gameState === 'bossfight' || gameState === 'bossintro') {
             drawBossOverlay();
@@ -3942,89 +3876,6 @@
         }
         drawAchievementPopup(ctx);
         document.getElementById('message').textContent = messageText;
-    }
-
-    // ===== SHOP FUNCTIONS =====
-    function drawShop() {
-        ctx.fillStyle = 'rgba(0,0,0,0.92)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 24px Courier New';
-        ctx.fillText('TIENDA', canvas.width / 2, 50);
-        ctx.fillStyle = '#0ff';
-        ctx.font = '14px Courier New';
-        ctx.fillText('Puntaje: ' + score.toLocaleString(), canvas.width / 2, 75);
-        var itemH = 70, startY = 100;
-        for (var si = 0; si < SHOP_ITEMS.length; si++) {
-            var item = SHOP_ITEMS[si];
-            var iy = startY + si * (itemH + 10);
-            var bought = shopPurchasedThisRound.indexOf(item.id) !== -1;
-            var canAfford = score >= item.cost && !bought;
-            var selected = si === shopSelectedIdx;
-            // Background
-            ctx.fillStyle = selected ? 'rgba(0,255,255,0.15)' : 'rgba(255,255,255,0.05)';
-            ctx.fillRect(50, iy, canvas.width - 100, itemH);
-            if (selected) { ctx.strokeStyle = '#0ff'; ctx.lineWidth = 2; ctx.strokeRect(50, iy, canvas.width - 100, itemH); }
-            // Icon
-            ctx.fillStyle = item.color;
-            ctx.font = 'bold 28px Courier New';
-            ctx.textAlign = 'center';
-            ctx.fillText(item.icon, 90, iy + 42);
-            // Name & desc
-            ctx.textAlign = 'left';
-            ctx.fillStyle = bought ? '#555' : '#fff';
-            ctx.font = 'bold 16px Courier New';
-            ctx.fillText(item.name, 120, iy + 28);
-            ctx.fillStyle = bought ? '#444' : '#aaa';
-            ctx.font = '12px Courier New';
-            ctx.fillText(item.desc, 120, iy + 48);
-            // Cost
-            ctx.textAlign = 'right';
-            ctx.fillStyle = bought ? '#555' : (canAfford ? '#0f0' : '#f55');
-            ctx.font = 'bold 14px Courier New';
-            ctx.fillText(bought ? 'COMPRADO' : item.cost.toLocaleString() + ' pts', canvas.width - 60, iy + 38);
-        }
-        ctx.textAlign = 'center';
-        // Boton CONTINUAR (visible y tocable en mobile)
-        ctx.fillStyle = '#0f0';
-        ctx.fillRect(canvas.width / 2 - 100, canvas.height - 65, 200, 40);
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 16px Courier New';
-        ctx.fillText('CONTINUAR', canvas.width / 2, canvas.height - 40);
-        ctx.fillStyle = '#888';
-        ctx.font = '11px Courier New';
-        ctx.fillText('Toca un item para seleccionar, toca de nuevo para comprar', canvas.width / 2, canvas.height - 5);
-    }
-
-    function shopBuy() {
-        var item = SHOP_ITEMS[shopSelectedIdx];
-        if (shopPurchasedThisRound.indexOf(item.id) !== -1) return;
-        if (score < item.cost) return;
-        score -= item.cost;
-        shopPurchasedThisRound.push(item.id);
-        if (item.id === 'speed_up') shopSpeedBoost = true;
-        else if (item.id === 'shield_start') shieldActive = true;
-        else if (item.id === 'magnet_up') shopMagnetBoost = true;
-        else if (item.id === 'extra_life') { lives++; }
-        playShopBuy();
-        updateHUD();
-    }
-
-    function shopClose() {
-        // Transition to next level
-        level++;
-        applyTheme();
-        resetMap();
-        resetPositions();
-        if (shopSpeedBoost) speedTimer = 300;
-        if (shopMagnetBoost) magnetTimer = 300;
-        gameState = 'countdown';
-        countdownTimer = 210;
-        currentLevelDeaths = 0;
-        levelGhostsEaten = 0;
-        levelStartScore = score;
-        updateHUD();
     }
 
     // ===== BOSS FIGHT FUNCTIONS =====
@@ -4660,12 +4511,6 @@
                     transitionCallback = function() { initBossFight(bIdx); };
                     ghostMessages = [];
                     playerTrail = [];
-                } else if (SHOP_LEVELS.indexOf(level) !== -1 && BOSS_LEVELS.indexOf(level) === -1) {
-                    // Go to shop
-                    stopMusic();
-                    gameState = 'shop';
-                    shopSelectedIdx = 0;
-                    shopPurchasedThisRound = [];
                 } else {
                     // Normal level transition
                     playWhoosh();
@@ -4779,9 +4624,6 @@
             }
         }
         // Shop state (just draw, handled by input)
-        if (gameState === 'shop') {
-            // Nothing to update, draw handles it
-        }
         // Bonus level logic
         if (gameState === 'bonus') {
             movePlayer();
