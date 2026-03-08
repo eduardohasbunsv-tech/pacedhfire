@@ -967,6 +967,64 @@
     const clansRef = db.collection('clans');
     const challengesRef = db.collection('challenges');
 
+    // ---- v4.0 FILTRO DE MALAS PALABRAS (español) ----
+    const BLOCKED_WORDS = [
+        'puta','puto','putas','putos','putazo','putear','putada','puteria','putería',
+        'mierda','mierdas','mierdero','mierdoso',
+        'verga','vergas','vergon','vergudo','vergota',
+        'chinga','chingar','chingada','chingado','chingadera','chingon','chingón','chingados',
+        'pendejo','pendeja','pendejos','pendejas','pendejada','pendejez',
+        'cabron','cabrón','cabrones','cabrona','cabronazo',
+        'culero','culera','culeros','culo','culos',
+        'mamón','mamon','mamona','mamalon','mamalón',
+        'huevon','huevón','huevona','wevon','guevon','güevón',
+        'idiota','idiotas','imbecil','imbécil','imbeciles','estupido','estúpido','estupida','estúpida',
+        'joto','jota','jotos','jotear','marica','maricon','maricón','maricones',
+        'zorra','zorras','zorro',
+        'perra','perro','perras','perros',
+        'coger','cojan','cogida','cogido',
+        'chupame','chupamela','mamame','mamámela','chupar',
+        'nalgas','nalga','nalgon','nalgona',
+        'teta','tetas','tetona','tetonas',
+        'asco','asqueroso','asquerosa',
+        'malparido','malparida','hijueputa','hijodeputa',
+        'gonorrea','gonorrhea',
+        'basura','maldito','maldita','malditos','malditas',
+        'desgraciado','desgraciada','desgraciados',
+        'muere','muerete','muérete','matate','mátate',
+        'baboso','babosa','babosos',
+        'tarado','tarada','tarados',
+        'cerdo','cerda','cerdos',
+        'rata','ratas','ratero','ratera',
+        'feo','fea','horrible',
+        'caca','kk','kaka',
+        'pene','penes','vagina','vaginas','pipi','pipí',
+        'sexo','sexual','sexy',
+        'droga','drogas','drogado','drogadicto',
+        'narco','narcos',
+        'hitler','nazi','nazis',
+        'vale verga','valeberga','valeverga',
+        'chinge su madre','chingas','alaverga','alv','nmms','nms','ptm','hdp','hp','ctm','stfu','wtf','fuck','shit','bitch','ass','dick','damn'
+    ];
+
+    function containsBadWord(text) {
+        if (!text) return false;
+        var normalized = text.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[_\-\.\/\\@#\$%\^&\*\+\=\|\~`]/g, '')
+            .replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a')
+            .replace(/5/g, 's').replace(/0/g, 'o').replace(/7/g, 't');
+        for (var i = 0; i < BLOCKED_WORDS.length; i++) {
+            var word = BLOCKED_WORDS[i].normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (normalized.indexOf(word) !== -1) return true;
+        }
+        return false;
+    }
+
+    function getBadWordMessage() {
+        return 'Texto inapropiado. Por favor usa un lenguaje respetuoso.';
+    }
+
     // ---- v4.0 COMMUNITY STATE ----
     let currentPlayerName = '';
     let cachedScores = [];
@@ -1053,6 +1111,12 @@
         if (isOwn) {
             document.getElementById('profileStatusSaveBtn').addEventListener('click', async function() {
                 var msg = document.getElementById('profileStatusInput').value.trim();
+                if (containsBadWord(msg)) {
+                    this.textContent = '⚠️';
+                    this.style.background = '#f55';
+                    setTimeout(function() { var b = document.getElementById('profileStatusSaveBtn'); if(b){b.textContent='OK';b.style.background='';} }, 1500);
+                    return;
+                }
                 try {
                     await scoresRef.doc(getPlayerId(currentPlayerName)).update({ statusMsg: msg });
                     this.textContent = '✓';
@@ -1262,6 +1326,12 @@
 
     async function sendChatMessage(text) {
         if (!currentClanId || !text.trim()) return;
+        if (containsBadWord(text)) {
+            var msgEl = document.getElementById('chatMessages');
+            msgEl.innerHTML += '<div class="chat-msg chat-msg-system" style="color:#f55;">⚠️ ' + getBadWordMessage() + '</div>';
+            msgEl.scrollTop = msgEl.scrollHeight;
+            return;
+        }
         try {
             await clansRef.doc(currentClanId).collection('messages').add({
                 sender: currentPlayerName,
@@ -6120,6 +6190,11 @@
             nameInput.focus();
             return;
         }
+        if (containsBadWord(name)) {
+            nameError.textContent = getBadWordMessage();
+            nameInput.focus();
+            return;
+        }
 
         startBtn.disabled = true;
         startBtn.textContent = 'VERIFICANDO...';
@@ -6228,11 +6303,13 @@
     document.getElementById('clanCreateConfirmBtn').addEventListener('click', async function() {
         var name = document.getElementById('clanNameInput').value.trim();
         if (!name || name.length < 2) { document.getElementById('clanCreateError').textContent = 'Nombre muy corto'; return; }
+        if (containsBadWord(name)) { document.getElementById('clanCreateError').textContent = getBadWordMessage(); return; }
         var colorEl = document.querySelector('#clanColorPicker .color-opt.selected');
         var emblemEl = document.querySelector('#clanEmblemPicker .emblem-opt.selected');
         var color = colorEl ? colorEl.dataset.color : CLAN_COLORS[0];
         var emblem = emblemEl ? emblemEl.dataset.emblem : CLAN_EMBLEMS[0];
         var warCry = document.getElementById('clanWarCryInput').value.trim();
+        if (containsBadWord(warCry)) { document.getElementById('clanCreateError').textContent = getBadWordMessage(); return; }
         this.disabled = true; this.textContent = 'CREANDO...';
         var result = await createClan(name, color, emblem, warCry);
         this.disabled = false; this.textContent = 'CREAR';
