@@ -978,9 +978,6 @@
         </div>
         <div id="message"></div>
         <div id="bottomBtns" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0;">
-            <button id="lbToggleBtn">🌎 TOP 100 MUNDIAL</button>
-            <button id="statsToggleBtn">📊 ESTADISTICAS</button>
-            <button id="clanToggleBtn">👥 CLAN</button>
         </div>
     </div>
 
@@ -1932,22 +1929,11 @@
 
     // ---- LEADERBOARD TOGGLE ----
     const lbOverlay = document.getElementById('lbOverlay');
-    document.getElementById('lbToggleBtn').addEventListener('click', async () => {
-        await loadScoresFromFirestore();
-        renderLeaderboard();
-        lbOverlay.classList.add('visible');
-    });
     document.getElementById('lbCloseBtn').addEventListener('click', () => {
         lbOverlay.classList.remove('visible');
     });
     lbOverlay.addEventListener('click', (e) => {
         if (e.target === lbOverlay) lbOverlay.classList.remove('visible');
-    });
-
-    // ---- STATS TOGGLE (always visible) ----
-    document.getElementById('statsToggleBtn').addEventListener('click', function() {
-        renderStatsScreen();
-        document.getElementById('statsOverlay').classList.add('visible');
     });
 
     // ===== PERSISTENT DATA (localStorage) =====
@@ -6337,12 +6323,9 @@
         document.getElementById('statsOverlay').classList.add('visible');
     });
     document.getElementById('lobbyClansBtn').addEventListener('click', async function() {
-        if (!currentPlayerName) {
-            showPlayView();
-            document.getElementById('nameError').textContent = 'Ingresa tu nombre para acceder a Clanes';
-            return;
+        if (currentPlayerName) {
+            await loadPlayerClanOnLogin();
         }
-        await loadPlayerClanOnLogin();
         if (currentClanId && currentClanData) {
             await loadClanData();
             renderClanDashboard();
@@ -6374,18 +6357,7 @@
 
     // ===== v4.0 COMMUNITY EVENT LISTENERS =====
 
-    // Clan overlay toggle
-    document.getElementById('clanToggleBtn').addEventListener('click', async function() {
-        if (!currentPlayerName) { alert('Ingresa tu nombre primero'); return; }
-        await loadPlayerClanOnLogin();
-        if (currentClanId && currentClanData) {
-            await loadClanData();
-            renderClanDashboard();
-        } else {
-            renderNoClanView();
-        }
-        document.getElementById('clanOverlay').classList.add('visible');
-    });
+    // Clan overlay close
     document.getElementById('clanCloseBtn').addEventListener('click', function() {
         document.getElementById('clanOverlay').classList.remove('visible');
     });
