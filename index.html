@@ -552,7 +552,7 @@
             <button id="skinNext" style="background:transparent;border:2px solid #0ff;color:#0ff;font-size:18px;cursor:pointer;padding:4px 10px;font-family:'Courier New',monospace;">&gt;</button>
         </div>
         <button class="start-btn" id="startBtn">JUGAR</button>
-        <button class="start-btn" id="continueBtn" style="display:none;background:#0f0;margin-top:8px;font-size:16px;">CONTINUAR</button>
+        <!-- CONTINUAR eliminado v3.6: siempre se inicia desde cero -->
         <button class="start-btn" id="statsBtn" style="background:transparent;border:2px solid #0ff;color:#0ff;margin-top:8px;font-size:14px;">ESTADISTICAS</button>
     </div>
     <!-- LEADERBOARD OVERLAY -->
@@ -4502,7 +4502,7 @@
                 if (currentLevelDeaths === 0) updateStat('perfectLevels', 1);
                 updateStat('bestLevel', level, 'max');
                 updateStat('bestScore', score, 'max');
-                saveGameProgress();
+                // saveGameProgress() eliminado v3.6: no hay opción de continuar
                 checkAchievements();
                 currentLevelDeaths = 0;
                 levelGhostsEaten = 0;
@@ -4874,30 +4874,7 @@
         document.getElementById('statsOverlay').classList.remove('visible');
     });
 
-    // Continue button
-    document.getElementById('continueBtn').addEventListener('click', function() {
-        const nameVal = document.getElementById('nameInput').value.trim();
-        if (!nameVal) return;
-        currentPlayerName = nameVal;
-        if (loadGameProgress()) {
-            document.getElementById('startScreen').style.display = 'none';
-            document.getElementById('playerTag').textContent = 'Jugador: ' + currentPlayerName;
-            initAudio();
-            gameState = 'playing';
-            startMusic();
-        }
-    });
-
-    // Name input -- show/hide continue button
-    document.getElementById('nameInput').addEventListener('input', function() {
-        const btn = document.getElementById('continueBtn');
-        if (hasSavedGame(this.value.trim())) {
-            btn.style.display = 'block';
-            btn.textContent = 'CONTINUAR (Nivel ' + persistentData.savedGame.level + ')';
-        } else {
-            btn.style.display = 'none';
-        }
-    });
+    // CONTINUAR eliminado v3.6: siempre se inicia desde nivel 1
 
     // ---- SKIN SELECTOR EVENT LISTENERS ----
     document.getElementById('skinPrev').addEventListener('click', function() {
