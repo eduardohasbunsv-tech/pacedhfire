@@ -527,7 +527,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.5</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.6</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -586,7 +586,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.5</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.6</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2289,12 +2289,20 @@
     }
 
     // ---- FRUIT FUNCTIONS ----
+    // Zona de guarida + túneles laterales: Pacman no puede llegar aquí
+    function isInGhostZone(r, c) {
+        if (r >= 9 && r <= 18 && c >= 9 && c <= 18) return true;
+        if (r >= 10 && r <= 18 && (c <= 4 || c >= 23)) return true;
+        return false;
+    }
+
     function spawnFruit() {
         const candidates = [];
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 // Spawn on empty tiles (dots already eaten) or remaining dot/power tiles
                 if (map[r][c] !== 0 && map[r][c] !== 2 && map[r][c] !== 3) continue;
+                if (isInGhostZone(r, c)) continue;
                 const dist = Math.abs(c - player.x) + Math.abs(r - player.y);
                 if (dist >= 3 && dist <= 10) {
                     candidates.push({ x: c, y: r });
@@ -2318,6 +2326,7 @@
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (map[r][c] !== 0) continue;
+                if (isInGhostZone(r, c)) continue;
                 const dist = Math.abs(c - player.x) + Math.abs(r - player.y);
                 if (dist >= 4 && dist <= 12) candidates.push({ x: c, y: r });
             }
@@ -2828,7 +2837,7 @@
     function canMove(x, y) {
         if (x < 0 || x >= COLS) return true;
         if (y < 0 || y >= ROWS) return false;
-        return map[y][x] !== 1;
+        return map[y][x] !== 1 && map[y][x] !== 4;
     }
 
     function canGhostMove(x, y, ghost) {
@@ -3001,13 +3010,19 @@
                 spawnParticles(player.px + TILE/2, player.py + TILE/2, 3, currentTheme ? currentTheme.dotColor : '#ffa', 0.5, 2, 10, 20, 2);
             } else if (tile === 3) {
                 map[player.y][player.x] = 0;
-                score += 250;
-                dotsEaten++;
-                updateStat('totalDotsEaten', 1);
-                activatePowerMode();
-                playPowerUp();
-                checkLifeMilestone();
-                spawnParticles(player.px + TILE/2, player.py + TILE/2, 8, currentTheme ? currentTheme.orbColor : '#fff', 1, 4, 15, 30, 3);
+                if (bossActive) {
+                    // Durante boss fight: activar boss power mode
+                    activateBossPowerMode();
+                } else {
+                    // Gameplay normal
+                    score += 250;
+                    dotsEaten++;
+                    updateStat('totalDotsEaten', 1);
+                    activatePowerMode();
+                    playPowerUp();
+                    checkLifeMilestone();
+                    spawnParticles(player.px + TILE/2, player.py + TILE/2, 8, currentTheme ? currentTheme.orbColor : '#fff', 1, 4, 15, 30, 3);
+                }
             }
 
             // Magnet effect: collect nearby dots
@@ -4549,13 +4564,7 @@
             scheduleBeat();
             updateMusicState();
             movePlayer();
-            // Eat dots for points in arena
-            var btile = map[player.y] && map[player.y][player.x];
-            if (btile === 3) {
-                map[player.y][player.x] = 0;
-                activateBossPowerMode();
-                playPowerUp();
-            }
+            // Power orbs ahora se manejan dentro de movePlayer() (bossActive check)
             updateBoss();
             updateMiniGhosts();
             checkBossCollision();
