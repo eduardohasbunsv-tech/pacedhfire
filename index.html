@@ -3531,7 +3531,7 @@
         if (!bossActive) {
             // Gameplay normal: matar fantasmas en el path
             ghosts.forEach(function(g, gi) {
-                if (g.inHouse || g.eaten) return;
+                if (g.inHouse || g.eaten || !g.scared) return;
                 var inPath = trace.tiles.some(function(t) { return t.x === g.x && t.y === g.y; });
                 if (inPath) {
                     laserKillGhost(g, gi);
