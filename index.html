@@ -764,7 +764,7 @@
     <div id="startScreen">
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v4.01</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.02</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -785,7 +785,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v4.01</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.02</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -850,6 +850,14 @@
         <div id="clanPanel">
             <button class="comm-close" id="clanCloseBtn">X</button>
             <h3 class="comm-title" id="clanPanelTitle">👥 CLAN</h3>
+            <div id="clanNameForm" style="display:none;">
+                <p style="text-align:center;color:#0ff;margin:12px 0;font-size:14px;">Ingresa tu nombre de jugador para continuar</p>
+                <div style="margin:10px auto;max-width:260px;">
+                    <input type="text" class="comm-input" id="clanNameInput2" maxlength="12" placeholder="Tu nombre..." style="text-align:center;font-size:16px;">
+                    <div class="comm-error" id="clanNameError"></div>
+                    <button class="comm-btn" id="clanNameConfirmBtn" style="width:100%;margin-top:10px;padding:12px;font-size:16px;">CONTINUAR</button>
+                </div>
+            </div>
             <div id="clanNoClan">
                 <p style="text-align:center;color:#888;margin:12px 0;">No perteneces a ningún clan</p>
                 <div style="text-align:center;margin:10px 0;">
@@ -951,7 +959,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.01</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.02</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -1282,7 +1290,17 @@
     }
 
     // ---- v4.0 CLAN UI RENDER ----
+    function renderClanNameForm() {
+        document.getElementById('clanNameForm').style.display = 'block';
+        document.getElementById('clanNoClan').style.display = 'none';
+        document.getElementById('clanCreateForm').style.display = 'none';
+        document.getElementById('clanDashboard').style.display = 'none';
+        document.getElementById('clanNameInput2').value = '';
+        document.getElementById('clanNameError').textContent = '';
+        setTimeout(function() { document.getElementById('clanNameInput2').focus(); }, 100);
+    }
     function renderClanCreateForm() {
+        document.getElementById('clanNameForm').style.display = 'none';
         document.getElementById('clanNoClan').style.display = 'none';
         document.getElementById('clanDashboard').style.display = 'none';
         document.getElementById('clanCreateForm').style.display = 'block';
@@ -1309,6 +1327,7 @@
     }
 
     function renderNoClanView() {
+        document.getElementById('clanNameForm').style.display = 'none';
         document.getElementById('clanNoClan').style.display = 'block';
         document.getElementById('clanCreateForm').style.display = 'none';
         document.getElementById('clanDashboard').style.display = 'none';
@@ -1317,6 +1336,7 @@
 
     async function renderClanDashboard() {
         if (!currentClanData) return;
+        document.getElementById('clanNameForm').style.display = 'none';
         document.getElementById('clanNoClan').style.display = 'none';
         document.getElementById('clanCreateForm').style.display = 'none';
         document.getElementById('clanDashboard').style.display = 'block';
@@ -6323,9 +6343,12 @@
         document.getElementById('statsOverlay').classList.add('visible');
     });
     document.getElementById('lobbyClansBtn').addEventListener('click', async function() {
-        if (currentPlayerName) {
-            await loadPlayerClanOnLogin();
+        if (!currentPlayerName) {
+            renderClanNameForm();
+            document.getElementById('clanOverlay').classList.add('visible');
+            return;
         }
+        await loadPlayerClanOnLogin();
         if (currentClanId && currentClanData) {
             await loadClanData();
             renderClanDashboard();
@@ -6357,6 +6380,41 @@
 
     // ===== v4.0 COMMUNITY EVENT LISTENERS =====
 
+    // Clan name form — CONTINUAR button
+    async function handleClanNameSubmit() {
+        var nameInput = document.getElementById('clanNameInput2');
+        var nameErr = document.getElementById('clanNameError');
+        var name = nameInput.value.trim();
+        if (!name || name.length < 2) { nameErr.textContent = 'Nombre muy corto (mín. 2 caracteres)'; return; }
+        if (name.length > 12) { nameErr.textContent = 'Nombre muy largo (máx. 12 caracteres)'; return; }
+        if (containsBadWord(name)) { nameErr.textContent = getBadWordMessage(); return; }
+        var btn = document.getElementById('clanNameConfirmBtn');
+        btn.disabled = true; btn.textContent = 'VERIFICANDO...';
+        var taken = await isNameTaken(name);
+        if (taken && !confirm('"' + name + '" ya existe en el ranking. ¿Eres tú?')) {
+            nameErr.textContent = 'Elige otro nombre';
+            btn.disabled = false; btn.textContent = 'CONTINUAR';
+            nameInput.focus();
+            return;
+        }
+        currentPlayerName = name;
+        // Also pre-fill the play view name input so it's ready if they go to JUGAR later
+        document.getElementById('nameInput').value = name;
+        btn.textContent = 'CARGANDO...';
+        await loadPlayerClanOnLogin();
+        btn.disabled = false; btn.textContent = 'CONTINUAR';
+        if (currentClanId && currentClanData) {
+            await loadClanData();
+            renderClanDashboard();
+        } else {
+            renderNoClanView();
+        }
+    }
+    document.getElementById('clanNameConfirmBtn').addEventListener('click', handleClanNameSubmit);
+    document.getElementById('clanNameInput2').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); handleClanNameSubmit(); }
+    });
+
     // Clan overlay close
     document.getElementById('clanCloseBtn').addEventListener('click', function() {
         document.getElementById('clanOverlay').classList.remove('visible');
@@ -6367,6 +6425,10 @@
 
     // Clan create flow
     document.getElementById('clanCreateBtn').addEventListener('click', function() {
+        if (currentClanId && currentClanData) {
+            alert('Ya perteneces a un clan. Primero debes salirte de tu clan actual antes de crear uno nuevo.');
+            return;
+        }
         renderClanCreateForm();
     });
     document.getElementById('clanCreateCancelBtn').addEventListener('click', function() {
