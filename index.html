@@ -7,7 +7,7 @@
     <meta name="description" content="EDH-PAC - Juego arcade de laberintos. Hecho por EDHFIRE, dedicado a Jóvenes Iglesia sobre la Roca.">
     <meta name="author" content="EDHFIRE">
     <meta property="og:title" content="EDH-PAC — Juego Arcade">
-    <meta property="og:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 10.">
+    <meta property="og:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 100.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://suntrader.shop">
     <meta name="theme-color" content="#111111">
@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-title" content="EDH-PAC">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="EDH-PAC — Juego Arcade">
-    <meta name="twitter:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 10.">
+    <meta name="twitter:description" content="Juego arcade de laberintos. Come los orbes, evita los fantasmas y compite por el Top 100.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👾</text></svg>">
     <!-- Firebase SDK (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -197,6 +197,21 @@
         }
         #lbToggleBtn:hover { background: #ff0; color: #000; }
         #lbToggleBtn:active { transform: scale(0.95); }
+        #statsToggleBtn {
+            padding: 8px 20px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: transparent;
+            color: #0ff;
+            border: 2px solid #0ff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        #statsToggleBtn:hover { background: #0ff; color: #000; }
+        #statsToggleBtn:active { transform: scale(0.95); }
         /* ---- LEADERBOARD OVERLAY ---- */
         #lbOverlay {
             display: none;
@@ -215,6 +230,8 @@
             max-width: 400px;
             max-height: 85vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
             background: #0a0a1a;
             border: 2px solid #ff0;
             border-radius: 12px;
@@ -511,7 +528,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.1</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.2</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -543,7 +560,7 @@
     <div id="lbOverlay">
         <div id="leaderboard">
             <button id="lbCloseBtn">X</button>
-            <h3>🌎 TOP 10 MUNDIAL</h3>
+            <h3>🌎 TOP 100 MUNDIAL</h3>
             <table>
                 <thead><tr>
                     <th class="rank">#</th>
@@ -570,7 +587,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.1</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.2</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -596,7 +613,10 @@
             </div>
         </div>
         <div id="message"></div>
-        <button id="lbToggleBtn">🌎 TOP 10 MUNDIAL</button>
+        <div id="bottomBtns" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0;">
+            <button id="lbToggleBtn">🌎 TOP 100 MUNDIAL</button>
+            <button id="statsToggleBtn">📊 ESTADISTICAS</button>
+        </div>
     </div>
 
     <script>
@@ -648,7 +668,7 @@
 
     async function loadScoresFromFirestore() {
         try {
-            const snap = await scoresRef.orderBy('score', 'desc').limit(50).get();
+            const snap = await scoresRef.orderBy('score', 'desc').limit(100).get();
             cachedScores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         } catch (e) {
             console.warn('Firestore read error:', e);
@@ -697,9 +717,9 @@
             tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">Aún no hay puntajes. ¡Sé el primero!</td></tr>';
             return;
         }
-        const top10 = scores.slice(0, 10);
+        const top100 = scores.slice(0, 100);
         let html = '';
-        top10.forEach((s, i) => {
+        top100.forEach((s, i) => {
             const rank = i + 1;
             const rankCls = rank <= 3 ? ` rank-${rank}` : '';
             const isYou = currentPlayerName && s.name.toLowerCase() === currentPlayerName.toLowerCase();
@@ -729,6 +749,12 @@
     });
     lbOverlay.addEventListener('click', (e) => {
         if (e.target === lbOverlay) lbOverlay.classList.remove('visible');
+    });
+
+    // ---- STATS TOGGLE (always visible) ----
+    document.getElementById('statsToggleBtn').addEventListener('click', function() {
+        renderStatsScreen();
+        document.getElementById('statsOverlay').classList.add('visible');
     });
 
     // ===== PERSISTENT DATA (localStorage) =====
@@ -781,7 +807,7 @@
     function clearSavedGame() { if (!persistentData) return; persistentData.savedGame = null; savePersistentData(); }
     function hasSavedGame(name) { return persistentData && persistentData.savedGame && persistentData.savedGame.playerName === name; }
     // ===== STAR RATING SYSTEM =====
-    function getStarThresholds(lvl) { const base = 800 + (lvl - 1) * 200; return [base, Math.floor(base * 1.8), base * 3]; }
+    function getStarThresholds(lvl) { const base = 4000 + (lvl - 1) * 1000; return [base, Math.floor(base * 1.8), base * 3]; }
     function calculateStars(lvl, levelScore) { const t = getStarThresholds(lvl); if (levelScore >= t[2]) return 3; if (levelScore >= t[1]) return 2; if (levelScore >= t[0]) return 1; return 0; }
     function drawStars(ctx, x, y, count, size) {
         for (let i = 0; i < 3; i++) {
@@ -890,12 +916,12 @@
     const COLS = 28;
     const ROWS = 31;
 
-    // ---- SPEED CONTROL ----
+    // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
-    const PLAYER_MOVE_RATE = 15;  // base lento (nivel 1)
-    const GHOST_BASE_RATE = 18;   // base lento (nivel 1)
-    const GHOST_SPEED_MULT = [1.1, 1.0, 0.85, 1.05, 0.95];
-    const GHOST_SCARED_RATE = 24;
+    const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
+    const GHOST_BASE_RATE = 19;   // base lento (nivel 1) — fantasmas arrancan mas lento
+    const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
+    const GHOST_SCARED_RATE = 26;
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -928,10 +954,10 @@
     // ---- BOSS LEVELS ----
     const BOSS_LEVELS = [5, 10, 15, 20];
     const BOSS_DEFS = [
-        { id: 'guardian', name: 'El Guardian', color: '#f44', glowColor: '#f66', hitsToKill: 3, points: 5000, speed: 12, pattern: 'charge' },
-        { id: 'shadow_queen', name: 'La Sombra Reina', color: '#a0f', glowColor: '#c4f', hitsToKill: 3, points: 10000, speed: 10, pattern: 'teleport' },
-        { id: 'devourer', name: 'El Devorador', color: '#0a0', glowColor: '#0f0', hitsToKill: 3, points: 15000, speed: 10, pattern: 'wallphase' },
-        { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 20000, speed: 8, pattern: 'combined' },
+        { id: 'guardian', name: 'El Guardian', color: '#f44', glowColor: '#f66', hitsToKill: 3, points: 25000, speed: 12, pattern: 'charge' },
+        { id: 'shadow_queen', name: 'La Sombra Reina', color: '#a0f', glowColor: '#c4f', hitsToKill: 3, points: 50000, speed: 10, pattern: 'teleport' },
+        { id: 'devourer', name: 'El Devorador', color: '#0a0', glowColor: '#0f0', hitsToKill: 3, points: 75000, speed: 10, pattern: 'wallphase' },
+        { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 100000, speed: 8, pattern: 'combined' },
     ];
 
     const BOSS_ARENA_MAP = [
@@ -971,10 +997,10 @@
     // ---- SHOP ----
     const SHOP_LEVELS = [3, 6, 9, 12, 15, 18];
     const SHOP_ITEMS = [
-        { id: 'speed_up', name: 'Velocidad+', desc: 'Mas rapido 1 nivel', cost: 2000, icon: 'V', color: '#ff0' },
-        { id: 'shield_start', name: 'Escudo', desc: 'Empezar con escudo', cost: 3000, icon: 'E', color: '#5ff' },
-        { id: 'magnet_up', name: 'Iman+', desc: 'Iman dura mas', cost: 2500, icon: 'M', color: '#f55' },
-        { id: 'extra_life', name: 'Vida Extra', desc: '+1 vida', cost: 5000, icon: '+', color: '#0f0' },
+        { id: 'speed_up', name: 'Velocidad+', desc: 'Mas rapido 1 nivel', cost: 8500, icon: 'V', color: '#ff0' },
+        { id: 'shield_start', name: 'Escudo', desc: 'Empezar con escudo', cost: 13000, icon: 'E', color: '#5ff' },
+        { id: 'magnet_up', name: 'Iman+', desc: 'Iman dura mas', cost: 11000, icon: 'M', color: '#f55' },
+        { id: 'extra_life', name: 'Vida Extra', desc: '+1 vida', cost: 22000, icon: '+', color: '#0f0' },
     ];
     let shopSelectedIdx = 0;
     let shopPurchasedThisRound = [];
@@ -1155,7 +1181,7 @@
 
     let map = [];
     let score = 0;
-    let lives = 3;
+    let lives = 4;
     let level = 1;
     let totalDots = 0;
     let dotsEaten = 0;
@@ -1216,8 +1242,8 @@
     let playerTrail = [];
 
     // ---- EXTRA LIVES ----
-    let nextLifeAt = 5000;
-    const LIFE_MILESTONES = [5000, 15000, 30000];
+    let nextLifeAt = 22000;
+    const LIFE_MILESTONES = [22000, 65000, 130000];
     let awardedMilestones = [];
 
     // ---- BONUS FRUIT LEVEL ----
@@ -1232,15 +1258,15 @@
     // ---- GHOST SCORE POPUPS ----
     let ghostScorePopups = []; // { x, y, text, timer, maxTimer, isCombo }
     const FRUIT_TYPES = [
-        { name: 'Cereza', color: '#f33', glow: '#f55', shape: 'cherry', effect: 'speed', effectDuration: 180, effectDesc: '+Velocidad' },
-        { name: 'Fresa', color: '#f5a', glow: '#f7c', shape: 'straw', effect: 'magnet', effectDuration: 180, effectDesc: 'Iman' },
-        { name: 'Naranja', color: '#fa5', glow: '#fc7', shape: 'round', effect: 'double', effectDuration: 300, effectDesc: 'x2 Orbes' },
-        { name: 'Manzana', color: '#5f5', glow: '#7f7', shape: 'round', effect: 'slow_ghosts', effectDuration: 240, effectDesc: 'Lento' },
-        { name: 'Uva', color: '#a5f', glow: '#c7f', shape: 'grape', effect: 'freeze_one', effectDuration: 180, effectDesc: 'Congela' },
+        { name: 'Cereza', color: '#f33', glow: '#f55', shape: 'cherry', effect: 'speed', effectDuration: 210, effectDesc: '+Velocidad' },
+        { name: 'Fresa', color: '#f5a', glow: '#f7c', shape: 'straw', effect: 'magnet', effectDuration: 210, effectDesc: 'Iman' },
+        { name: 'Naranja', color: '#fa5', glow: '#fc7', shape: 'round', effect: 'double', effectDuration: 340, effectDesc: 'x2 Orbes' },
+        { name: 'Manzana', color: '#5f5', glow: '#7f7', shape: 'round', effect: 'slow_ghosts', effectDuration: 275, effectDesc: 'Lento' },
+        { name: 'Uva', color: '#a5f', glow: '#c7f', shape: 'grape', effect: 'freeze_one', effectDuration: 210, effectDesc: 'Congela' },
         { name: 'Melon', color: '#5fa', glow: '#7fc', shape: 'round', effect: 'shield', effectDuration: 0, effectDesc: 'Escudo' },
     ];
     const FRUIT_TIMEOUT = 500;
-    const FRUIT_POINTS = 400;
+    const FRUIT_POINTS = 2000;
 
     const POWERUP_TYPES = [
         { id: 'magnet', name: 'Iman', color: '#f55', glow: '#f77', icon: 'M', duration: 300 },
@@ -1249,7 +1275,7 @@
         { id: 'freeze', name: 'Freeze', color: '#55f', glow: '#77f', icon: 'F', duration: 180 },
     ];
     const POWERUP_SPAWN_DOTS = 50;
-    const POWERUP_POINTS = 200;
+    const POWERUP_POINTS = 1000;
 
     // Player
     const player = {
@@ -1274,14 +1300,14 @@
     function createGhosts() {
         // Niveles 1-10: 4 fantasmas. Niveles 11-20: 5 fantasmas (se agrega SHADOW)
         ghosts = [
-            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 1, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 25, targetY: 0 },
-            { x: 13, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 5, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 2, targetY: 0 },
-            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 10, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 27, targetY: 30 },
-            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 15, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 0, targetY: 30 },
+            { x: 14, y: 13, dir: 0, color: GHOST_COLORS[0], name: GHOST_NAMES[0], mode: 'scatter', px: 14*TILE, py: 13*TILE, inHouse: true, houseTimer: 2, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 25, targetY: 0 },
+            { x: 13, y: 13, dir: 0, color: GHOST_COLORS[1], name: GHOST_NAMES[1], mode: 'scatter', px: 13*TILE, py: 13*TILE, inHouse: true, houseTimer: 6, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 2, targetY: 0 },
+            { x: 12, y: 13, dir: 0, color: GHOST_COLORS[2], name: GHOST_NAMES[2], mode: 'scatter', px: 12*TILE, py: 13*TILE, inHouse: true, houseTimer: 12, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 27, targetY: 30 },
+            { x: 15, y: 13, dir: 0, color: GHOST_COLORS[3], name: GHOST_NAMES[3], mode: 'scatter', px: 15*TILE, py: 13*TILE, inHouse: true, houseTimer: 17, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 0, targetY: 30 },
         ];
         // SHADOW solo aparece del nivel 11 en adelante
         if (level >= 11) {
-            ghosts.push({ x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 8, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 14, targetY: 0 });
+            ghosts.push({ x: 14, y: 14, dir: 2, color: GHOST_COLORS[4], name: GHOST_NAMES[4], mode: 'scatter', px: 14*TILE, py: 14*TILE, inHouse: true, houseTimer: 10, scared: false, eaten: false, eatenThisPower: false, frozen: false, targetX: 14, targetY: 0 });
         }
     }
 
@@ -2740,7 +2766,7 @@
 
     function initGame() {
         score = 0;
-        lives = 3;
+        lives = 4;
         level = 1;
         updateStat('gamesPlayed', 1);
         gameStartTime = Date.now();
@@ -2991,7 +3017,7 @@
     function movePlayer() {
         player.px += (player.x * TILE - player.px) * LERP_SPEED;
         player.py += (player.y * TILE - player.py) * LERP_SPEED;
-        let rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.63));
+        let rate = Math.max(3, PLAYER_MOVE_RATE - Math.floor((level - 1) * 0.56));
         if (speedTimer > 0 || shopSpeedBoost) rate = Math.max(2, Math.floor(rate / 2));
         if (animFrame % rate !== 0) return;
 
@@ -3019,7 +3045,7 @@
             const tile = map[player.y][player.x];
             if (tile === 2) {
                 map[player.y][player.x] = 0;
-                var dotPts = doubleDotTimer > 0 ? 20 : 10;
+                var dotPts = doubleDotTimer > 0 ? 100 : 50;
                 score += dotPts;
                 // Combo chain
                 if (comboTimer <= COMBO_WINDOW) { comboChain++; } else { comboChain = 1; }
@@ -3037,7 +3063,7 @@
                 spawnParticles(player.px + TILE/2, player.py + TILE/2, 3, currentTheme ? currentTheme.dotColor : '#ffa', 0.5, 2, 10, 20, 2);
             } else if (tile === 3) {
                 map[player.y][player.x] = 0;
-                score += 50;
+                score += 250;
                 dotsEaten++;
                 updateStat('totalDotsEaten', 1);
                 activatePowerMode();
@@ -3055,7 +3081,7 @@
                         if (mr < 0 || mr >= ROWS || mc < 0 || mc >= COLS) continue;
                         if (map[mr][mc] === 2 && Math.random() < 0.15) {
                             map[mr][mc] = 0;
-                            score += doubleDotTimer > 0 ? 20 : 10;
+                            score += doubleDotTimer > 0 ? 100 : 50;
                             dotsEaten++;
                             comboTimer = 0;
                             updateStat('totalDotsEaten', 1);
@@ -3066,7 +3092,7 @@
             }
 
             // Spawn fruit every 30 dots eaten
-            if (dotsEaten > 0 && dotsEaten % 30 === 0 && !fruit) {
+            if (dotsEaten > 0 && dotsEaten % 26 === 0 && !fruit) {
                 spawnFruit();
             }
 
@@ -3128,6 +3154,15 @@
             if (dotsEaten >= totalDots) {
                 fruit = null;
                 furyMode = false;
+                // Bonus nivel completado
+                var lvlBonus = level <= 5 ? 5000 : level <= 10 ? 10000 : level <= 15 ? 15000 : 25000;
+                score += lvlBonus;
+                ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 80, text: '+' + lvlBonus.toLocaleString() + ' NIVEL!', timer: 90, maxTimer: 90, isCombo: true, color: '#0f0' });
+                // Bonus perfect clear (sin morir en este nivel)
+                if (currentLevelDeaths === 0) {
+                    score += 10000;
+                    ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 50, text: '+10,000 PERFECTO!', timer: 100, maxTimer: 100, isCombo: true, color: '#ffd700' });
+                }
                 gameState = 'win';
                 winTimer = 240;
                 messageText = '¡NIVEL COMPLETADO!';
@@ -3166,7 +3201,7 @@
         if (ghost.eaten) return { x: 14, y: 13 };
         if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
         const modeTimer = animFrame % 800;
-        const isChase = modeTimer < 550;
+        const isChase = modeTimer < 510;
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
@@ -3247,10 +3282,10 @@
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) {
             // 50% más lento que su velocidad normal en el nivel actual
-            const normalRate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
+            const normalRate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 0.66));
             rate = Math.round(normalRate * 2);
         }
-        else rate = Math.max(4, GHOST_BASE_RATE - Math.floor((level - 1) * 0.74));
+        else rate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 0.66));
         // Apply per-ghost speed multiplier
         if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
@@ -3332,25 +3367,25 @@
                     g.eaten = true; g.scared = false;
                     g.eatenThisPower = true; // no puede ser comido otra vez en este power mode
                     ghostsEatenInPower++;
-                    // Multiplicador Agresivo: 200 base x multiplicador escalonado
-                    // 1ro: x1=200, 2do: x3=600, 3ro: x5=1000, 4to: x8=1600, 5to: x12=2400
-                    const GHOST_COMBO_MULTS = [1, 3, 5, 8, 12];
+                    // Multiplicador Agresivo x5: 1000 base x multiplicador escalonado
+                    // 1ro: x1=1000, 2do: x4=4000, 3ro: x8=8000, 4to: x15=15000, 5to: x25=25000
+                    const GHOST_COMBO_MULTS = [1, 4, 8, 15, 25];
                     const comboIdx = Math.min(ghostsEatenInPower - 1, GHOST_COMBO_MULTS.length - 1);
                     const comboMult = GHOST_COMBO_MULTS[comboIdx];
                     const isCombo = ghostsEatenInPower >= 2;
-                    const earnedPoints = 200 * comboMult;
+                    const earnedPoints = 1000 * comboMult;
                     score += earnedPoints;
                     // Popup escala con combo: amarillo→naranja→rojo→dorado
                     const comboColors = ['#fff', '#ff0', '#fa5', '#f44', '#ffd700'];
                     const popupColor = comboColors[comboIdx] || '#ffd700';
-                    const popupText = isCombo ? earnedPoints + ' COMBO x' + comboMult + '!' : '+' + earnedPoints;
+                    const popupText = isCombo ? earnedPoints.toLocaleString() + ' COMBO x' + comboMult + '!' : '+' + earnedPoints.toLocaleString();
                     ghostScorePopups.push({ x: g.px + TILE/2, y: g.py, text: popupText, timer: 70, maxTimer: 70, isCombo: isCombo, color: popupColor });
                     // Bonus PERFECTO si come TODOS los fantasmas activos
                     const activeGhosts = ghosts.filter(gh => !gh.inHouse || gh === g);
                     const allEaten = activeGhosts.every(gh => gh.eaten || gh.inHouse);
                     if (allEaten && ghostsEatenInPower >= 2) {
-                        score += 3000;
-                        ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 30, text: '+3000 PERFECTO!', timer: 90, maxTimer: 90, isCombo: true, color: '#ffd700' });
+                        score += 15000;
+                        ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 30, text: '+15,000 PERFECTO!', timer: 90, maxTimer: 90, isCombo: true, color: '#ffd700' });
                     }
                     currentGhostStreak++;
                     updateStat('totalGhostsEaten', 1);
@@ -4255,7 +4290,7 @@
             if (mdx < TILE * 0.7 && mdy < TILE * 0.7) {
                 if (mg.scared) {
                     miniGhosts.splice(i, 1);
-                    score += 400;
+                    score += 2000;
                     spawnParticles(mg.px + TILE/2, mg.py + TILE/2, 8, BOSS_DEFS[bossIdx].color, 1, 3, 10, 20, 2);
                     playComboHit();
                 } else {
@@ -4518,9 +4553,9 @@
                 }
             }
             // Fury mode: random trigger (~every 30 seconds)
-            if (!powerMode && !furyMode && Math.random() < 1/1800) {
+            if (!powerMode && !furyMode && Math.random() < 1/2100) {
                 furyMode = true;
-                furyEndTime = Date.now() + 8000;
+                furyEndTime = Date.now() + 7000;
                 fruitMsg = '¡MODO FURIA!';
                 fruitMsgTimer = 120;
                 playFuryActivation();
