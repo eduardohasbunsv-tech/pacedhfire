@@ -558,15 +558,15 @@
         .lobby-btn-stats:hover { background: #fa5; color: #000; text-shadow: none; }
 
         /* ===== v4.0 COMMUNITY STYLES ===== */
-        #clanOverlay, #chatOverlay, #giftOverlay, #profileOverlay, #challengeOverlay {
+        #clanOverlay, #chatOverlay, #giftOverlay, #profileOverlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
             align-items: flex-start; padding: 30px 20px; overflow-y: auto;
         }
         #clanOverlay.visible, #chatOverlay.visible, #giftOverlay.visible,
-        #profileOverlay.visible, #challengeOverlay.visible { display: flex; }
+        #profileOverlay.visible { display: flex; }
 
-        #clanPanel, #chatPanel, #giftPanel, #profilePanel, #challengePanel {
+        #clanPanel, #chatPanel, #giftPanel, #profilePanel {
             width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
             background: #0a0a1a; border: 2px solid #0ff; border-radius: 12px;
             padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
@@ -714,32 +714,6 @@
         .clan-lb-members { color: #888; margin: 0 8px; font-size: 11px; }
         .clan-lb-score { color: #0f0; text-align: right; }
 
-        /* Challenge */
-        .challenge-active { background: #111; border: 2px solid #ff0; border-radius: 8px;
-            padding: 12px; margin: 8px 0; text-align: center; }
-        .challenge-vs { font-size: 24px; color: #ff0; margin: 6px 0; }
-        .challenge-clan-name { font-size: 16px; font-weight: bold; }
-        .challenge-progress { display: flex; justify-content: space-between; margin: 8px 0; }
-        .challenge-score-left { color: #0ff; font-size: 16px; }
-        .challenge-score-right { color: #fa5; font-size: 16px; }
-        .challenge-bar { width: 100%; height: 8px; background: #333; border-radius: 4px;
-            margin: 6px 0; overflow: hidden; }
-        .challenge-bar-fill { height: 100%; background: linear-gradient(90deg, #0ff, #ff0);
-            border-radius: 4px; transition: width 0.3s; }
-        .challenge-timer { color: #f55; font-size: 12px; margin-top: 4px; }
-        .challenge-history-item { background: #111; border: 1px solid #222; border-radius: 6px;
-            padding: 8px; margin: 4px 0; font-size: 12px; }
-        .challenge-result-win { color: #0f0; }
-        .challenge-result-loss { color: #f55; }
-        .challenge-pending { background: #1a1a0e; border: 2px solid #fa5; border-radius: 8px;
-            padding: 10px; margin: 8px 0; text-align: center; }
-
-        .challenge-clan-pick { display: flex; align-items: center; justify-content: space-between;
-            padding: 8px; background: #111; border: 1px solid #222; border-radius: 6px;
-            margin: 4px 0; cursor: pointer; }
-        .challenge-clan-pick:hover { border-color: #0ff; }
-        .challenge-clan-pick.selected { border-color: #ff0; background: #1a1a0e; }
-
         /* Bottom btn for clan */
         #clanToggleBtn { background: transparent; color: #0ff; border: 2px solid #0ff;
             border-radius: 6px; padding: 6px 12px; font-family: 'Courier New', monospace;
@@ -747,7 +721,7 @@
         #clanToggleBtn:hover { background: #0ff; color: #000; }
 
         @media (max-width: 580px) {
-            #clanPanel, #chatPanel, #giftPanel, #profilePanel, #challengePanel {
+            #clanPanel, #chatPanel, #giftPanel, #profilePanel {
                 max-width: 95%; padding: 14px; }
         }
     </style>
@@ -764,7 +738,7 @@
     <div id="startScreen">
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v4.03</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.04</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -785,7 +759,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v4.03</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.04</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -894,7 +868,6 @@
                 <div class="clan-actions" id="clanActions">
                     <button class="comm-btn" id="clanChatBtn">💬 CHAT</button>
                     <button class="comm-btn" id="clanGiftBtn">❤️ VIDAS</button>
-                    <button class="comm-btn-secondary" id="clanChallengeBtn">⚔️ DESAFIO</button>
                     <button class="comm-btn-danger" id="clanLeaveBtn">SALIR</button>
                 </div>
             </div>
@@ -936,20 +909,6 @@
             <div id="profileContent"></div>
         </div>
     </div>
-    <!-- v4.0: CHALLENGE OVERLAY -->
-    <div id="challengeOverlay">
-        <div id="challengePanel">
-            <button class="comm-close" id="challengeCloseBtn">X</button>
-            <h3 class="comm-title">⚔️ DESAFIOS CLAN vs CLAN</h3>
-            <div id="challengeActive"></div>
-            <div id="challengeHistory"></div>
-            <div id="challengeNewSection" style="display:none;">
-                <label class="comm-label">Elige clan rival:</label>
-                <div id="challengeClanList"></div>
-                <button class="comm-btn" id="challengeSendBtn" style="margin-top:8px;width:100%;">ENVIAR DESAFIO</button>
-            </div>
-        </div>
-    </div>
     <!-- v4.0: GIFT RECEIVED POPUP -->
     <div id="giftReceivedPopup">
         <div class="gift-popup-text" id="giftPopupText"></div>
@@ -959,7 +918,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.03</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.04</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -1032,7 +991,6 @@
     const db = firebase.firestore();
     const scoresRef = db.collection('scores');
     const clansRef = db.collection('clans');
-    const challengesRef = db.collection('challenges');
 
     // ---- v4.0 FILTRO DE MALAS PALABRAS (español) ----
     const BLOCKED_WORDS = [
@@ -1099,7 +1057,6 @@
     let currentClanData = null;
     let chatUnsubscribe = null;
     let pendingGiftLives = 0;
-    let challengeBonusLives = 0;
     let cachedClans = [];
     const CLAN_COLORS = ['#f55','#0ff','#0f0','#ff0','#f5f','#fa5'];
     const CLAN_EMBLEMS = ['⚡','🔥','💀','👑','🎯','🛡️','⭐','🐉'];
@@ -1633,236 +1590,21 @@
         } catch (e) { console.warn('Update clan score error:', e); }
     }
 
-    // ---- v4.0 CHALLENGE FUNCTIONS ----
-    async function getActiveChallenge(clanId) {
-        if (!clanId) return null;
-        try {
-            var snap1 = await challengesRef.where('challengerClanId', '==', clanId).where('status', '==', 'active').limit(1).get();
-            if (!snap1.empty) return { id: snap1.docs[0].id, ...snap1.docs[0].data() };
-            var snap2 = await challengesRef.where('challengedClanId', '==', clanId).where('status', '==', 'active').limit(1).get();
-            if (!snap2.empty) return { id: snap2.docs[0].id, ...snap2.docs[0].data() };
-        } catch (e) {}
-        return null;
-    }
-
-    async function getPendingChallenge(clanId) {
-        if (!clanId) return null;
-        try {
-            var snap = await challengesRef.where('challengedClanId', '==', clanId).where('status', '==', 'pending').limit(1).get();
-            if (!snap.empty) return { id: snap.docs[0].id, ...snap.docs[0].data() };
-        } catch (e) {}
-        return null;
-    }
-
-    async function createChallenge(targetClanId) {
-        if (!currentClanId || !currentClanData) return { success: false };
-        try {
-            var targetDoc = await clansRef.doc(targetClanId).get();
-            if (!targetDoc.exists) return { success: false, error: 'Clan no encontrado' };
-            var target = targetDoc.data();
-            await challengesRef.add({
-                challengerClanId: currentClanId, challengerClanName: currentClanData.name,
-                challengerEmblem: currentClanData.emblem,
-                challengedClanId: targetClanId, challengedClanName: target.name,
-                challengedEmblem: target.emblem,
-                startTime: null, endTime: null,
-                status: 'pending',
-                challengerScore: 0, challengedScore: 0,
-                winnerId: null, bonusExpiry: null
-            });
-            await sendSystemMessage(currentClanId, 'Se envió un desafío a ' + target.name + '!');
-            await sendSystemMessage(targetClanId, currentClanData.name + ' los desafió a un duelo!');
-            return { success: true };
-        } catch (e) { return { success: false, error: e.message }; }
-    }
-
-    async function respondToChallenge(challengeId, accept) {
-        try {
-            if (accept) {
-                var now = Date.now();
-                await challengesRef.doc(challengeId).update({
-                    status: 'active', startTime: now, endTime: now + 48 * 60 * 60 * 1000
-                });
-            } else {
-                await challengesRef.doc(challengeId).update({ status: 'declined' });
-            }
-        } catch (e) { console.warn('Respond challenge error:', e); }
-    }
-
-    async function addChallengeScore(score) {
-        if (!currentClanId) return;
-        var challenge = await getActiveChallenge(currentClanId);
-        if (!challenge) return;
-        if (Date.now() > challenge.endTime) { await checkChallengeExpiry(challenge); return; }
-        try {
-            var field = challenge.challengerClanId === currentClanId ? 'challengerScore' : 'challengedScore';
-            var update = {};
-            update[field] = firebase.firestore.FieldValue.increment(score);
-            await challengesRef.doc(challenge.id).update(update);
-        } catch (e) { console.warn('Add challenge score error:', e); }
-    }
-
-    async function checkChallengeExpiry(challenge) {
-        if (!challenge || challenge.status !== 'active') return;
-        if (Date.now() < challenge.endTime) return;
-        try {
-            var winnerId = null;
-            if (challenge.challengerScore > challenge.challengedScore) winnerId = challenge.challengerClanId;
-            else if (challenge.challengedScore > challenge.challengerScore) winnerId = challenge.challengedClanId;
-            await challengesRef.doc(challenge.id).update({
-                status: 'completed', winnerId: winnerId,
-                bonusExpiry: winnerId ? Date.now() + 3 * 24 * 60 * 60 * 1000 : null
-            });
-            if (winnerId) {
-                var winnerName = winnerId === challenge.challengerClanId ? challenge.challengerClanName : challenge.challengedClanName;
-                var loserName = winnerId === challenge.challengerClanId ? challenge.challengedClanName : challenge.challengerClanName;
-                await sendSystemMessage(winnerId === challenge.challengerClanId ? challenge.challengerClanId : challenge.challengedClanId,
-                    '🏆 ¡' + winnerName + ' ganó el desafío contra ' + loserName + '! +1 vida bonus por 3 días');
-            }
-        } catch (e) { console.warn('Challenge expiry error:', e); }
-    }
-
-    async function getChallengeBonus(clanId) {
-        if (!clanId) return 0;
-        try {
-            var snap1 = await challengesRef.where('winnerId', '==', clanId).where('status', '==', 'completed').get();
-            var hasBonus = false;
-            snap1.forEach(function(d) {
-                if (d.data().bonusExpiry && d.data().bonusExpiry > Date.now()) hasBonus = true;
-            });
-            return hasBonus ? 1 : 0;
-        } catch (e) { return 0; }
-    }
-
-    async function renderChallengePanel() {
-        if (!currentClanId || !currentClanData) return;
-        var isLeader = currentClanData.leaderID === getPlayerId(currentPlayerName);
-        var active = await getActiveChallenge(currentClanId);
-        var pending = await getPendingChallenge(currentClanId);
-        var activeHtml = '';
-        if (active) {
-            if (Date.now() > active.endTime) { await checkChallengeExpiry(active); active = null; }
-        }
-        if (active) {
-            var remaining = active.endTime - Date.now();
-            var hrs = Math.floor(remaining / 3600000);
-            var mins = Math.floor((remaining % 3600000) / 60000);
-            var totalScore = (active.challengerScore + active.challengedScore) || 1;
-            var pct = Math.round((active.challengerScore / totalScore) * 100);
-            var isChlgr = currentClanId === active.challengerClanId;
-            activeHtml = '<div class="challenge-active">' +
-                '<div class="challenge-clan-name" style="color:#0ff;">' + active.challengerEmblem + ' ' + active.challengerClanName + '</div>' +
-                '<div class="challenge-vs">⚔️ VS ⚔️</div>' +
-                '<div class="challenge-clan-name" style="color:#fa5;">' + active.challengedEmblem + ' ' + active.challengedClanName + '</div>' +
-                '<div class="challenge-progress">' +
-                    '<span class="challenge-score-left">' + active.challengerScore.toLocaleString() + '</span>' +
-                    '<span class="challenge-score-right">' + active.challengedScore.toLocaleString() + '</span>' +
-                '</div>' +
-                '<div class="challenge-bar"><div class="challenge-bar-fill" style="width:' + pct + '%;"></div></div>' +
-                '<div class="challenge-timer">⏱ ' + hrs + 'h ' + mins + 'm restantes</div></div>';
-        } else if (pending) {
-            activeHtml = '<div class="challenge-pending">' +
-                '<p style="color:#fa5;">⚔️ ' + pending.challengerClanName + ' te desafía!</p>' +
-                (isLeader ? '<div style="margin-top:8px;display:flex;gap:6px;justify-content:center;">' +
-                    '<button class="comm-btn" id="challengeAcceptBtn">ACEPTAR</button>' +
-                    '<button class="comm-btn-danger" id="challengeDeclineBtn">RECHAZAR</button></div>' :
-                    '<p style="color:#888;font-size:11px;">Solo el líder puede responder</p>') +
-                '</div>';
-        } else {
-            activeHtml = '<p style="color:#888;text-align:center;font-size:12px;">No hay desafío activo</p>';
-        }
-        document.getElementById('challengeActive').innerHTML = activeHtml;
-        // Wire accept/decline
-        if (pending && isLeader) {
-            var accBtn = document.getElementById('challengeAcceptBtn');
-            var decBtn = document.getElementById('challengeDeclineBtn');
-            if (accBtn) accBtn.addEventListener('click', async function() {
-                await respondToChallenge(pending.id, true);
-                await sendSystemMessage(currentClanId, '¡Desafío aceptado contra ' + pending.challengerClanName + '!');
-                renderChallengePanel();
-            });
-            if (decBtn) decBtn.addEventListener('click', async function() {
-                await respondToChallenge(pending.id, false);
-                renderChallengePanel();
-            });
-        }
-        // History
-        var histHtml = '<h4 style="color:#888;margin-top:12px;font-size:12px;">HISTORIAL</h4>';
-        try {
-            var snap1 = await challengesRef.where('challengerClanId', '==', currentClanId).where('status', '==', 'completed').orderBy('endTime', 'desc').limit(5).get();
-            var snap2 = await challengesRef.where('challengedClanId', '==', currentClanId).where('status', '==', 'completed').orderBy('endTime', 'desc').limit(5).get();
-            var history = [];
-            snap1.forEach(function(d) { history.push(d.data()); });
-            snap2.forEach(function(d) { history.push(d.data()); });
-            history.sort(function(a,b) { return (b.endTime || 0) - (a.endTime || 0); });
-            if (history.length === 0) {
-                histHtml += '<p style="color:#555;font-size:11px;text-align:center;">Sin desafíos completados</p>';
-            }
-            history.slice(0, 5).forEach(function(h) {
-                var won = h.winnerId === currentClanId;
-                var opponent = h.challengerClanId === currentClanId ? h.challengedClanName : h.challengerClanName;
-                histHtml += '<div class="challenge-history-item"><span class="' + (won ? 'challenge-result-win' : 'challenge-result-loss') + '">' +
-                    (won ? '🏆 Victoria' : '💀 Derrota') + '</span> vs ' + opponent +
-                    ' (' + (h.challengerScore || 0).toLocaleString() + ' - ' + (h.challengedScore || 0).toLocaleString() + ')</div>';
-            });
-        } catch (e) {}
-        document.getElementById('challengeHistory').innerHTML = histHtml;
-        // New challenge button (only for leaders, only if no active/pending)
-        var newSection = document.getElementById('challengeNewSection');
-        if (isLeader && !active && !pending) {
-            newSection.style.display = 'block';
-            try {
-                var allClans = await clansRef.orderBy('totalScore', 'desc').limit(20).get();
-                var listHtml = '';
-                allClans.forEach(function(d) {
-                    if (d.id === currentClanId) return;
-                    var c = d.data();
-                    listHtml += '<div class="challenge-clan-pick" data-clanid="' + d.id + '">' +
-                        '<span>' + c.emblem + ' <strong style="color:' + c.color + ';">' + c.name + '</strong></span>' +
-                        '<span style="color:#0f0;">' + (c.totalScore || 0).toLocaleString() + '</span></div>';
-                });
-                if (!listHtml) listHtml = '<p style="color:#555;font-size:11px;">No hay otros clanes</p>';
-                document.getElementById('challengeClanList').innerHTML = listHtml;
-                var selectedTargetClan = null;
-                document.querySelectorAll('.challenge-clan-pick').forEach(function(el) {
-                    el.addEventListener('click', function() {
-                        document.querySelectorAll('.challenge-clan-pick').forEach(function(e) { e.classList.remove('selected'); });
-                        el.classList.add('selected');
-                        selectedTargetClan = el.dataset.clanid;
-                    });
-                });
-                document.getElementById('challengeSendBtn').onclick = async function() {
-                    if (!selectedTargetClan) return;
-                    this.disabled = true; this.textContent = 'ENVIANDO...';
-                    var result = await createChallenge(selectedTargetClan);
-                    this.disabled = false; this.textContent = 'ENVIAR DESAFIO';
-                    if (result.success) renderChallengePanel();
-                    else alert(result.error || 'Error al enviar desafío');
-                };
-            } catch (e) {}
-        } else {
-            newSection.style.display = 'none';
-        }
-    }
-
     // ---- v4.0 COMMUNITY INTEGRATION ----
     async function onGameOver_community(finalScore) {
         try {
             await updatePlayerProfile();
             if (currentClanId) {
                 await updateClanTotalScore(currentClanId);
-                if (finalScore > 0) await addChallengeScore(finalScore);
             }
         } catch (e) { console.warn('Community game over error:', e); }
     }
 
     async function onGameStart_community() {
-        challengeBonusLives = 0;
         pendingGiftLives = 0;
         if (!currentClanId) return;
         try {
             await checkAndApplyGifts();
-            challengeBonusLives = await getChallengeBonus(currentClanId);
         } catch (e) { console.warn('Community game start error:', e); }
     }
 
@@ -4009,9 +3751,8 @@
 
     function initGame() {
         score = 0;
-        lives = 25 + pendingGiftLives + challengeBonusLives;
+        lives = 25 + pendingGiftLives;
         pendingGiftLives = 0;
-        challengeBonusLives = 0;
         level = 1;
         updateStat('gamesPlayed', 1);
         gameStartTime = Date.now();
@@ -6537,19 +6278,6 @@
     });
     document.getElementById('profileOverlay').addEventListener('click', function(e) {
         if (e.target === document.getElementById('profileOverlay')) document.getElementById('profileOverlay').classList.remove('visible');
-    });
-
-    // Challenge overlay
-    document.getElementById('clanChallengeBtn').addEventListener('click', async function() {
-        if (!currentClanId) return;
-        await renderChallengePanel();
-        document.getElementById('challengeOverlay').classList.add('visible');
-    });
-    document.getElementById('challengeCloseBtn').addEventListener('click', function() {
-        document.getElementById('challengeOverlay').classList.remove('visible');
-    });
-    document.getElementById('challengeOverlay').addEventListener('click', function(e) {
-        if (e.target === document.getElementById('challengeOverlay')) document.getElementById('challengeOverlay').classList.remove('visible');
     });
 
     // Leaderboard tabs
