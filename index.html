@@ -527,7 +527,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.4</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.5</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -586,7 +586,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.4</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.5</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -953,10 +953,10 @@
     // ---- BOSS LEVELS ----
     const BOSS_LEVELS = [5, 10, 15, 20];
     const BOSS_DEFS = [
-        { id: 'guardian', name: 'El Guardian', color: '#f44', glowColor: '#f66', hitsToKill: 3, points: 25000, speed: 12, pattern: 'charge' },
-        { id: 'shadow_queen', name: 'La Sombra Reina', color: '#a0f', glowColor: '#c4f', hitsToKill: 3, points: 50000, speed: 10, pattern: 'teleport' },
-        { id: 'devourer', name: 'El Devorador', color: '#0a0', glowColor: '#0f0', hitsToKill: 3, points: 75000, speed: 10, pattern: 'wallphase' },
-        { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 100000, speed: 8, pattern: 'combined' },
+        { id: 'guardian', name: 'El Guardian', color: '#f44', glowColor: '#f66', hitsToKill: 3, points: 25000, speed: 5, pattern: 'charge' },
+        { id: 'shadow_queen', name: 'La Sombra Reina', color: '#a0f', glowColor: '#c4f', hitsToKill: 3, points: 50000, speed: 4, pattern: 'teleport' },
+        { id: 'devourer', name: 'El Devorador', color: '#0a0', glowColor: '#0f0', hitsToKill: 3, points: 75000, speed: 4, pattern: 'wallphase' },
+        { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 100000, speed: 3, pattern: 'combined' },
     ];
 
     const BOSS_ARENA_MAP = [
@@ -3900,8 +3900,8 @@
         bossPowerMode = false;
         bossPowerTimer = 0;
         bossChargeState = 'idle';
-        bossChargePause = 60;
-        bossTeleportTimer = 120;
+        bossChargePause = 15;
+        bossTeleportTimer = 30;
         bossPhaseTimer = 0;
         bossDeathTimer = 0;
         powerMode = false;
@@ -3922,11 +3922,11 @@
     function updateBoss() {
         if (!boss || boss.hp <= 0) return;
         bossPhaseTimer++;
-        // Lerp boss position
-        boss.px += (boss.x * TILE - boss.px) * 0.1;
-        boss.py += (boss.y * TILE - boss.py) * 0.1;
+        // Lerp boss position (usar LERP_SPEED para movimiento fluido)
+        boss.px += (boss.x * TILE - boss.px) * LERP_SPEED;
+        boss.py += (boss.y * TILE - boss.py) * LERP_SPEED;
         var def = BOSS_DEFS[bossIdx];
-        var rate = boss.scared ? def.speed * 2 : def.speed;
+        var rate = boss.scared ? Math.max(2, Math.floor(def.speed * 1.5)) : def.speed;
         if (animFrame % rate !== 0) return;
         switch(def.pattern) {
             case 'charge': updateBossCharge(); break;
@@ -3934,7 +3934,7 @@
             case 'wallphase': updateBossWallPhase(); break;
             case 'combined':
                 // Cycle through patterns
-                var phase = Math.floor(bossPhaseTimer / 300) % 3;
+                var phase = Math.floor(bossPhaseTimer / 180) % 3;
                 if (phase === 0) updateBossCharge();
                 else if (phase === 1) updateBossTeleport();
                 else updateBossWallPhase();
@@ -3964,7 +3964,7 @@
                 if (boss.x >= COLS) boss.x = 0;
             } else {
                 bossChargeState = 'idle';
-                bossChargePause = 40 + Math.floor(Math.random() * 30);
+                bossChargePause = 10 + Math.floor(Math.random() * 10);
                 triggerShake(3, 8);
             }
         }
@@ -3990,7 +3990,7 @@
             if (miniGhosts.length < 3) {
                 miniGhosts.push({ x: boss.x, y: boss.y, px: boss.x * TILE, py: boss.y * TILE, dir: Math.floor(Math.random() * 4), timer: 300, scared: false });
             }
-            bossTeleportTimer = 90 + Math.floor(Math.random() * 60);
+            bossTeleportTimer = 25 + Math.floor(Math.random() * 20);
         }
         moveBossTowardPlayer();
     }
