@@ -527,7 +527,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.8</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.9</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -586,7 +586,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.8</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.9</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -1169,7 +1169,7 @@
 
     let map = [];
     let score = 0;
-    let lives = 4;
+    let lives = 25;
     let level = 1;
     let totalDots = 0;
     let dotsEaten = 0;
@@ -2793,7 +2793,7 @@
 
     function initGame() {
         score = 0;
-        lives = 4;
+        lives = 25;
         level = 1;
         updateStat('gamesPlayed', 1);
         gameStartTime = Date.now();
