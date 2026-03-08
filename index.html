@@ -527,7 +527,7 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
-        <h1>EDH-PAC <span class="version-tag">v3.6</span></h1>
+        <h1>EDH-PAC <span class="version-tag">v3.7</span></h1>
         <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
         <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
         <h2>Un juego arcade de laberintos</h2>
@@ -586,7 +586,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.6</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v3.7</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -1192,6 +1192,16 @@
     let powerupMsgTimer = 0;
     let powerupMsg = '';
     let levelGhostsEaten = 0;
+
+    // ---- LASER BEAM STATE ----
+    let laserActive = false;
+    let laserTimer = 0;
+    let laserStartX = 0, laserStartY = 0;
+    let laserEndX = 0, laserEndY = 0;
+    let laserDir = 1;
+    let laserCooldown = 0;
+    const LASER_FIRE_INTERVAL = 8;
+    const LASER_FADE_FRAMES = 6;
 
     // ---- COMBO CHAIN STATE ----
     let comboChain = 0;
@@ -1964,6 +1974,41 @@
         n.start(t); n.stop(t + 0.08);
     }
 
+    function playLaserZap() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        // Sweep descendente sawtooth
+        const zap = audioCtx.createOscillator();
+        const zapG = audioCtx.createGain();
+        zap.type = 'sawtooth';
+        zap.frequency.setValueAtTime(2000, t);
+        zap.frequency.exponentialRampToValueAtTime(500, t + 0.08);
+        zapG.gain.setValueAtTime(0.12, t);
+        zapG.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        zap.connect(zapG); zapG.connect(sfxGain);
+        zap.start(t); zap.stop(t + 0.1);
+        // Click snap
+        const click = audioCtx.createOscillator();
+        const clickG = audioCtx.createGain();
+        click.type = 'square';
+        click.frequency.setValueAtTime(4000, t);
+        click.frequency.exponentialRampToValueAtTime(800, t + 0.02);
+        clickG.gain.setValueAtTime(0.08, t);
+        clickG.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+        click.connect(clickG); clickG.connect(sfxGain);
+        click.start(t); click.stop(t + 0.03);
+        // Noise burst
+        if (noiseBuffer) {
+            const n = audioCtx.createBufferSource();
+            n.buffer = noiseBuffer;
+            const ng = audioCtx.createGain();
+            ng.gain.setValueAtTime(0.06, t);
+            ng.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            n.connect(ng); ng.connect(sfxGain);
+            n.start(t); n.stop(t + 0.05);
+        }
+    }
+
     function playDeath() {
         if (!audioCtx) return;
         stopMusic();
@@ -2733,6 +2778,7 @@
         createGhosts();
         powerMode = false;
         powerTimer = 0;
+        laserActive = false; laserTimer = 0; laserCooldown = 0;
         activePowerup = null;
         magnetTimer = 0;
         speedTimer = 0;
@@ -3384,6 +3430,174 @@
         });
     }
 
+    // ---- LASER BEAM FUNCTIONS ----
+    function traceLaser() {
+        var d = DIRS[player.dir];
+        var tx = player.x, ty = player.y;
+        var tiles = [];
+        while (true) {
+            tx += d.dx; ty += d.dy;
+            if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) break;
+            if (map[ty][tx] === 1) break;
+            tiles.push({ x: tx, y: ty });
+        }
+        var endPx, endPy;
+        if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) {
+            endPx = Math.max(0, Math.min(COLS * TILE, tx * TILE + TILE / 2));
+            endPy = Math.max(0, Math.min(ROWS * TILE, ty * TILE + TILE / 2));
+        } else {
+            endPx = tx * TILE + TILE / 2;
+            endPy = ty * TILE + TILE / 2;
+        }
+        return { tiles: tiles, endPx: endPx, endPy: endPy, hitWall: (tx >= 0 && tx < COLS && ty >= 0 && ty < ROWS) };
+    }
+
+    function laserKillGhost(g, gi) {
+        if (g.eaten) return;
+        g.eaten = true;
+        g.scared = false;
+        g.eatenThisPower = true;
+        ghostsEatenInPower++;
+        var GHOST_COMBO_MULTS = [1, 4, 8, 15, 25];
+        var comboIdx = Math.min(ghostsEatenInPower - 1, GHOST_COMBO_MULTS.length - 1);
+        var comboMult = GHOST_COMBO_MULTS[comboIdx];
+        var isCombo = ghostsEatenInPower >= 2;
+        var earnedPoints = 1000 * comboMult;
+        score += earnedPoints;
+        var comboColors = ['#fff', '#ff0', '#fa5', '#f44', '#ffd700'];
+        var popupColor = comboColors[comboIdx] || '#ffd700';
+        var popupText = isCombo ? earnedPoints.toLocaleString() + ' LASER x' + comboMult + '!' : '+' + earnedPoints.toLocaleString() + ' LASER!';
+        ghostScorePopups.push({ x: g.px + TILE/2, y: g.py, text: popupText, timer: 70, maxTimer: 70, isCombo: isCombo, color: popupColor });
+        // PERFECTO check
+        var activeGhosts = ghosts.filter(function(gh) { return !gh.inHouse || gh === g; });
+        var allEaten = activeGhosts.every(function(gh) { return gh.eaten || gh.inHouse; });
+        if (allEaten && ghostsEatenInPower >= 2) {
+            score += 15000;
+            ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 30, text: '+15,000 PERFECTO!', timer: 90, maxTimer: 90, isCombo: true, color: '#ffd700' });
+        }
+        currentGhostStreak++;
+        updateStat('totalGhostsEaten', 1);
+        levelGhostsEaten++;
+        updateStat('bestStreak', currentGhostStreak, 'max');
+        checkLifeMilestone();
+        updateHUD();
+        if (isCombo) playGhostComboHit(); else playComboHit();
+        var particleCount = 10 + ghostsEatenInPower * 4;
+        spawnParticles(g.px + TILE/2, g.py + TILE/2, particleCount, g.color, 1, 5, 20, 40, 3);
+        spawnParticles(g.px + TILE/2, g.py + TILE/2, 6, '#0ff', 2, 4, 10, 20, 2);
+        if (ghostsEatenInPower >= 4) triggerFlash('rgba(255,215,0,0.3)', 10);
+    }
+
+    function laserHitBoss() {
+        if (!boss || boss.hp <= 0) return;
+        boss.hp--;
+        boss.scared = false;
+        bossPowerMode = false;
+        bossPowerTimer = 0;
+        playBossHit();
+        triggerShake(6, 15);
+        spawnParticles(boss.px + TILE, boss.py + TILE, 20, BOSS_DEFS[bossIdx].color, 2, 6, 15, 30, 3);
+        spawnParticles(boss.px + TILE, boss.py + TILE, 8, '#0ff', 2, 5, 10, 20, 2);
+        ghostScorePopups.push({ x: boss.px + TILE, y: boss.py, text: '-1 HP LASER!', timer: 60, maxTimer: 60, isCombo: true, color: '#0ff' });
+        if (boss.hp <= 0) {
+            gameState = 'bossdeath';
+            bossDeathTimer = 120;
+            score += BOSS_DEFS[bossIdx].points;
+            updateStat('bossesDefeated', 1);
+            bossDefeated.push(bossIdx);
+            playBossDefeat();
+            triggerShake(10, 30);
+            spawnParticles(boss.px + TILE, boss.py + TILE, 40, BOSS_DEFS[bossIdx].color, 2, 8, 20, 50, 4);
+            lives++;
+            updateHUD();
+            checkAchievements();
+        } else {
+            boss.x = 14; boss.y = 8; boss.px = 14 * TILE; boss.py = 8 * TILE;
+            bossChargeState = 'idle';
+            bossChargePause = 60;
+        }
+    }
+
+    function fireLaser() {
+        var trace = traceLaser();
+        laserActive = true;
+        laserTimer = LASER_FADE_FRAMES;
+        laserDir = player.dir;
+        laserStartX = player.px + TILE / 2;
+        laserStartY = player.py + TILE / 2;
+        laserEndX = trace.endPx;
+        laserEndY = trace.endPy;
+        var hitSomething = false;
+        if (!bossActive) {
+            // Gameplay normal: matar fantasmas en el path
+            ghosts.forEach(function(g, gi) {
+                if (g.inHouse || g.eaten) return;
+                var inPath = trace.tiles.some(function(t) { return t.x === g.x && t.y === g.y; });
+                if (inPath) {
+                    laserKillGhost(g, gi);
+                    hitSomething = true;
+                }
+            });
+        } else {
+            // Boss fight: dañar boss y mini-ghosts
+            if (boss && boss.scared) {
+                var bossHit = trace.tiles.some(function(t) {
+                    return Math.abs(t.x - boss.x) <= 1 && Math.abs(t.y - boss.y) <= 1;
+                });
+                if (bossHit) { laserHitBoss(); hitSomething = true; }
+            }
+            for (var i = miniGhosts.length - 1; i >= 0; i--) {
+                var mg = miniGhosts[i];
+                if (!mg.scared) continue;
+                var mgHit = trace.tiles.some(function(t) { return t.x === mg.x && t.y === mg.y; });
+                if (mgHit) {
+                    score += 2000;
+                    spawnParticles(mg.px + TILE/2, mg.py + TILE/2, 8, BOSS_DEFS[bossIdx].color, 1, 3, 10, 20, 2);
+                    miniGhosts.splice(i, 1);
+                    playComboHit();
+                    hitSomething = true;
+                }
+            }
+        }
+        playLaserZap();
+        if (trace.hitWall) spawnParticles(trace.endPx, trace.endPy, 6, '#0ff', 1, 3, 8, 16, 2);
+        if (hitSomething) triggerShake(2, 4);
+    }
+
+    function drawLaser() {
+        if (!laserActive || laserTimer <= 0) return;
+        var alpha = laserTimer / LASER_FADE_FRAMES;
+        var beamWidth = 2 + alpha * 3;
+        ctx.save();
+        // Glow exterior
+        ctx.strokeStyle = 'rgba(0, 255, 255, ' + (alpha * 0.3) + ')';
+        ctx.lineWidth = beamWidth + 6;
+        ctx.shadowColor = '#0ff';
+        ctx.shadowBlur = 15 * alpha;
+        ctx.beginPath();
+        ctx.moveTo(laserStartX, laserStartY);
+        ctx.lineTo(laserEndX, laserEndY);
+        ctx.stroke();
+        // Rayo brillante
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.9) + ')';
+        ctx.lineWidth = beamWidth;
+        ctx.shadowBlur = 8 * alpha;
+        ctx.shadowColor = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(laserStartX, laserStartY);
+        ctx.lineTo(laserEndX, laserEndY);
+        ctx.stroke();
+        // Core line
+        ctx.strokeStyle = 'rgba(0, 255, 255, ' + alpha + ')';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.moveTo(laserStartX, laserStartY);
+        ctx.lineTo(laserEndX, laserEndY);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     // ---- DRAWING ----
     function drawWall(x, y) {
         const px = x * TILE; const py = y * TILE;
@@ -3596,6 +3810,7 @@
         }
         if (gameState !== 'dying' || deathTimer > 45) {
             drawPlayer();
+            drawLaser();
             // Combo counter near player
             if (comboChain >= COMBO_TIER_1 && gameState === 'playing') {
                 ctx.save();
@@ -3921,6 +4136,7 @@
         bossDeathTimer = 0;
         powerMode = false;
         powerTimer = 0;
+        laserActive = false; laserTimer = 0; laserCooldown = 0;
         magnetTimer = 0; speedTimer = 0; freezeTimer = 0;
         shieldActive = false;
         fruit = null;
@@ -4362,6 +4578,12 @@
             movePlayer();
             ghosts.forEach((g, i) => moveGhost(g, i));
             checkCollisions();
+            // LASER BEAM: auto-disparo durante power mode
+            if (powerMode) {
+                laserCooldown--;
+                if (laserCooldown <= 0) { fireLaser(); laserCooldown = LASER_FIRE_INTERVAL; }
+            }
+            if (laserActive) { laserTimer--; if (laserTimer <= 0) laserActive = false; }
             if (powerMode) {
                 const remaining = powerEndTime - Date.now();
                 powerTimer = remaining; // para parpadeo visual
@@ -4369,6 +4591,7 @@
                     powerMode = false;
                     powerTimer = 0;
                     ghosts.forEach(g => { g.scared = false; });
+                    laserActive = false; laserTimer = 0; laserCooldown = 0;
                 }
             }
             if (!musicPlaying && audioCtx) startMusic();
@@ -4568,6 +4791,12 @@
             updateBoss();
             updateMiniGhosts();
             checkBossCollision();
+            // LASER BEAM: auto-disparo durante boss power mode
+            if (bossPowerMode) {
+                laserCooldown--;
+                if (laserCooldown <= 0) { fireLaser(); laserCooldown = LASER_FIRE_INTERVAL; }
+            }
+            if (laserActive) { laserTimer--; if (laserTimer <= 0) laserActive = false; }
             // Boss power mode timer
             if (bossPowerMode) {
                 bossPowerTimer--;
@@ -4575,6 +4804,7 @@
                     bossPowerMode = false;
                     if (boss) boss.scared = false;
                     miniGhosts.forEach(function(mg) { mg.scared = false; });
+                    laserActive = false; laserTimer = 0; laserCooldown = 0;
                 }
             }
             // Respawn power orbs on a timer
