@@ -469,22 +469,37 @@
             -webkit-tap-highlight-color: transparent;
         }
         #pauseBtn:active { background: rgba(0,255,255,0.2); }
-        #pauseExitBtn {
+        #pauseMenu {
             display: none;
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, 20px);
+            transform: translate(-50%, 15px);
             z-index: 10;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        #pauseResumeBtn, #pauseExitBtn {
             padding: 12px 28px;
             font-family: 'Courier New', monospace;
             font-size: 16px;
             font-weight: bold;
-            color: #f55;
-            background: rgba(0,0,0,0.85);
-            border: 2px solid #f55;
             border-radius: 8px;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            width: 220px;
+            text-align: center;
+        }
+        #pauseResumeBtn {
+            color: #0ff;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #0ff;
+        }
+        #pauseResumeBtn:hover, #pauseResumeBtn:active { background: #0ff; color: #000; }
+        #pauseExitBtn {
+            color: #f55;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #f55;
         }
         #pauseExitBtn:hover, #pauseExitBtn:active { background: #f55; color: #000; }
         /* ---- LOADING SCREEN ---- */
@@ -756,7 +771,7 @@
     <div id="startScreen">
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v4.06</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.07</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -777,7 +792,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v4.06</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.07</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -936,7 +951,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.06</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.07</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -945,7 +960,10 @@
         </div>
         <div style="position:relative; width:100%; max-width:560px;">
             <button id="pauseBtn">&#10074;&#10074;</button>
-            <button id="pauseExitBtn">🏠 SALIR AL LOBBY</button>
+            <div id="pauseMenu">
+                <button id="pauseResumeBtn">▶ REGRESAR AL JUEGO</button>
+                <button id="pauseExitBtn">🏠 SALIR AL LOBBY</button>
+            </div>
             <canvas id="game" width="560" height="620"></canvas>
             <div id="dpad">
                 <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
@@ -3884,12 +3902,12 @@
         if (e.key === 'Escape') {
             if (gameState === 'playing' || gameState === 'bossfight') {
                 gameState = 'paused';
-                document.getElementById('pauseExitBtn').style.display = 'block';
+                document.getElementById('pauseMenu').style.display = 'flex';
                 if (typeof stopMusic === 'function') stopMusic();
                 return;
             } else if (gameState === 'paused') {
                 gameState = bossActive ? 'bossfight' : 'playing';
-                document.getElementById('pauseExitBtn').style.display = 'none';
+                document.getElementById('pauseMenu').style.display = 'none';
                 if (typeof startMusic === 'function') startMusic();
                 return;
             } else if (gameState === 'cutscene') {
@@ -3980,18 +3998,25 @@
     document.getElementById('pauseBtn').addEventListener('click', function() {
         if (gameState === 'playing' || gameState === 'bossfight') {
             gameState = 'paused';
-            document.getElementById('pauseExitBtn').style.display = 'block';
+            document.getElementById('pauseMenu').style.display = 'flex';
             if (typeof stopMusic === 'function') stopMusic();
         } else if (gameState === 'paused') {
             gameState = bossActive ? 'bossfight' : 'playing';
-            document.getElementById('pauseExitBtn').style.display = 'none';
+            document.getElementById('pauseMenu').style.display = 'none';
             if (typeof startMusic === 'function') startMusic();
         }
     });
 
+    // Resume game from pause menu
+    document.getElementById('pauseResumeBtn').addEventListener('click', function() {
+        document.getElementById('pauseMenu').style.display = 'none';
+        gameState = bossActive ? 'bossfight' : 'playing';
+        if (typeof startMusic === 'function') startMusic();
+    });
+
     // Exit to lobby from pause
     document.getElementById('pauseExitBtn').addEventListener('click', function() {
-        document.getElementById('pauseExitBtn').style.display = 'none';
+        document.getElementById('pauseMenu').style.display = 'none';
         stopMusic();
         gameState = 'start';
         document.getElementById('goButtons').classList.remove('visible');
