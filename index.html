@@ -469,6 +469,24 @@
             -webkit-tap-highlight-color: transparent;
         }
         #pauseBtn:active { background: rgba(0,255,255,0.2); }
+        #pauseExitBtn {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, 20px);
+            z-index: 10;
+            padding: 12px 28px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #f55;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #f55;
+            border-radius: 8px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #pauseExitBtn:hover, #pauseExitBtn:active { background: #f55; color: #000; }
         /* ---- LOADING SCREEN ---- */
         #loadingScreen {
             position: fixed;
@@ -738,7 +756,7 @@
     <div id="startScreen">
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v4.05</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.06</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -759,7 +777,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v4.05</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v4.06</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -918,7 +936,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.05</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.06</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -927,6 +945,7 @@
         </div>
         <div style="position:relative; width:100%; max-width:560px;">
             <button id="pauseBtn">&#10074;&#10074;</button>
+            <button id="pauseExitBtn">🏠 SALIR AL LOBBY</button>
             <canvas id="game" width="560" height="620"></canvas>
             <div id="dpad">
                 <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
@@ -3865,10 +3884,12 @@
         if (e.key === 'Escape') {
             if (gameState === 'playing' || gameState === 'bossfight') {
                 gameState = 'paused';
+                document.getElementById('pauseExitBtn').style.display = 'block';
                 if (typeof stopMusic === 'function') stopMusic();
                 return;
             } else if (gameState === 'paused') {
                 gameState = bossActive ? 'bossfight' : 'playing';
+                document.getElementById('pauseExitBtn').style.display = 'none';
                 if (typeof startMusic === 'function') startMusic();
                 return;
             } else if (gameState === 'cutscene') {
@@ -3959,11 +3980,23 @@
     document.getElementById('pauseBtn').addEventListener('click', function() {
         if (gameState === 'playing' || gameState === 'bossfight') {
             gameState = 'paused';
+            document.getElementById('pauseExitBtn').style.display = 'block';
             if (typeof stopMusic === 'function') stopMusic();
         } else if (gameState === 'paused') {
             gameState = bossActive ? 'bossfight' : 'playing';
+            document.getElementById('pauseExitBtn').style.display = 'none';
             if (typeof startMusic === 'function') startMusic();
         }
+    });
+
+    // Exit to lobby from pause
+    document.getElementById('pauseExitBtn').addEventListener('click', function() {
+        document.getElementById('pauseExitBtn').style.display = 'none';
+        stopMusic();
+        gameState = 'start';
+        document.getElementById('goButtons').classList.remove('visible');
+        document.getElementById('startScreen').style.display = 'flex';
+        showLobbyView();
     });
 
     function movePlayer() {
@@ -5037,10 +5070,10 @@
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0ff';
             ctx.font = 'bold 36px "Courier New"';
-            ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+            ctx.fillText('PAUSA', canvas.width/2, canvas.height/2 - 20);
             ctx.fillStyle = '#888';
             ctx.font = '14px "Courier New"';
-            ctx.fillText('Presiona ESC o toca pausa', canvas.width/2, canvas.height/2 + 30);
+            ctx.fillText('ESC o toca pausa para continuar', canvas.width/2, canvas.height/2 + 10);
         }
 
         // Boss fight overlay
