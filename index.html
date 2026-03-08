@@ -1245,18 +1245,28 @@
             if (data.memberIDs.length <= 1) {
                 await clansRef.doc(currentClanId).delete();
             } else {
+                // Remove the member first
                 await clansRef.doc(currentClanId).update({
                     memberIDs: firebase.firestore.FieldValue.arrayRemove(pid),
                     memberNames: firebase.firestore.FieldValue.arrayRemove(currentPlayerName)
                 });
+                // If the leader is leaving, pass leadership to the oldest remaining member
                 if (data.leaderID === pid) {
-                    var newLeaderIdx = data.memberIDs.indexOf(pid) === 0 ? 1 : 0;
+                    var leaderIdx = data.memberIDs.indexOf(pid);
+                    // Build the remaining members list in original order
+                    var remainingIDs = data.memberIDs.filter(function(id) { return id !== pid; });
+                    var remainingNames = data.memberNames.filter(function(n) { return n !== currentPlayerName; });
+                    // The oldest remaining member is the first one in the list
+                    var newLeaderID = remainingIDs[0];
+                    var newLeaderName = remainingNames[0];
                     await clansRef.doc(currentClanId).update({
-                        leaderID: data.memberIDs[newLeaderIdx],
-                        leaderName: data.memberNames[newLeaderIdx]
+                        leaderID: newLeaderID,
+                        leaderName: newLeaderName
                     });
+                    await sendSystemMessage(currentClanId, currentPlayerName + ' abandonó el clan. ' + newLeaderName + ' es el nuevo líder 👑');
+                } else {
+                    await sendSystemMessage(currentClanId, currentPlayerName + ' salió del clan');
                 }
-                await sendSystemMessage(currentClanId, currentPlayerName + ' salió del clan');
             }
             await scoresRef.doc(pid).update({ clanId: null, clanName: null });
             currentClanId = null;
@@ -1266,6 +1276,12 @@
 
     async function kickMember(memberPid, memberName) {
         if (!currentClanId || !currentClanData) return;
+        // Solo el líder puede expulsar miembros
+        var pid = getPlayerId(currentPlayerName);
+        if (currentClanData.leaderID !== pid) {
+            alert('Solo el líder del clan puede expulsar miembros.');
+            return;
+        }
         try {
             await clansRef.doc(currentClanId).update({
                 memberIDs: firebase.firestore.FieldValue.arrayRemove(memberPid),
