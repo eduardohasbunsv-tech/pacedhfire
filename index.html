@@ -3093,9 +3093,13 @@
         html += '<div style="color:#888;font-size:12px;">Estado: ' + t.status + '</div>';
         if (t.endTime) html += '<div style="color:#fa5;font-size:12px;">Termina: ' + new Date(t.endTime.seconds ? t.endTime.seconds * 1000 : t.endTime).toLocaleString() + '</div>';
         html += '</div>';
-        if (!isJoined && currentPlayerName) {
-            html += '<div style="text-align:center;margin:12px 0;"><button class="comm-btn" id="tournamentJoinBtn">PARTICIPAR</button></div>';
-        } else if (isJoined) {
+        if (!currentPlayerName) {
+            html += '<div style="text-align:center;margin:12px 0;padding:10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;">';
+            html += '<p style="color:#e74c3c;font-size:12px;margin:0 0 6px;">⚠️ Necesitas un nombre para participar</p>';
+            html += '<p style="color:#888;font-size:11px;margin:0;">Ve a <strong>JUGAR</strong> e ingresa tu nombre primero</p></div>';
+        } else if (!isJoined) {
+            html += '<div style="text-align:center;margin:12px 0;"><button class="comm-btn" id="tournamentJoinBtn" style="background:#e74c3c;font-size:14px;padding:12px 24px;">⚔️ PARTICIPAR</button></div>';
+        } else {
             html += '<div style="text-align:center;color:#0f0;margin:8px 0;">✓ Participando — Tu mejor: ' + ((t.players[pid] && t.players[pid].score) || 0).toLocaleString() + '</div>';
         }
         // Leaderboard
