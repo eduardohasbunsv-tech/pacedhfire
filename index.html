@@ -7931,10 +7931,35 @@
     document.getElementById('multiOverlay').addEventListener('click', function(e) {
         if (e.target === document.getElementById('multiOverlay')) document.getElementById('multiOverlay').classList.remove('visible');
     });
-    // Mostrar campo de nombre en multi si no hay nombre
+    // Mostrar campo de nombre en multi si no hay nombre + habilitar/deshabilitar botones
     function updateMultiNamePrompt() {
         var prompt = document.getElementById('multiNamePrompt');
         if (prompt) prompt.style.display = currentPlayerName ? 'none' : 'block';
+        updateMultiButtonStates();
+    }
+    function updateMultiButtonStates() {
+        var hasName = !!currentPlayerName;
+        var createBtn = document.getElementById('multiCreateBtn');
+        var joinBtn = document.getElementById('multiJoinBtn');
+        var codeInput = document.getElementById('multiCodeInput');
+        var spectateBtn = document.getElementById('multiSpectateBtn');
+        if (createBtn) { createBtn.disabled = !hasName; createBtn.style.opacity = hasName ? '1' : '0.4'; createBtn.style.pointerEvents = hasName ? 'auto' : 'none'; }
+        if (joinBtn) { joinBtn.disabled = !hasName; joinBtn.style.opacity = hasName ? '1' : '0.4'; joinBtn.style.pointerEvents = hasName ? 'auto' : 'none'; }
+        if (codeInput) { codeInput.disabled = !hasName; codeInput.style.opacity = hasName ? '1' : '0.4'; }
+        if (spectateBtn) { spectateBtn.disabled = !hasName; spectateBtn.style.opacity = hasName ? '1' : '0.4'; spectateBtn.style.pointerEvents = hasName ? 'auto' : 'none'; }
+    }
+    function showMultiError(msg) {
+        var errEl = document.getElementById('multiErrorMsg');
+        if (!errEl) {
+            errEl = document.createElement('div');
+            errEl.id = 'multiErrorMsg';
+            errEl.style.cssText = 'color:#ff4444;font-size:11px;text-align:center;margin:8px 0 0;padding:6px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:6px;';
+            var container = document.querySelector('#multiMenu > div:last-child');
+            if (container) container.appendChild(errEl);
+        }
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+        setTimeout(function() { if (errEl) errEl.style.display = 'none'; }, 4000);
     }
     document.getElementById('multiNameBtn').addEventListener('click', function() {
         var name = document.getElementById('multiNameInput').value.trim();
@@ -7942,26 +7967,41 @@
         currentPlayerName = name;
         if (persistentData) { persistentData.playerName = name; savePersistentData(); }
         document.getElementById('multiNamePrompt').style.display = 'none';
+        updateMultiButtonStates();
     });
     document.getElementById('multiCreateBtn').addEventListener('click', async function() {
         if (!currentPlayerName) { updateMultiNamePrompt(); return; }
-        var result = await createMultiplayerSession();
-        if (result.success) renderMultiplayerLobby();
-        else alert(result.error);
+        this.disabled = true; this.textContent = 'CREANDO...';
+        try {
+            var result = await createMultiplayerSession();
+            if (result.success) renderMultiplayerLobby();
+            else showMultiError(result.error || 'Error al crear sala');
+        } catch(e) { showMultiError('Error: ' + e.message); }
+        this.disabled = false; this.textContent = 'CREAR SALA';
     });
     document.getElementById('multiJoinBtn').addEventListener('click', async function() {
         if (!currentPlayerName) { updateMultiNamePrompt(); return; }
         var code = document.getElementById('multiCodeInput').value.trim();
-        var result = await joinMultiplayerSession(code, false);
-        if (result.success) renderMultiplayerLobby();
-        else alert(result.error);
+        if (!code) { showMultiError('Ingresa un código de sala'); return; }
+        if (code.length < 4) { showMultiError('El código debe tener al menos 4 caracteres'); return; }
+        this.disabled = true; this.textContent = '...';
+        try {
+            var result = await joinMultiplayerSession(code, false);
+            if (result.success) { renderMultiplayerLobby(); }
+            else { showMultiError(result.error || 'No se pudo unir a la sala'); }
+        } catch(e) { showMultiError('Error de conexión: ' + e.message); }
+        this.disabled = false; this.textContent = 'UNIRSE';
     });
     document.getElementById('multiSpectateBtn').addEventListener('click', async function() {
         var code = document.getElementById('multiCodeInput').value.trim();
-        if (!code) { alert('Ingresa un código'); return; }
-        var result = await joinMultiplayerSession(code, true);
-        if (result.success) renderMultiplayerLobby();
-        else alert(result.error);
+        if (!code) { showMultiError('Ingresa un código de sala'); return; }
+        this.disabled = true;
+        try {
+            var result = await joinMultiplayerSession(code, true);
+            if (result.success) renderMultiplayerLobby();
+            else showMultiError(result.error || 'No se pudo conectar como espectador');
+        } catch(e) { showMultiError('Error: ' + e.message); }
+        this.disabled = false;
     });
 
     // Audio toggle buttons
