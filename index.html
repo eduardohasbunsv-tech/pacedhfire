@@ -3032,6 +3032,15 @@
             html += '<div style="color:#666;font-size:11px;">' + (persistentData.seasonXp || 0) + ' / ' + xpNeeded + ' XP para Nv ' + (nextUnclaimedLvl + 1) + '</div>';
         }
         html += '</div>';
+        // Explicación de cómo funciona
+        html += '<div style="background:rgba(255,255,255,0.04);border:1px solid #333;border-radius:10px;padding:10px 14px;margin:10px 0;text-align:left;">';
+        html += '<div style="color:' + c1 + ';font-weight:bold;font-size:13px;margin-bottom:6px;">🎮 ¿Cómo funciona?</div>';
+        html += '<div style="color:#aaa;font-size:12px;line-height:1.6;">';
+        html += 'Juega partidas normales para ganar XP de temporada.<br>';
+        html += 'Por cada 200 puntos de score ganas 1 XP.<br>';
+        html += 'Desbloquea niveles y cobra tus recompensas aquí.<br>';
+        html += '<span style="color:' + c1 + ';">¡Completa los 10 niveles antes de que termine la temporada!</span>';
+        html += '</div></div>';
         html += '<div class="season-track">';
         var rewards = currentSeason.rewards || [];
         for (var i = 0; i < 10; i++) {
