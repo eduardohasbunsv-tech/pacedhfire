@@ -1358,6 +1358,9 @@
                 <button class="audio-btn" id="sfxToggleBtn" title="Efectos">🔊</button>
             </div>
         </div>
+        <div id="multiplayerBanner" style="display:none;background:linear-gradient(90deg,#3498db,#2c3e50);color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-family:'Press Start 2P',monospace;letter-spacing:1px;border-radius:6px;margin:4px auto;max-width:560px;">
+            👻 MODO MULTIJUGADOR — Sala: <span id="multiBannerCode"></span>
+        </div>
         <div style="position:relative; width:100%; max-width:560px;">
             <button id="pauseBtn">&#10074;&#10074;</button>
             <div id="pauseMenu">
@@ -3427,6 +3430,9 @@
         if (startBtn) {
             startBtn.addEventListener('click', function() {
                 document.getElementById('multiOverlay').classList.remove('visible');
+                // Mostrar banner de multijugador
+                var banner = document.getElementById('multiplayerBanner');
+                if (banner) { banner.style.display = 'block'; document.getElementById('multiBannerCode').textContent = multiplayerSessionId; }
                 showPlayView();
             });
         }
@@ -3435,6 +3441,9 @@
             leaveBtn.addEventListener('click', function() {
                 multiplayerSessionId = null; isHost = false; isSpectator = false;
                 if (multiplayerListener) { multiplayerListener(); multiplayerListener = null; }
+                // Ocultar banner de multijugador
+                var banner = document.getElementById('multiplayerBanner');
+                if (banner) banner.style.display = 'none';
                 document.getElementById('multiLobby').style.display = 'none';
                 document.getElementById('multiMenu').style.display = 'block';
             });
@@ -7552,6 +7561,11 @@
     function showLobbyView() {
         document.getElementById('lobbyView').style.display = 'flex';
         document.getElementById('playView').style.display = 'none';
+        // Ocultar banner multijugador si no hay sesión activa
+        if (!multiplayerSessionId) {
+            var banner = document.getElementById('multiplayerBanner');
+            if (banner) banner.style.display = 'none';
+        }
         // v5.0: Update lobby displays
         updateLobbyInfo();
         resetMissionsIfNeeded();
