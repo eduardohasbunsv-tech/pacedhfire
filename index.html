@@ -1304,7 +1304,7 @@
             </div>
             <div id="editorCreateView" style="display:none;">
                 <div class="editor-toolbar" id="editorToolbar"></div>
-                <canvas id="editorCanvas" width="420" height="540"></canvas>
+                <canvas id="editorCanvas" width="420" height="465"></canvas>
                 <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
                     <input type="text" class="comm-input" id="editorMapName" maxlength="20" placeholder="Nombre del mapa..." style="flex:1;">
                     <button class="comm-btn" id="editorSaveBtn">GUARDAR</button>
@@ -3174,8 +3174,8 @@
         { id: 'spawn', name: '😀 Spawn', value: 4 },
         { id: 'ghost', name: '👻 Fantasma', value: 5 },
     ];
-    const EDITOR_COLS = 21;
-    const EDITOR_ROWS = 27;
+    const EDITOR_COLS = 28;
+    const EDITOR_ROWS = 31;
     let editorMap = [];
     let editorTool = 'wall';
     let editorCtxRef = null;
