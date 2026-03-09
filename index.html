@@ -607,11 +607,6 @@
             box-shadow: 0 0 10px rgba(155,89,182,0.2);
         }
         .lobby-btn-season:hover { background: #9b59b6; color: #000; text-shadow: none; }
-        .lobby-btn-tournament {
-            color: #e74c3c; border-color: #e74c3c; text-shadow: 0 0 8px #e74c3c;
-            box-shadow: 0 0 10px rgba(231,76,60,0.2);
-        }
-        .lobby-btn-tournament:hover { background: #e74c3c; color: #000; text-shadow: none; }
         .lobby-btn-editor {
             color: #2ecc71; border-color: #2ecc71; text-shadow: 0 0 8px #2ecc71;
             box-shadow: 0 0 10px rgba(46,204,113,0.2);
@@ -785,19 +780,6 @@
         .season-node .sn-level { color: #888; font-weight: bold; }
         .season-node .sn-icon { font-size: 20px; margin: 4px 0; }
         .season-node .sn-reward { color: #ffd700; font-size: 10px; }
-
-        /* v5.0 TOURNAMENT OVERLAY */
-        #tournamentOverlay {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
-            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
-        }
-        #tournamentOverlay.visible { display: flex; }
-        #tournamentPanel {
-            width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
-            background: #0a0a1a; border: 2px solid #e74c3c; border-radius: 12px;
-            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
-        }
 
         /* v5.0 MAP EDITOR OVERLAY */
         #editorOverlay {
@@ -1091,9 +1073,6 @@
                 <button class="lobby-btn lobby-btn-season" id="lobbySeasonBtn">
                     <span class="lobby-btn-icon">🏆</span> TEMPORADA
                 </button>
-                <button class="lobby-btn lobby-btn-tournament" id="lobbyTournamentBtn">
-                    <span class="lobby-btn-icon">⚔️</span> TORNEO
-                </button>
                 <button class="lobby-btn lobby-btn-editor" id="lobbyEditorBtn">
                     <span class="lobby-btn-icon">🗺️</span> MAPAS
                 </button>
@@ -1283,14 +1262,6 @@
             <button class="comm-close" id="seasonCloseBtn">X</button>
             <h3 class="comm-title">🏆 TEMPORADA</h3>
             <div id="seasonContent"><p style="text-align:center;color:#888;margin:20px 0;">Próximamente...</p></div>
-        </div>
-    </div>
-    <!-- v5.0: TOURNAMENT OVERLAY -->
-    <div id="tournamentOverlay">
-        <div id="tournamentPanel">
-            <button class="comm-close" id="tournamentCloseBtn">X</button>
-            <h3 class="comm-title">⚔️ TORNEO</h3>
-            <div id="tournamentContent"><p style="text-align:center;color:#888;margin:20px 0;">No hay torneos activos</p></div>
         </div>
     </div>
     <!-- v5.0: MAP EDITOR OVERLAY -->
@@ -2085,7 +2056,7 @@
             renderLeaderboard();
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
-            // v5.0: Coins, XP, missions, tournaments
+            // v5.0: Coins, XP, missions
             onGameOver_v5(finalScore, finalLevel, sessionGhostsEaten);
         } catch (e) {
             console.warn('Firestore write error:', e);
@@ -3079,88 +3050,6 @@
         });
     }
 
-    // ---- v5.0 TOURNAMENT SYSTEM ----
-    let activeTournament = null;
-    let tournamentListener = null;
-
-    async function loadActiveTournament() {
-        try {
-            var snap = await db.collection('tournaments').where('status', '==', 'active').limit(1).get();
-            if (!snap.empty) {
-                activeTournament = { id: snap.docs[0].id, ...snap.docs[0].data() };
-            } else {
-                activeTournament = null;
-            }
-        } catch(e) { activeTournament = null; }
-    }
-
-    function renderTournamentView() {
-        var el = document.getElementById('tournamentContent');
-        if (!activeTournament) {
-            el.innerHTML = '<p style="text-align:center;color:#888;margin:20px 0;">No hay torneos activos en este momento.</p>';
-            return;
-        }
-        var t = activeTournament;
-        var pid = currentPlayerName ? getPlayerId(currentPlayerName) : null;
-        var isJoined = pid && t.players && t.players[pid];
-        var html = '<div style="text-align:center;margin-bottom:12px;">';
-        html += '<div style="font-size:20px;color:#e74c3c;font-weight:bold;">' + (t.name || 'Torneo') + '</div>';
-        html += '<div style="color:#888;font-size:12px;">Estado: ' + t.status + '</div>';
-        if (t.endTime) html += '<div style="color:#fa5;font-size:12px;">Termina: ' + new Date(t.endTime.seconds ? t.endTime.seconds * 1000 : t.endTime).toLocaleString() + '</div>';
-        html += '</div>';
-        if (!currentPlayerName) {
-            html += '<div style="text-align:center;margin:12px 0;padding:10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;">';
-            html += '<p style="color:#e74c3c;font-size:12px;margin:0 0 6px;">⚠️ Necesitas un nombre para participar</p>';
-            html += '<p style="color:#888;font-size:11px;margin:0;">Ve a <strong>JUGAR</strong> e ingresa tu nombre primero</p></div>';
-        } else if (!isJoined) {
-            html += '<div style="text-align:center;margin:12px 0;"><button class="comm-btn" id="tournamentJoinBtn" style="background:#e74c3c;font-size:14px;padding:12px 24px;">⚔️ PARTICIPAR</button></div>';
-        } else {
-            html += '<div style="text-align:center;color:#0f0;margin:8px 0;">✓ Participando — Tu mejor: ' + ((t.players[pid] && t.players[pid].score) || 0).toLocaleString() + '</div>';
-        }
-        // Leaderboard
-        var players = t.players || {};
-        var sorted = Object.keys(players).map(function(k) { return { name: players[k].name || k, score: players[k].score || 0 }; });
-        sorted.sort(function(a, b) { return b.score - a.score; });
-        html += '<div style="margin-top:12px;"><div style="color:#e74c3c;font-weight:bold;margin-bottom:6px;">CLASIFICACIÓN</div>';
-        sorted.forEach(function(p, i) {
-            var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.';
-            html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;">';
-            html += '<span>' + medal + ' ' + p.name + '</span><span style="color:#0f0;">' + p.score.toLocaleString() + '</span></div>';
-        });
-        if (sorted.length === 0) html += '<p style="color:#888;text-align:center;">Sin participantes aún</p>';
-        html += '</div>';
-        el.innerHTML = html;
-        var joinBtn = document.getElementById('tournamentJoinBtn');
-        if (joinBtn) {
-            joinBtn.addEventListener('click', async function() {
-                if (!currentPlayerName || !activeTournament) return;
-                var pid = getPlayerId(currentPlayerName);
-                try {
-                    var updateData = {};
-                    updateData['players.' + pid] = { name: currentPlayerName, score: 0, submittedAt: null };
-                    await db.collection('tournaments').doc(activeTournament.id).update(updateData);
-                    activeTournament.players = activeTournament.players || {};
-                    activeTournament.players[pid] = { name: currentPlayerName, score: 0 };
-                    renderTournamentView();
-                } catch(e) { console.warn('Tournament join error:', e); }
-            });
-        }
-    }
-
-    async function submitTournamentScore(finalScore) {
-        if (!activeTournament || !currentPlayerName) return;
-        var pid = getPlayerId(currentPlayerName);
-        if (!activeTournament.players || !activeTournament.players[pid]) return;
-        if (activeTournament.players[pid].score >= finalScore) return; // only best score
-        try {
-            var updateData = {};
-            updateData['players.' + pid + '.score'] = finalScore;
-            updateData['players.' + pid + '.submittedAt'] = firebase.firestore.FieldValue.serverTimestamp();
-            await db.collection('tournaments').doc(activeTournament.id).update(updateData);
-            activeTournament.players[pid].score = finalScore;
-        } catch(e) { console.warn('Tournament score submit error:', e); }
-    }
-
     // ---- v5.0 MAP EDITOR ----
     async function loadCommunityMaps() {
         try {
@@ -3346,8 +3235,6 @@
             persistentData.seasonXp = (persistentData.seasonXp || 0) + Math.floor(finalScore / 200);
             savePersistentData();
         }
-        // Tournament score
-        submitTournamentScore(finalScore);
         // Update Firestore profile
         if (currentPlayerName) {
             var pid = getPlayerId(currentPlayerName);
@@ -7883,18 +7770,6 @@
         if (e.target === document.getElementById('seasonOverlay')) document.getElementById('seasonOverlay').classList.remove('visible');
     });
 
-    document.getElementById('lobbyTournamentBtn').addEventListener('click', async function() {
-        await loadActiveTournament();
-        renderTournamentView();
-        document.getElementById('tournamentOverlay').classList.add('visible');
-    });
-    document.getElementById('tournamentCloseBtn').addEventListener('click', function() {
-        document.getElementById('tournamentOverlay').classList.remove('visible');
-    });
-    document.getElementById('tournamentOverlay').addEventListener('click', function(e) {
-        if (e.target === document.getElementById('tournamentOverlay')) document.getElementById('tournamentOverlay').classList.remove('visible');
-    });
-
     document.getElementById('lobbyEditorBtn').addEventListener('click', async function() {
         document.getElementById('editorOverlay').classList.add('visible');
         var maps = await loadCommunityMaps();
@@ -8032,8 +7907,6 @@
     resetMissionsIfNeeded();
     // v5.0: Cargar temporada activa al inicio para que el XP se otorgue desde la primera partida
     loadCurrentSeason();
-    // v5.5: Cargar torneo activo al inicio para que el score se envíe automáticamente al jugar
-    loadActiveTournament();
     // Apply audio toggle states from saved data
     if (persistentData && !persistentData.musicEnabled) {
         document.getElementById('musicToggleBtn').classList.add('muted');
