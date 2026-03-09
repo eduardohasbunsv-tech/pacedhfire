@@ -2830,18 +2830,179 @@
         }
     }
 
-    // ---- v5.0 SEASON SYSTEM ----
+    // ---- v5.0 SEASON SYSTEM (Auto-Rotación) ----
     let currentSeason = null;
+
+    const SEASON_TEMPLATES = [
+        {
+            number: 1, name: 'Neon Nights', duration: 30,
+            theme: { color1: '#ff00ff', color2: '#00ffff', name: 'Neon' },
+            rewards: [
+                { coins: 50, icon: '🪙' }, { coins: 100, icon: '🪙' }, { coins: 150, icon: '💎' },
+                { coins: 200, icon: '🪙' }, { coins: 300, icon: '🌟' }, { coins: 400, icon: '🪙' },
+                { coins: 500, icon: '💎' }, { coins: 650, icon: '🪙' }, { coins: 800, icon: '🌟' },
+                { coins: 1000, icon: '👑' }
+            ]
+        },
+        {
+            number: 2, name: 'Golden Rush', duration: 30,
+            theme: { color1: '#ffd700', color2: '#ff8c00', name: 'Gold' },
+            rewards: [
+                { coins: 60, icon: '🪙' }, { coins: 120, icon: '🪙' }, { coins: 180, icon: '💰' },
+                { coins: 250, icon: '🪙' }, { coins: 350, icon: '💰' }, { coins: 450, icon: '🪙' },
+                { coins: 550, icon: '💰' }, { coins: 700, icon: '🪙' }, { coins: 850, icon: '💰' },
+                { coins: 1100, icon: '👑' }
+            ]
+        },
+        {
+            number: 3, name: 'Shadow Realm', duration: 30,
+            theme: { color1: '#9b59b6', color2: '#2c003e', name: 'Shadow' },
+            rewards: [
+                { coins: 55, icon: '🪙' }, { coins: 110, icon: '🪙' }, { coins: 170, icon: '🔮' },
+                { coins: 230, icon: '🪙' }, { coins: 320, icon: '🔮' }, { coins: 420, icon: '🪙' },
+                { coins: 530, icon: '🔮' }, { coins: 680, icon: '🪙' }, { coins: 830, icon: '🔮' },
+                { coins: 1050, icon: '👑' }
+            ]
+        },
+        {
+            number: 4, name: 'Arctic Frost', duration: 30,
+            theme: { color1: '#00bfff', color2: '#e0f7ff', name: 'Frost' },
+            rewards: [
+                { coins: 60, icon: '🪙' }, { coins: 115, icon: '🪙' }, { coins: 175, icon: '❄️' },
+                { coins: 240, icon: '🪙' }, { coins: 330, icon: '❄️' }, { coins: 440, icon: '🪙' },
+                { coins: 540, icon: '❄️' }, { coins: 690, icon: '🪙' }, { coins: 840, icon: '❄️' },
+                { coins: 1080, icon: '👑' }
+            ]
+        },
+        {
+            number: 5, name: 'Inferno', duration: 30,
+            theme: { color1: '#ff4500', color2: '#ff6347', name: 'Fire' },
+            rewards: [
+                { coins: 65, icon: '🪙' }, { coins: 125, icon: '🪙' }, { coins: 190, icon: '🔥' },
+                { coins: 260, icon: '🪙' }, { coins: 360, icon: '🔥' }, { coins: 460, icon: '🪙' },
+                { coins: 570, icon: '🔥' }, { coins: 720, icon: '🪙' }, { coins: 870, icon: '🔥' },
+                { coins: 1120, icon: '👑' }
+            ]
+        },
+        {
+            number: 6, name: 'Galaxy', duration: 30,
+            theme: { color1: '#7b68ee', color2: '#191970', name: 'Galaxy' },
+            rewards: [
+                { coins: 70, icon: '🪙' }, { coins: 130, icon: '🪙' }, { coins: 200, icon: '🌌' },
+                { coins: 280, icon: '🪙' }, { coins: 380, icon: '🌌' }, { coins: 480, icon: '🪙' },
+                { coins: 600, icon: '🌌' }, { coins: 750, icon: '🪙' }, { coins: 900, icon: '🌌' },
+                { coins: 1150, icon: '👑' }
+            ]
+        }
+    ];
+
+    function getSeasonDocId(number) { return 'season-' + number; }
 
     async function loadCurrentSeason() {
         try {
+            // 1. Buscar temporada activa
             var snap = await db.collection('seasons').where('active', '==', true).limit(1).get();
             if (!snap.empty) {
                 currentSeason = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                // 2. Verificar si expiró
+                var endDate = new Date(currentSeason.endDate);
+                var now = new Date();
+                if (now > endDate) {
+                    // Temporada expirada → desactivar y rotar
+                    await db.collection('seasons').doc(currentSeason.id).update({ active: false });
+                    await createNextSeason(currentSeason.number);
+                }
             } else {
+                // 3. No hay temporada activa → crear la primera o la siguiente
                 currentSeason = null;
+                await autoCreateSeason();
             }
-        } catch(e) { currentSeason = null; }
+        } catch(e) {
+            console.log('Season load error:', e);
+            currentSeason = null;
+        }
+    }
+
+    async function autoCreateSeason() {
+        try {
+            // Buscar la última temporada creada (activa o no)
+            var allSnap = await db.collection('seasons').orderBy('number', 'desc').limit(1).get();
+            if (allSnap.empty) {
+                // No existe ninguna → crear temporada 1
+                await createSeasonFromTemplate(0);
+            } else {
+                var lastSeason = allSnap.docs[0].data();
+                var endDate = new Date(lastSeason.endDate);
+                var now = new Date();
+                if (now > endDate) {
+                    // La última expiró → crear la siguiente
+                    await createNextSeason(lastSeason.number);
+                } else if (!lastSeason.active) {
+                    // Existe pero no está activa y no expiró → reactivar
+                    await db.collection('seasons').doc(allSnap.docs[0].id).update({ active: true });
+                    currentSeason = { id: allSnap.docs[0].id, ...lastSeason, active: true };
+                }
+            }
+        } catch(e) {
+            console.log('Auto create season error:', e);
+        }
+    }
+
+    async function createNextSeason(lastNumber) {
+        // Ciclo: después de la 6 vuelve a la 1
+        var nextIdx = lastNumber % SEASON_TEMPLATES.length;
+        await createSeasonFromTemplate(nextIdx);
+        // Resetear progreso del jugador para la nueva temporada
+        if (persistentData) {
+            persistentData.seasonXp = 0;
+            persistentData.seasonRewardsClaimed = [];
+            savePersistentData();
+        }
+    }
+
+    async function createSeasonFromTemplate(templateIdx) {
+        var tmpl = SEASON_TEMPLATES[templateIdx];
+        var now = new Date();
+        var end = new Date(now.getTime() + tmpl.duration * 24 * 60 * 60 * 1000);
+        var startStr = now.toISOString().split('T')[0];
+        var endStr = end.toISOString().split('T')[0];
+        // Número global incrementa siempre
+        var globalNumber = tmpl.number;
+        try {
+            var allSnap = await db.collection('seasons').orderBy('number', 'desc').limit(1).get();
+            if (!allSnap.empty) {
+                globalNumber = allSnap.docs[0].data().number + 1;
+            }
+        } catch(e) {}
+
+        var seasonData = {
+            name: tmpl.name,
+            number: globalNumber,
+            startDate: startStr,
+            endDate: endStr,
+            active: true,
+            theme: tmpl.theme,
+            rewards: tmpl.rewards,
+            templateIdx: templateIdx
+        };
+
+        var docId = getSeasonDocId(globalNumber);
+        await db.collection('seasons').doc(docId).set(seasonData);
+        currentSeason = { id: docId, ...seasonData };
+        // Resetear progreso para nueva temporada
+        if (persistentData) {
+            persistentData.seasonId = docId;
+            persistentData.seasonXp = 0;
+            persistentData.seasonRewardsClaimed = [];
+            savePersistentData();
+        }
+    }
+
+    function getDaysRemaining() {
+        if (!currentSeason || !currentSeason.endDate) return 0;
+        var end = new Date(currentSeason.endDate);
+        var now = new Date();
+        return Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
     }
 
     function renderSeasonPass() {
@@ -2850,9 +3011,27 @@
             el.innerHTML = '<p style="text-align:center;color:#888;margin:20px 0;">No hay temporada activa. ¡Próximamente!</p>';
             return;
         }
+        var c1 = currentSeason.theme ? currentSeason.theme.color1 || '#9b59b6' : '#9b59b6';
+        var c2 = currentSeason.theme ? currentSeason.theme.color2 || '#333' : '#333';
+        var daysLeft = getDaysRemaining();
         var html = '<div style="text-align:center;margin-bottom:12px;">';
-        html += '<div style="font-size:20px;color:' + (currentSeason.theme ? currentSeason.theme.color1 || '#9b59b6' : '#9b59b6') + ';font-weight:bold;">' + (currentSeason.name || 'Temporada ' + (currentSeason.number || 1)) + '</div>';
-        html += '<div style="color:#888;font-size:12px;">XP de Temporada: ' + (persistentData.seasonXp || 0) + '</div></div>';
+        html += '<div style="font-size:22px;font-weight:bold;background:linear-gradient(90deg,' + c1 + ',' + c2 + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">' + (currentSeason.name || 'Temporada ' + (currentSeason.number || 1)) + '</div>';
+        html += '<div style="color:#aaa;font-size:13px;margin:4px 0;">Temporada ' + (currentSeason.number || 1) + ' — ' + daysLeft + ' día' + (daysLeft !== 1 ? 's' : '') + ' restante' + (daysLeft !== 1 ? 's' : '') + '</div>';
+        html += '<div style="color:#888;font-size:12px;">⭐ XP de Temporada: <span style="color:#fff;font-weight:bold;">' + (persistentData.seasonXp || 0) + '</span></div>';
+        // XP progress bar for next level
+        var nextUnclaimedLvl = 0;
+        for (var n = 0; n < 10; n++) {
+            if (!(persistentData.seasonRewardsClaimed && persistentData.seasonRewardsClaimed.includes(n))) { nextUnclaimedLvl = n; break; }
+            if (n === 9) nextUnclaimedLvl = 10;
+        }
+        if (nextUnclaimedLvl < 10) {
+            var xpNeeded = (nextUnclaimedLvl + 1) * 200;
+            var xpPct = Math.min(100, Math.floor(((persistentData.seasonXp || 0) / xpNeeded) * 100));
+            html += '<div style="width:100%;max-width:280px;margin:8px auto;height:8px;background:#222;border-radius:4px;overflow:hidden;">';
+            html += '<div style="width:' + xpPct + '%;height:100%;background:linear-gradient(90deg,' + c1 + ',' + c2 + ');transition:width 0.5s;border-radius:4px;"></div></div>';
+            html += '<div style="color:#666;font-size:11px;">' + (persistentData.seasonXp || 0) + ' / ' + xpNeeded + ' XP para Nv ' + (nextUnclaimedLvl + 1) + '</div>';
+        }
+        html += '</div>';
         html += '<div class="season-track">';
         var rewards = currentSeason.rewards || [];
         for (var i = 0; i < 10; i++) {
@@ -2861,11 +3040,13 @@
             var unlocked = (persistentData.seasonXp || 0) >= xpNeeded;
             var claimed = persistentData.seasonRewardsClaimed && persistentData.seasonRewardsClaimed.includes(i);
             var cls = 'season-node' + (claimed ? ' claimed' : unlocked ? ' unlocked' : '');
-            html += '<div class="' + cls + '" data-slvl="' + i + '">';
-            html += '<div class="sn-level">Nv ' + (i + 1) + '</div>';
+            html += '<div class="' + cls + '" data-slvl="' + i + '" style="border-color:' + (unlocked || claimed ? c1 : '#333') + ';cursor:' + (unlocked && !claimed ? 'pointer' : 'default') + ';">';
+            html += '<div class="sn-level" style="' + (unlocked || claimed ? 'color:' + c1 : '') + '">Nv ' + (i + 1) + '</div>';
             html += '<div class="sn-icon">' + (r.icon || '🪙') + '</div>';
-            html += '<div class="sn-reward">' + (r.coins || (i+1)*50) + '</div>';
-            html += claimed ? '<div style="color:#0f0;font-size:10px;">✓</div>' : '';
+            html += '<div class="sn-reward">' + (r.coins || (i+1)*50) + ' 🪙</div>';
+            if (claimed) html += '<div style="color:#0f0;font-size:11px;font-weight:bold;">✓ Cobrado</div>';
+            else if (unlocked) html += '<div style="color:' + c1 + ';font-size:10px;font-weight:bold;">¡Cobrar!</div>';
+            else html += '<div style="color:#555;font-size:10px;">' + xpNeeded + ' XP</div>';
             html += '</div>';
         }
         html += '</div>';
@@ -2879,6 +3060,7 @@
                     persistentData.seasonRewardsClaimed.push(lvl);
                     var reward = (currentSeason.rewards && currentSeason.rewards[lvl]) || { coins: (lvl+1)*50 };
                     awardCoins(reward.coins || (lvl+1)*50, 'Temporada Nv ' + (lvl+1));
+                    playSfx('coinEarned');
                     savePersistentData();
                     renderSeasonPass();
                 }
