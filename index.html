@@ -591,6 +591,282 @@
             box-shadow: 0 0 10px rgba(255,170,85,0.2);
         }
         .lobby-btn-stats:hover { background: #fa5; color: #000; text-shadow: none; }
+        /* v5.0 NEW LOBBY BUTTONS */
+        .lobby-btn-shop {
+            color: #f0f; border-color: #f0f; text-shadow: 0 0 8px #f0f;
+            box-shadow: 0 0 10px rgba(255,0,255,0.2);
+        }
+        .lobby-btn-shop:hover { background: #f0f; color: #000; text-shadow: none; }
+        .lobby-btn-missions {
+            color: #f55; border-color: #f55; text-shadow: 0 0 8px #f55;
+            box-shadow: 0 0 10px rgba(255,85,85,0.2);
+        }
+        .lobby-btn-missions:hover { background: #f55; color: #000; text-shadow: none; }
+        .lobby-btn-season {
+            color: #9b59b6; border-color: #9b59b6; text-shadow: 0 0 8px #9b59b6;
+            box-shadow: 0 0 10px rgba(155,89,182,0.2);
+        }
+        .lobby-btn-season:hover { background: #9b59b6; color: #000; text-shadow: none; }
+        .lobby-btn-tournament {
+            color: #e74c3c; border-color: #e74c3c; text-shadow: 0 0 8px #e74c3c;
+            box-shadow: 0 0 10px rgba(231,76,60,0.2);
+        }
+        .lobby-btn-tournament:hover { background: #e74c3c; color: #000; text-shadow: none; }
+        .lobby-btn-editor {
+            color: #2ecc71; border-color: #2ecc71; text-shadow: 0 0 8px #2ecc71;
+            box-shadow: 0 0 10px rgba(46,204,113,0.2);
+        }
+        .lobby-btn-editor:hover { background: #2ecc71; color: #000; text-shadow: none; }
+        .lobby-btn-multi {
+            color: #3498db; border-color: #3498db; text-shadow: 0 0 8px #3498db;
+            box-shadow: 0 0 10px rgba(52,152,219,0.2);
+        }
+        .lobby-btn-multi:hover { background: #3498db; color: #000; text-shadow: none; }
+
+        /* v5.0 LOBBY INFO BAR (coins + rank) */
+        .lobby-info-bar {
+            display: flex; justify-content: center; gap: 16px; margin: 12px 0 4px;
+            flex-wrap: wrap;
+        }
+        .lobby-info-item {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.05); border: 1px solid #333;
+            border-radius: 20px; padding: 6px 14px; font-size: 14px;
+        }
+        #coinDisplay .coin-icon { color: #ffd700; }
+        #coinDisplay .coin-amount { color: #ffd700; font-weight: bold; }
+        #rankDisplay .rank-icon { font-size: 16px; }
+        #rankDisplay .rank-name { font-weight: bold; }
+        .rank-bronce { color: #cd7f32; }
+        .rank-plata { color: #c0c0c0; }
+        .rank-oro { color: #ffd700; }
+        .rank-diamante { color: #b9f2ff; }
+        .rank-leyenda { color: #ff6b6b; text-shadow: 0 0 8px rgba(255,107,107,0.5); }
+        .xp-bar-wrap {
+            width: 100%; max-width: 300px; height: 6px; background: #222;
+            border-radius: 3px; margin: 4px auto 0; overflow: hidden;
+        }
+        .xp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #0ff, #0f0);
+            border-radius: 3px; transition: width 0.5s ease;
+        }
+
+        /* v5.0 COIN NOTIFICATION */
+        .coin-notification {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            background: rgba(0,0,0,0.9); border: 2px solid #ffd700;
+            border-radius: 10px; padding: 10px 18px; color: #ffd700;
+            font-family: 'Courier New', monospace; font-weight: bold;
+            font-size: 16px; animation: coinNotifIn 0.3s ease, coinNotifOut 0.3s ease 1.7s forwards;
+            pointer-events: none;
+        }
+        @keyframes coinNotifIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes coinNotifOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+        /* v5.0 RANK UP POPUP */
+        .rankup-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 100; background: #0a0a1a; border: 3px solid; border-radius: 16px;
+            padding: 30px 40px; text-align: center; animation: lbSlideIn 0.3s ease;
+        }
+        .rankup-popup h2 { font-size: 24px; margin-bottom: 8px; }
+        .rankup-popup .rankup-icon { font-size: 48px; margin: 10px 0; }
+        .rankup-popup .rankup-name { font-size: 20px; font-weight: bold; margin: 8px 0; }
+        .rankup-popup .rankup-coins { color: #ffd700; font-size: 16px; margin: 6px 0; }
+        .rankup-popup button {
+            margin-top: 14px; padding: 10px 30px; background: transparent;
+            border: 2px solid #0ff; color: #0ff; border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold;
+            cursor: pointer;
+        }
+        .rankup-popup button:hover { background: #0ff; color: #000; }
+
+        /* v5.0 SHOP OVERLAY */
+        #shopOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
+        }
+        #shopOverlay.visible { display: flex; }
+        #shopPanel {
+            width: 100%; max-width: 460px; max-height: 85vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #f0f; border-radius: 12px;
+            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+        .shop-balance { text-align: center; font-size: 22px; color: #ffd700; margin: 8px 0 14px; }
+        .shop-tabs { display: flex; gap: 0; margin-bottom: 12px; }
+        .shop-tab {
+            flex: 1; padding: 8px; text-align: center; font-family: 'Courier New', monospace;
+            font-size: 11px; font-weight: bold; cursor: pointer; background: #111;
+            border: 1px solid #333; color: #888; transition: all 0.2s;
+        }
+        .shop-tab:first-child { border-radius: 6px 0 0 6px; }
+        .shop-tab:last-child { border-radius: 0 6px 6px 0; }
+        .shop-tab.active { background: #1a0a2e; color: #f0f; border-color: #f0f; }
+        .shop-items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .shop-item {
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            padding: 10px; text-align: center; transition: border-color 0.2s;
+        }
+        .shop-item:hover { border-color: #f0f; }
+        .shop-item.owned { border-color: #0f0; }
+        .shop-item.equipped { border-color: #ffd700; background: #1a1500; }
+        .shop-item-icon { font-size: 28px; margin-bottom: 4px; }
+        .shop-item-name { color: #fff; font-size: 12px; font-weight: bold; }
+        .shop-item-price { color: #ffd700; font-size: 11px; margin: 4px 0; }
+        .shop-item-btn {
+            padding: 4px 12px; border: none; border-radius: 4px; font-family: 'Courier New', monospace;
+            font-size: 11px; font-weight: bold; cursor: pointer; margin-top: 4px;
+        }
+        .shop-item-btn.buy { background: #0f0; color: #000; }
+        .shop-item-btn.buy:disabled { background: #555; color: #888; cursor: not-allowed; }
+        .shop-item-btn.equip { background: #0ff; color: #000; }
+        .shop-item-btn.equipped { background: #ffd700; color: #000; }
+
+        /* v5.0 MISSIONS OVERLAY */
+        #missionsOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
+        }
+        #missionsOverlay.visible { display: flex; }
+        #missionsPanel {
+            width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #f55; border-radius: 12px;
+            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+        .mission-card {
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            padding: 12px; margin: 6px 0; position: relative;
+        }
+        .mission-card.completed { border-color: #0f0; background: #0a1a0a; }
+        .mission-card.claimed { opacity: 0.5; }
+        .mission-desc { color: #fff; font-size: 13px; font-weight: bold; }
+        .mission-progress { margin-top: 6px; }
+        .mission-progress-bar {
+            width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden;
+        }
+        .mission-progress-fill { height: 100%; background: #f55; border-radius: 4px; transition: width 0.3s; }
+        .mission-progress-fill.done { background: #0f0; }
+        .mission-progress-text { font-size: 11px; color: #888; margin-top: 2px; }
+        .mission-reward { position: absolute; top: 12px; right: 12px; color: #ffd700; font-size: 13px; font-weight: bold; }
+        .mission-claim-btn {
+            display: none; margin-top: 8px; padding: 6px 16px; background: #ffd700; color: #000;
+            border: none; border-radius: 4px; font-family: 'Courier New', monospace;
+            font-size: 12px; font-weight: bold; cursor: pointer;
+        }
+        .mission-card.completed .mission-claim-btn { display: inline-block; }
+        .mission-card.claimed .mission-claim-btn { display: none; }
+        .mission-section-title { color: #f55; font-size: 14px; font-weight: bold; margin: 12px 0 6px; }
+
+        /* v5.0 SEASON OVERLAY */
+        #seasonOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
+        }
+        #seasonOverlay.visible { display: flex; }
+        #seasonPanel {
+            width: 100%; max-width: 460px; max-height: 85vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #9b59b6; border-radius: 12px;
+            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+        .season-track {
+            display: flex; overflow-x: auto; gap: 4px; padding: 10px 0;
+            scrollbar-width: thin;
+        }
+        .season-node {
+            min-width: 60px; text-align: center; padding: 8px 4px;
+            border: 2px solid #333; border-radius: 8px; background: #111;
+            font-size: 11px; cursor: default; transition: all 0.2s;
+        }
+        .season-node.unlocked { border-color: #9b59b6; background: #1a0a2e; }
+        .season-node.claimed { border-color: #0f0; background: #0a1a0a; }
+        .season-node .sn-level { color: #888; font-weight: bold; }
+        .season-node .sn-icon { font-size: 20px; margin: 4px 0; }
+        .season-node .sn-reward { color: #ffd700; font-size: 10px; }
+
+        /* v5.0 TOURNAMENT OVERLAY */
+        #tournamentOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
+        }
+        #tournamentOverlay.visible { display: flex; }
+        #tournamentPanel {
+            width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #e74c3c; border-radius: 12px;
+            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+
+        /* v5.0 MAP EDITOR OVERLAY */
+        #editorOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 20px 10px; overflow-y: auto;
+        }
+        #editorOverlay.visible { display: flex; }
+        #editorPanel {
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #2ecc71; border-radius: 12px;
+            padding: 16px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+        .editor-toolbar {
+            display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0;
+        }
+        .editor-tool {
+            padding: 6px 10px; background: #111; border: 2px solid #333; border-radius: 6px;
+            color: #888; font-family: 'Courier New', monospace; font-size: 11px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .editor-tool.active { border-color: #2ecc71; color: #2ecc71; background: #0a1a0e; }
+        #editorCanvas { border: 1px solid #333; border-radius: 4px; cursor: crosshair; }
+        .map-list-item {
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            padding: 10px; margin: 6px 0; display: flex; align-items: center;
+            justify-content: space-between;
+        }
+        .map-list-item:hover { border-color: #2ecc71; }
+        .map-info { flex: 1; }
+        .map-name { color: #fff; font-size: 13px; font-weight: bold; }
+        .map-author { color: #888; font-size: 11px; }
+        .map-stats { color: #888; font-size: 11px; }
+        .map-play-btn {
+            padding: 6px 14px; background: #2ecc71; color: #000; border: none;
+            border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;
+            font-weight: bold; cursor: pointer;
+        }
+        .map-like-btn {
+            padding: 4px 8px; background: transparent; border: 1px solid #f55;
+            border-radius: 4px; color: #f55; font-size: 14px; cursor: pointer; margin-right: 6px;
+        }
+        .map-like-btn.liked { background: #f55; color: #fff; }
+
+        /* v5.0 MULTIPLAYER OVERLAY */
+        #multiOverlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
+            align-items: flex-start; padding: 30px 20px; overflow-y: auto;
+        }
+        #multiOverlay.visible { display: flex; }
+        #multiPanel {
+            width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+            background: #0a0a1a; border: 2px solid #3498db; border-radius: 12px;
+            padding: 20px; position: relative; animation: lbSlideIn 0.3s ease;
+        }
+
+        /* v5.0 AUDIO CONTROLS */
+        .audio-controls {
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 5;
+        }
+        .audio-btn {
+            width: 36px; height: 36px; background: rgba(0,0,0,0.6);
+            border: 1px solid #555; border-radius: 8px; color: #fff;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center;
+        }
+        .audio-btn:hover { border-color: #0ff; }
+        .audio-btn.muted { opacity: 0.4; }
 
         /* ===== v4.0 COMMUNITY STYLES ===== */
         #clanOverlay, #chatOverlay, #giftOverlay, #profileOverlay {
@@ -773,10 +1049,23 @@
     <div id="startScreen">
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v4.07</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.0</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
+            <div class="lobby-info-bar">
+                <div class="lobby-info-item" id="coinDisplay">
+                    <span class="coin-icon">🪙</span>
+                    <span class="coin-amount" id="coinAmount">0</span>
+                </div>
+                <div class="lobby-info-item" id="rankDisplay">
+                    <span class="rank-icon" id="rankIcon">🥉</span>
+                    <span class="rank-name rank-bronce" id="rankName">Bronce</span>
+                </div>
+            </div>
+            <div class="xp-bar-wrap">
+                <div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div>
+            </div>
             <div class="lobby-buttons">
                 <button class="lobby-btn lobby-btn-play" id="lobbyPlayBtn">
                     <span class="lobby-btn-icon">🎮</span> JUGAR
@@ -790,11 +1079,29 @@
                 <button class="lobby-btn lobby-btn-stats" id="lobbyStatsBtn">
                     <span class="lobby-btn-icon">📊</span> ESTADISTICAS
                 </button>
+                <button class="lobby-btn lobby-btn-shop" id="lobbyShopBtn">
+                    <span class="lobby-btn-icon">🏪</span> TIENDA
+                </button>
+                <button class="lobby-btn lobby-btn-missions" id="lobbyMissionsBtn">
+                    <span class="lobby-btn-icon">📋</span> MISIONES
+                </button>
+                <button class="lobby-btn lobby-btn-season" id="lobbySeasonBtn">
+                    <span class="lobby-btn-icon">🏆</span> TEMPORADA
+                </button>
+                <button class="lobby-btn lobby-btn-tournament" id="lobbyTournamentBtn">
+                    <span class="lobby-btn-icon">⚔️</span> TORNEO
+                </button>
+                <button class="lobby-btn lobby-btn-editor" id="lobbyEditorBtn">
+                    <span class="lobby-btn-icon">🗺️</span> MAPAS
+                </button>
+                <button class="lobby-btn lobby-btn-multi" id="lobbyMultiBtn">
+                    <span class="lobby-btn-icon">👻</span> MULTIJUGADOR
+                </button>
             </div>
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v4.07</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.0</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -949,16 +1256,100 @@
         <div class="gift-popup-text" id="giftPopupText"></div>
         <div class="gift-popup-hearts">❤️❤️❤️</div>
     </div>
+    <!-- v5.0: SHOP OVERLAY -->
+    <div id="shopOverlay">
+        <div id="shopPanel">
+            <button class="comm-close" id="shopCloseBtn">X</button>
+            <h3 class="comm-title">🏪 TIENDA PAC</h3>
+            <div class="shop-balance">🪙 <span id="shopBalance">0</span></div>
+            <div class="shop-tabs" id="shopTabs"></div>
+            <div class="shop-items" id="shopItems"></div>
+        </div>
+    </div>
+    <!-- v5.0: MISSIONS OVERLAY -->
+    <div id="missionsOverlay">
+        <div id="missionsPanel">
+            <button class="comm-close" id="missionsCloseBtn">X</button>
+            <h3 class="comm-title">📋 MISIONES</h3>
+            <div id="missionsContent"></div>
+        </div>
+    </div>
+    <!-- v5.0: SEASON OVERLAY -->
+    <div id="seasonOverlay">
+        <div id="seasonPanel">
+            <button class="comm-close" id="seasonCloseBtn">X</button>
+            <h3 class="comm-title">🏆 TEMPORADA</h3>
+            <div id="seasonContent"><p style="text-align:center;color:#888;margin:20px 0;">Próximamente...</p></div>
+        </div>
+    </div>
+    <!-- v5.0: TOURNAMENT OVERLAY -->
+    <div id="tournamentOverlay">
+        <div id="tournamentPanel">
+            <button class="comm-close" id="tournamentCloseBtn">X</button>
+            <h3 class="comm-title">⚔️ TORNEO</h3>
+            <div id="tournamentContent"><p style="text-align:center;color:#888;margin:20px 0;">No hay torneos activos</p></div>
+        </div>
+    </div>
+    <!-- v5.0: MAP EDITOR OVERLAY -->
+    <div id="editorOverlay">
+        <div id="editorPanel">
+            <button class="comm-close" id="editorCloseBtn">X</button>
+            <h3 class="comm-title">🗺️ MAPAS</h3>
+            <div class="shop-tabs" id="editorTabs">
+                <button class="shop-tab active" data-etab="explore">EXPLORAR</button>
+                <button class="shop-tab" data-etab="create">CREAR</button>
+            </div>
+            <div id="editorExploreView">
+                <div id="mapList"><p style="text-align:center;color:#888;margin:12px 0;">Cargando mapas...</p></div>
+            </div>
+            <div id="editorCreateView" style="display:none;">
+                <div class="editor-toolbar" id="editorToolbar"></div>
+                <canvas id="editorCanvas" width="420" height="540"></canvas>
+                <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+                    <input type="text" class="comm-input" id="editorMapName" maxlength="20" placeholder="Nombre del mapa..." style="flex:1;">
+                    <button class="comm-btn" id="editorSaveBtn">GUARDAR</button>
+                </div>
+                <div class="comm-error" id="editorError"></div>
+            </div>
+        </div>
+    </div>
+    <!-- v5.0: MULTIPLAYER OVERLAY -->
+    <div id="multiOverlay">
+        <div id="multiPanel">
+            <button class="comm-close" id="multiCloseBtn">X</button>
+            <h3 class="comm-title">👻 MULTIJUGADOR</h3>
+            <div id="multiContent">
+                <div id="multiMenu">
+                    <p style="text-align:center;color:#888;margin:12px 0;">Juega con amigos</p>
+                    <div style="display:flex;flex-direction:column;gap:10px;max-width:260px;margin:0 auto;">
+                        <button class="comm-btn" id="multiCreateBtn">CREAR SALA</button>
+                        <div style="display:flex;gap:6px;">
+                            <input type="text" class="comm-input" id="multiCodeInput" maxlength="6" placeholder="CODIGO" style="text-transform:uppercase;letter-spacing:2px;text-align:center;">
+                            <button class="comm-btn" id="multiJoinBtn">UNIRSE</button>
+                        </div>
+                        <button class="comm-btn-secondary" id="multiSpectateBtn" style="font-size:12px;">👁️ MODO ESPECTADOR</button>
+                    </div>
+                </div>
+                <div id="multiLobby" style="display:none;">
+                    <div id="multiLobbyInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- GAME AREA -->
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.08</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.0</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
             <div>NIVEL: <span id="level">1</span></div>
             <div>VIDAS: <span id="lives">3</span></div>
+            <div class="audio-controls">
+                <button class="audio-btn" id="musicToggleBtn" title="Música">🎵</button>
+                <button class="audio-btn" id="sfxToggleBtn" title="Efectos">🔊</button>
+            </div>
         </div>
         <div style="position:relative; width:100%; max-width:560px;">
             <button id="pauseBtn">&#10074;&#10074;</button>
@@ -1694,6 +2085,8 @@
             renderLeaderboard();
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
+            // v5.0: Coins, XP, missions, tournaments
+            onGameOver_v5(finalScore, finalLevel, sessionGhostsEaten);
         } catch (e) {
             console.warn('Firestore write error:', e);
         }
@@ -1761,7 +2154,14 @@
     let currentGhostStreak = 0;
     let levelStartScore = 0;
     function getDefaultPersistentData() {
-        return { version: 2, savedGame: null, selectedSkin: 'default', stats: { gamesPlayed: 0, totalGhostsEaten: 0, totalDotsEaten: 0, totalFruitsEaten: 0, totalDeaths: 0, bestScore: 0, bestLevel: 0, bestStreak: 0, perfectLevels: 0, totalPowerModes: 0, levelCompletions: 0, levelsStarRating: {}, bossesDefeated: 0 }, achievements: [] };
+        return { version: 3, savedGame: null, selectedSkin: 'default', stats: { gamesPlayed: 0, totalGhostsEaten: 0, totalDotsEaten: 0, totalFruitsEaten: 0, totalDeaths: 0, bestScore: 0, bestLevel: 0, bestStreak: 0, perfectLevels: 0, totalPowerModes: 0, levelCompletions: 0, levelsStarRating: {}, bossesDefeated: 0 }, achievements: [],
+        // v5.0 fields
+        pacCoins: 0, xp: 0, rank: 'bronce',
+        ownedItems: [], equippedTrail: null, equippedDeathFx: null, equippedVictoryFx: null, customColor: null,
+        missions: { daily: [], weekly: null, lastDailyReset: 0, lastWeeklyReset: 0 },
+        seasonId: null, seasonXp: 0, seasonRewardsClaimed: [],
+        sfxVolume: 0.7, musicVolume: 0.5, sfxEnabled: true, musicEnabled: true,
+        likedMaps: [] };
     }
     function loadPersistentData() {
         try {
@@ -1775,6 +2175,24 @@
                 if (persistentData.selectedSkin === undefined) persistentData.selectedSkin = 'default';
                 if (persistentData.stats.bossesDefeated === undefined) persistentData.stats.bossesDefeated = 0;
                 selectedSkin = persistentData.selectedSkin || 'default';
+                // v5.0 migration
+                if (persistentData.pacCoins === undefined) persistentData.pacCoins = 0;
+                if (persistentData.xp === undefined) persistentData.xp = 0;
+                if (persistentData.rank === undefined) persistentData.rank = 'bronce';
+                if (!persistentData.ownedItems) persistentData.ownedItems = [];
+                if (persistentData.equippedTrail === undefined) persistentData.equippedTrail = null;
+                if (persistentData.equippedDeathFx === undefined) persistentData.equippedDeathFx = null;
+                if (persistentData.equippedVictoryFx === undefined) persistentData.equippedVictoryFx = null;
+                if (persistentData.customColor === undefined) persistentData.customColor = null;
+                if (!persistentData.missions) persistentData.missions = { daily: [], weekly: null, lastDailyReset: 0, lastWeeklyReset: 0 };
+                if (persistentData.seasonId === undefined) persistentData.seasonId = null;
+                if (persistentData.seasonXp === undefined) persistentData.seasonXp = 0;
+                if (!persistentData.seasonRewardsClaimed) persistentData.seasonRewardsClaimed = [];
+                if (persistentData.sfxVolume === undefined) persistentData.sfxVolume = 0.7;
+                if (persistentData.musicVolume === undefined) persistentData.musicVolume = 0.5;
+                if (persistentData.sfxEnabled === undefined) persistentData.sfxEnabled = true;
+                if (persistentData.musicEnabled === undefined) persistentData.musicEnabled = true;
+                if (!persistentData.likedMaps) persistentData.likedMaps = [];
             } else { persistentData = getDefaultPersistentData(); }
         } catch(e) { persistentData = getDefaultPersistentData(); }
     }
@@ -1906,6 +2324,959 @@
             return '<div class="ach-card ' + (unlocked ? 'unlocked' : 'locked') + '"><div class="ach-icon">' + a.icon + '</div><div class="ach-name">' + a.name + '</div><div class="ach-desc">' + a.desc + '</div></div>';
         }).join('');
     }
+
+    // ========================================
+    // ===== v5.0 SYSTEMS =====
+    // ========================================
+
+    // ---- v5.0 RANKS ----
+    const RANKS = [
+        { id: 'bronce', name: 'Bronce', icon: '🥉', minXp: 0, color: '#cd7f32', bonus: 50 },
+        { id: 'plata', name: 'Plata', icon: '🥈', minXp: 1000, color: '#c0c0c0', bonus: 100 },
+        { id: 'oro', name: 'Oro', icon: '🥇', minXp: 5000, color: '#ffd700', bonus: 200 },
+        { id: 'diamante', name: 'Diamante', icon: '💎', minXp: 15000, color: '#b9f2ff', bonus: 500 },
+        { id: 'leyenda', name: 'Leyenda', icon: '👑', minXp: 50000, color: '#ff6b6b', bonus: 1000 },
+    ];
+
+    function getCurrentRank() {
+        if (!persistentData) return RANKS[0];
+        var xp = persistentData.xp || 0;
+        var rank = RANKS[0];
+        for (var i = RANKS.length - 1; i >= 0; i--) {
+            if (xp >= RANKS[i].minXp) { rank = RANKS[i]; break; }
+        }
+        return rank;
+    }
+
+    function getNextRank() {
+        var current = getCurrentRank();
+        var idx = RANKS.indexOf(current);
+        return idx < RANKS.length - 1 ? RANKS[idx + 1] : null;
+    }
+
+    function getXpProgress() {
+        if (!persistentData) return 0;
+        var current = getCurrentRank();
+        var next = getNextRank();
+        if (!next) return 1; // max rank
+        var xpInLevel = persistentData.xp - current.minXp;
+        var xpNeeded = next.minXp - current.minXp;
+        return Math.min(1, xpInLevel / xpNeeded);
+    }
+
+    function awardXp(amount) {
+        if (!persistentData || amount <= 0) return;
+        var oldRank = getCurrentRank();
+        persistentData.xp = (persistentData.xp || 0) + amount;
+        var newRank = getCurrentRank();
+        persistentData.rank = newRank.id;
+        savePersistentData();
+        if (newRank.id !== oldRank.id) {
+            showRankUpPopup(newRank);
+            awardCoins(newRank.bonus, 'Subiste a ' + newRank.name);
+        }
+    }
+
+    function showRankUpPopup(rank) {
+        var popup = document.createElement('div');
+        popup.className = 'rankup-popup';
+        popup.style.borderColor = rank.color;
+        popup.innerHTML = '<h2 style="color:' + rank.color + '">¡SUBISTE DE RANGO!</h2>' +
+            '<div class="rankup-icon">' + rank.icon + '</div>' +
+            '<div class="rankup-name" style="color:' + rank.color + '">' + rank.name + '</div>' +
+            '<div class="rankup-coins">+' + rank.bonus + ' 🪙</div>' +
+            '<button onclick="this.parentElement.remove()">CERRAR</button>';
+        document.body.appendChild(popup);
+        setTimeout(function() { if (popup.parentElement) popup.remove(); }, 5000);
+    }
+
+    // ---- v5.0 PAC COINS ----
+    function awardCoins(amount, reason) {
+        if (!persistentData || amount <= 0) return;
+        persistentData.pacCoins = (persistentData.pacCoins || 0) + amount;
+        savePersistentData();
+        showCoinNotification('+' + amount + ' 🪙' + (reason ? ' — ' + reason : ''));
+        updateLobbyInfo();
+    }
+
+    function spendCoins(amount) {
+        if (!persistentData || amount <= 0) return false;
+        if ((persistentData.pacCoins || 0) < amount) return false;
+        persistentData.pacCoins -= amount;
+        savePersistentData();
+        updateLobbyInfo();
+        return true;
+    }
+
+    function showCoinNotification(text) {
+        var notif = document.createElement('div');
+        notif.className = 'coin-notification';
+        notif.textContent = text;
+        document.body.appendChild(notif);
+        setTimeout(function() { if (notif.parentElement) notif.remove(); }, 2200);
+    }
+
+    function updateLobbyInfo() {
+        if (!persistentData) return;
+        document.getElementById('coinAmount').textContent = (persistentData.pacCoins || 0).toLocaleString();
+        var rank = getCurrentRank();
+        document.getElementById('rankIcon').textContent = rank.icon;
+        var rankNameEl = document.getElementById('rankName');
+        rankNameEl.textContent = rank.name;
+        rankNameEl.className = 'rank-name rank-' + rank.id;
+        var progress = getXpProgress();
+        document.getElementById('xpBarFill').style.width = (progress * 100) + '%';
+    }
+
+    // ---- v5.0 SHOP ----
+    const SHOP_ITEMS = [
+        { id: 'skin_gold', name: 'PAC Dorado', type: 'skin', price: 500, icon: '🟡', color: '#ffd700' },
+        { id: 'skin_ice', name: 'PAC Hielo', type: 'skin', price: 500, icon: '🧊', color: '#00ffff' },
+        { id: 'skin_fire', name: 'PAC Fuego', type: 'skin', price: 800, icon: '🔥', color: '#ff4500' },
+        { id: 'skin_galaxy', name: 'PAC Galaxia', type: 'skin', price: 1500, icon: '🌌', color: '#9b59b6' },
+        { id: 'trail_sparkle', name: 'Destellos', type: 'trail', price: 300, icon: '✨' },
+        { id: 'trail_fire', name: 'Llamas', type: 'trail', price: 600, icon: '🔥' },
+        { id: 'trail_rainbow', name: 'Arcoíris', type: 'trail', price: 1000, icon: '🌈' },
+        { id: 'death_explode', name: 'Explosión', type: 'deathFx', price: 400, icon: '💥' },
+        { id: 'death_pixel', name: 'Pixelado', type: 'deathFx', price: 400, icon: '🟦' },
+        { id: 'death_dissolve', name: 'Disolución', type: 'deathFx', price: 700, icon: '💨' },
+        { id: 'victory_fireworks', name: 'Fuegos Artificiales', type: 'victoryFx', price: 500, icon: '🎆' },
+        { id: 'victory_confetti', name: 'Confeti', type: 'victoryFx', price: 500, icon: '🎊' },
+        { id: 'title_shadow', name: 'Sombra', type: 'title', price: 1000, icon: '🌑' },
+        { id: 'title_immortal', name: 'Inmortal', type: 'title', price: 2000, icon: '♾️' },
+    ];
+    const SHOP_TABS = [
+        { id: 'skin', name: 'Skins' },
+        { id: 'trail', name: 'Estelas' },
+        { id: 'deathFx', name: 'Muerte' },
+        { id: 'victoryFx', name: 'Victoria' },
+        { id: 'title', name: 'Títulos' },
+    ];
+    let currentShopTab = 'skin';
+
+    function renderShop() {
+        document.getElementById('shopBalance').textContent = (persistentData.pacCoins || 0).toLocaleString();
+        var tabsHtml = SHOP_TABS.map(function(t) {
+            return '<button class="shop-tab' + (t.id === currentShopTab ? ' active' : '') + '" data-stab="' + t.id + '">' + t.name + '</button>';
+        }).join('');
+        document.getElementById('shopTabs').innerHTML = tabsHtml;
+        var items = SHOP_ITEMS.filter(function(i) { return i.type === currentShopTab; });
+        var html = items.map(function(item) {
+            var owned = persistentData.ownedItems && persistentData.ownedItems.includes(item.id);
+            var equipped = isItemEquipped(item);
+            var canBuy = (persistentData.pacCoins || 0) >= item.price;
+            var cls = 'shop-item' + (equipped ? ' equipped' : owned ? ' owned' : '');
+            var btnHtml = '';
+            if (equipped) btnHtml = '<button class="shop-item-btn equipped" disabled>EQUIPADO</button>';
+            else if (owned) btnHtml = '<button class="shop-item-btn equip" data-sid="' + item.id + '">EQUIPAR</button>';
+            else btnHtml = '<button class="shop-item-btn buy" data-sid="' + item.id + '"' + (canBuy ? '' : ' disabled') + '>COMPRAR ' + item.price + ' 🪙</button>';
+            return '<div class="' + cls + '"><div class="shop-item-icon">' + item.icon + '</div><div class="shop-item-name">' + item.name + '</div>' +
+                (owned ? '' : '<div class="shop-item-price">' + item.price + ' 🪙</div>') + btnHtml + '</div>';
+        }).join('');
+        document.getElementById('shopItems').innerHTML = html || '<p style="color:#888;text-align:center;grid-column:1/-1;">No hay items en esta categoría</p>';
+        // Bind tab clicks
+        document.querySelectorAll('[data-stab]').forEach(function(btn) {
+            btn.addEventListener('click', function() { currentShopTab = btn.dataset.stab; renderShop(); });
+        });
+        // Bind buy/equip clicks
+        document.querySelectorAll('.shop-item-btn.buy:not([disabled])').forEach(function(btn) {
+            btn.addEventListener('click', function() { buyItem(btn.dataset.sid); });
+        });
+        document.querySelectorAll('.shop-item-btn.equip').forEach(function(btn) {
+            btn.addEventListener('click', function() { equipItem(btn.dataset.sid); });
+        });
+    }
+
+    function isItemEquipped(item) {
+        if (!persistentData) return false;
+        if (item.type === 'skin') return persistentData.customColor === item.color;
+        if (item.type === 'trail') return persistentData.equippedTrail === item.id.replace('trail_', '');
+        if (item.type === 'deathFx') return persistentData.equippedDeathFx === item.id.replace('death_', '');
+        if (item.type === 'victoryFx') return persistentData.equippedVictoryFx === item.id.replace('victory_', '');
+        return false;
+    }
+
+    function buyItem(itemId) {
+        var item = SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+        if (!item) return;
+        if (!spendCoins(item.price)) return;
+        persistentData.ownedItems.push(item.id);
+        savePersistentData();
+        equipItem(itemId);
+    }
+
+    function equipItem(itemId) {
+        var item = SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+        if (!item || !persistentData.ownedItems.includes(itemId)) return;
+        if (item.type === 'skin') persistentData.customColor = item.color;
+        else if (item.type === 'trail') persistentData.equippedTrail = itemId.replace('trail_', '');
+        else if (item.type === 'deathFx') persistentData.equippedDeathFx = itemId.replace('death_', '');
+        else if (item.type === 'victoryFx') persistentData.equippedVictoryFx = itemId.replace('victory_', '');
+        savePersistentData();
+        renderShop();
+    }
+
+    // ---- v5.0 MISSIONS ----
+    const MISSION_TEMPLATES = [
+        { type: 'eatDots', desc: 'Come {n} orbes', targets: [50, 100, 200], rewards: [50, 100, 150] },
+        { type: 'eatGhosts', desc: 'Come {n} fantasmas', targets: [5, 10, 20], rewards: [80, 120, 200] },
+        { type: 'reachLevel', desc: 'Llega al nivel {n}', targets: [3, 5, 8], rewards: [60, 100, 180] },
+        { type: 'scorePoints', desc: 'Consigue {n} puntos', targets: [5000, 10000, 25000], rewards: [80, 150, 250] },
+        { type: 'playGames', desc: 'Juega {n} partidas', targets: [2, 3, 5], rewards: [40, 60, 100] },
+        { type: 'eatFruits', desc: 'Come {n} frutas', targets: [3, 5, 10], rewards: [60, 100, 150] },
+    ];
+    let sessionDotsEaten = 0, sessionGhostsEaten = 0, sessionFruitsEaten = 0;
+
+    function generateDailyMissions() {
+        var missions = [];
+        var used = [];
+        for (var i = 0; i < 3; i++) {
+            var idx;
+            do { idx = Math.floor(Math.random() * MISSION_TEMPLATES.length); } while (used.includes(idx));
+            used.push(idx);
+            var tmpl = MISSION_TEMPLATES[idx];
+            var diff = Math.floor(Math.random() * tmpl.targets.length);
+            missions.push({
+                type: tmpl.type, target: tmpl.targets[diff],
+                desc: tmpl.desc.replace('{n}', tmpl.targets[diff].toLocaleString()),
+                reward: tmpl.rewards[diff], progress: 0, completed: false, claimed: false
+            });
+        }
+        return missions;
+    }
+
+    function generateWeeklyMission() {
+        var tmpl = MISSION_TEMPLATES[Math.floor(Math.random() * MISSION_TEMPLATES.length)];
+        var bigTarget = tmpl.targets[tmpl.targets.length - 1] * 3;
+        return {
+            type: tmpl.type, target: bigTarget,
+            desc: tmpl.desc.replace('{n}', bigTarget.toLocaleString()),
+            reward: 500, progress: 0, completed: false, claimed: false
+        };
+    }
+
+    function resetMissionsIfNeeded() {
+        if (!persistentData) return;
+        var now = Date.now();
+        var todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        if (!persistentData.missions.lastDailyReset || persistentData.missions.lastDailyReset < todayStart.getTime()) {
+            persistentData.missions.daily = generateDailyMissions();
+            persistentData.missions.lastDailyReset = now;
+        }
+        var weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0, 0, 0, 0);
+        if (!persistentData.missions.lastWeeklyReset || persistentData.missions.lastWeeklyReset < weekStart.getTime()) {
+            persistentData.missions.weekly = generateWeeklyMission();
+            persistentData.missions.lastWeeklyReset = now;
+        }
+        savePersistentData();
+    }
+
+    function updateMissionProgress(type, value) {
+        if (!persistentData || !persistentData.missions) return;
+        var updated = false;
+        persistentData.missions.daily.forEach(function(m) {
+            if (m.type === type && !m.completed) {
+                m.progress = Math.min(m.target, m.progress + value);
+                if (m.progress >= m.target) m.completed = true;
+                updated = true;
+            }
+        });
+        if (persistentData.missions.weekly && persistentData.missions.weekly.type === type && !persistentData.missions.weekly.completed) {
+            persistentData.missions.weekly.progress = Math.min(persistentData.missions.weekly.target, persistentData.missions.weekly.progress + value);
+            if (persistentData.missions.weekly.progress >= persistentData.missions.weekly.target) persistentData.missions.weekly.completed = true;
+            updated = true;
+        }
+        if (updated) savePersistentData();
+    }
+
+    function renderMissions() {
+        resetMissionsIfNeeded();
+        var html = '<div class="mission-section-title">📅 MISIONES DIARIAS</div>';
+        persistentData.missions.daily.forEach(function(m, i) {
+            var pct = m.target > 0 ? Math.min(100, Math.floor(m.progress / m.target * 100)) : 0;
+            var cls = 'mission-card' + (m.claimed ? ' claimed' : m.completed ? ' completed' : '');
+            html += '<div class="' + cls + '">' +
+                '<div class="mission-desc">' + m.desc + '</div>' +
+                '<div class="mission-reward">🪙 ' + m.reward + '</div>' +
+                '<div class="mission-progress">' +
+                '<div class="mission-progress-bar"><div class="mission-progress-fill' + (m.completed ? ' done' : '') + '" style="width:' + pct + '%"></div></div>' +
+                '<div class="mission-progress-text">' + m.progress + ' / ' + m.target + '</div></div>' +
+                '<button class="mission-claim-btn" data-midx="d' + i + '">COBRAR 🪙</button></div>';
+        });
+        if (persistentData.missions.weekly) {
+            var w = persistentData.missions.weekly;
+            var wpct = w.target > 0 ? Math.min(100, Math.floor(w.progress / w.target * 100)) : 0;
+            var wcls = 'mission-card' + (w.claimed ? ' claimed' : w.completed ? ' completed' : '');
+            html += '<div class="mission-section-title" style="color:#ffd700;">🏅 MISIÓN SEMANAL</div>';
+            html += '<div class="' + wcls + '">' +
+                '<div class="mission-desc">' + w.desc + '</div>' +
+                '<div class="mission-reward">🪙 ' + w.reward + '</div>' +
+                '<div class="mission-progress">' +
+                '<div class="mission-progress-bar"><div class="mission-progress-fill' + (w.completed ? ' done' : '') + '" style="width:' + wpct + '%"></div></div>' +
+                '<div class="mission-progress-text">' + w.progress + ' / ' + w.target + '</div></div>' +
+                '<button class="mission-claim-btn" data-midx="w">COBRAR 🪙</button></div>';
+        }
+        document.getElementById('missionsContent').innerHTML = html;
+        // Bind claim buttons
+        document.querySelectorAll('.mission-claim-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = btn.dataset.midx;
+                if (idx === 'w') {
+                    if (persistentData.missions.weekly && persistentData.missions.weekly.completed && !persistentData.missions.weekly.claimed) {
+                        persistentData.missions.weekly.claimed = true;
+                        awardCoins(persistentData.missions.weekly.reward, 'Misión semanal');
+                        savePersistentData(); renderMissions();
+                    }
+                } else {
+                    var di = parseInt(idx.replace('d', ''));
+                    var m = persistentData.missions.daily[di];
+                    if (m && m.completed && !m.claimed) {
+                        m.claimed = true;
+                        awardCoins(m.reward, 'Misión diaria');
+                        savePersistentData(); renderMissions();
+                    }
+                }
+            });
+        });
+    }
+
+    // ---- v5.0 SFX SYSTEM ----
+    let sfxGainNode = null;
+
+    function initSfxSystem() {
+        if (!audioCtx) return;
+        try {
+            sfxGainNode = audioCtx.createGain();
+            sfxGainNode.gain.value = persistentData ? persistentData.sfxVolume : 0.7;
+            sfxGainNode.connect(audioCtx.destination);
+        } catch(e) {}
+    }
+
+    const SFX_DEFS = {
+        dotEat: { freq: 600, dur: 0.05, type: 'sine' },
+        ghostEat: { freq: 200, dur: 0.3, type: 'sawtooth', sweep: 800 },
+        powerPellet: { freq: 150, dur: 0.5, type: 'square' },
+        death: { freq: 400, dur: 0.8, type: 'sawtooth', sweep: 50 },
+        levelComplete: { freq: 523, dur: 0.4, type: 'sine' },
+        coinEarned: { freq: 1200, dur: 0.1, type: 'sine' },
+        menuClick: { freq: 800, dur: 0.03, type: 'square' },
+    };
+
+    function playSfx(name) {
+        if (!audioCtx || !sfxGainNode) return;
+        if (persistentData && !persistentData.sfxEnabled) return;
+        var def = SFX_DEFS[name];
+        if (!def) return;
+        try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = def.type || 'sine';
+            osc.frequency.setValueAtTime(def.freq, audioCtx.currentTime);
+            if (def.sweep) osc.frequency.linearRampToValueAtTime(def.sweep, audioCtx.currentTime + def.dur);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + def.dur);
+            osc.connect(gain);
+            gain.connect(sfxGainNode);
+            osc.start(); osc.stop(audioCtx.currentTime + def.dur + 0.01);
+        } catch(e) {}
+    }
+
+    // ---- v5.0 HAPTIC FEEDBACK ----
+    function vibrate(pattern) {
+        try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
+    }
+
+    // ---- v5.0 TRAIL SYSTEM ----
+    let trailPositions = []; // [{x,y,age}]
+
+    function updateTrail() {
+        if (!persistentData || !persistentData.equippedTrail) return;
+        if (typeof player === 'undefined' || !player.moving) return;
+        trailPositions.unshift({ x: player.px + 10, y: player.py + 10, age: 0 });
+        trailPositions.forEach(function(t) { t.age++; });
+        trailPositions = trailPositions.filter(function(t) { return t.age < 20; });
+    }
+
+    function drawTrailEffect(context) {
+        if (!persistentData || !persistentData.equippedTrail || trailPositions.length < 2) return;
+        var trail = persistentData.equippedTrail;
+        trailPositions.forEach(function(t, i) {
+            var alpha = 1 - t.age / 20;
+            if (alpha <= 0) return;
+            context.save();
+            context.globalAlpha = alpha * 0.6;
+            var sz = 3 * (1 - t.age / 20);
+            if (trail === 'sparkle') {
+                context.fillStyle = '#ffd700';
+                context.beginPath(); context.arc(t.x + (Math.random()-0.5)*4, t.y + (Math.random()-0.5)*4, sz, 0, Math.PI*2); context.fill();
+            } else if (trail === 'fire') {
+                context.fillStyle = 'hsl(' + (30 - t.age * 2) + ',100%,50%)';
+                context.beginPath(); context.arc(t.x, t.y + t.age*0.3, sz + 1, 0, Math.PI*2); context.fill();
+            } else if (trail === 'rainbow') {
+                context.fillStyle = 'hsl(' + (t.age * 18 + animFrame * 3) + ',100%,60%)';
+                context.beginPath(); context.arc(t.x, t.y, sz + 1, 0, Math.PI*2); context.fill();
+            }
+            context.restore();
+        });
+    }
+
+    // ---- v5.0 DEATH EFFECTS ----
+    let deathParticles = [];
+
+    function initDeathEffect(cx, cy) {
+        if (!persistentData || !persistentData.equippedDeathFx) return false;
+        deathParticles = [];
+        var fx = persistentData.equippedDeathFx;
+        if (fx === 'explode') {
+            for (var i = 0; i < 20; i++) {
+                var angle = Math.random() * Math.PI * 2;
+                var speed = 1 + Math.random() * 3;
+                deathParticles.push({ x: cx, y: cy, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 30 + Math.random()*20, color: ['#ff0','#f50','#f00','#ffd700'][Math.floor(Math.random()*4)] });
+            }
+        } else if (fx === 'pixel') {
+            for (var px = -2; px <= 2; px++) {
+                for (var py = -2; py <= 2; py++) {
+                    deathParticles.push({ x: cx + px*5, y: cy + py*5, vx: px*0.5, vy: py*0.3 - 1 - Math.random(), life: 40 + Math.random()*20, color: '#ff0' });
+                }
+            }
+        } else if (fx === 'dissolve') {
+            for (var d = 0; d < 15; d++) {
+                deathParticles.push({ x: cx + (Math.random()-0.5)*16, y: cy + (Math.random()-0.5)*16, vx: (Math.random()-0.5)*0.5, vy: -0.5 - Math.random(), life: 40 + Math.random()*20, color: 'rgba(255,255,0,' + (0.3+Math.random()*0.7) + ')' });
+            }
+        }
+        return true;
+    }
+
+    function updateDeathParticles() {
+        deathParticles.forEach(function(p) { p.x += p.vx; p.y += p.vy; p.life--; if (p.vy < 3) p.vy += 0.05; });
+        deathParticles = deathParticles.filter(function(p) { return p.life > 0; });
+    }
+
+    function drawDeathParticles(context) {
+        deathParticles.forEach(function(p) {
+            context.save();
+            context.globalAlpha = Math.min(1, p.life / 15);
+            context.fillStyle = p.color;
+            context.fillRect(p.x - 2, p.y - 2, 4, 4);
+            context.restore();
+        });
+    }
+
+    // ---- v5.0 VICTORY EFFECTS ----
+    let victoryParticles = [];
+    let victoryTimer = 0;
+
+    function initVictoryEffect() {
+        if (!persistentData || !persistentData.equippedVictoryFx) return;
+        victoryParticles = [];
+        victoryTimer = 90; // 1.5 seconds
+    }
+
+    function updateVictoryEffect() {
+        if (victoryTimer <= 0) return;
+        victoryTimer--;
+        var fx = persistentData ? persistentData.equippedVictoryFx : null;
+        if (!fx) return;
+        if (fx === 'fireworks' && victoryTimer % 10 === 0) {
+            var cx = 100 + Math.random() * 360;
+            var cy = 100 + Math.random() * 200;
+            for (var i = 0; i < 12; i++) {
+                var angle = (i / 12) * Math.PI * 2;
+                victoryParticles.push({ x: cx, y: cy, vx: Math.cos(angle)*2.5, vy: Math.sin(angle)*2.5, life: 30, color: 'hsl(' + Math.floor(Math.random()*360) + ',100%,60%)' });
+            }
+        } else if (fx === 'confetti' && victoryTimer % 3 === 0) {
+            victoryParticles.push({ x: Math.random()*560, y: -5, vx: (Math.random()-0.5)*2, vy: 1 + Math.random()*2, life: 80, color: 'hsl(' + Math.floor(Math.random()*360) + ',80%,60%)', sz: 3 + Math.random()*4 });
+        }
+        victoryParticles.forEach(function(p) { p.x += p.vx; p.y += p.vy; p.life--; });
+        victoryParticles = victoryParticles.filter(function(p) { return p.life > 0; });
+    }
+
+    function drawVictoryEffect(context) {
+        victoryParticles.forEach(function(p) {
+            context.save();
+            context.globalAlpha = Math.min(1, p.life / 10);
+            context.fillStyle = p.color;
+            var s = p.sz || 3;
+            context.fillRect(p.x - s/2, p.y - s/2, s, s);
+            context.restore();
+        });
+    }
+
+    // ---- v5.0 SWIPE CONTROLS ----
+    let swipeStartX = 0, swipeStartY = 0, swipeStartTime = 0;
+
+    function handleSwipeStart(e) {
+        if (e.touches && e.touches.length === 1) {
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+            swipeStartTime = Date.now();
+        }
+    }
+
+    function handleSwipeEnd(e) {
+        if (!swipeStartTime) return;
+        var touch = e.changedTouches ? e.changedTouches[0] : null;
+        if (!touch) return;
+        var dx = touch.clientX - swipeStartX;
+        var dy = touch.clientY - swipeStartY;
+        var dt = Date.now() - swipeStartTime;
+        swipeStartTime = 0;
+        if (dt > 300 || (Math.abs(dx) < 30 && Math.abs(dy) < 30)) return;
+        if (typeof player === 'undefined') return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            player.nextDir = dx > 0 ? 1 : 0; // right : left
+        } else {
+            player.nextDir = dy > 0 ? 3 : 2; // down : up
+        }
+    }
+
+    // ---- v5.0 SEASON SYSTEM ----
+    let currentSeason = null;
+
+    async function loadCurrentSeason() {
+        try {
+            var snap = await db.collection('seasons').where('active', '==', true).limit(1).get();
+            if (!snap.empty) {
+                currentSeason = { id: snap.docs[0].id, ...snap.docs[0].data() };
+            } else {
+                currentSeason = null;
+            }
+        } catch(e) { currentSeason = null; }
+    }
+
+    function renderSeasonPass() {
+        var el = document.getElementById('seasonContent');
+        if (!currentSeason) {
+            el.innerHTML = '<p style="text-align:center;color:#888;margin:20px 0;">No hay temporada activa. ¡Próximamente!</p>';
+            return;
+        }
+        var html = '<div style="text-align:center;margin-bottom:12px;">';
+        html += '<div style="font-size:20px;color:' + (currentSeason.theme ? currentSeason.theme.color1 || '#9b59b6' : '#9b59b6') + ';font-weight:bold;">' + (currentSeason.name || 'Temporada ' + (currentSeason.number || 1)) + '</div>';
+        html += '<div style="color:#888;font-size:12px;">XP de Temporada: ' + (persistentData.seasonXp || 0) + '</div></div>';
+        html += '<div class="season-track">';
+        var rewards = currentSeason.rewards || [];
+        for (var i = 0; i < 10; i++) {
+            var r = rewards[i] || { coins: (i + 1) * 50 };
+            var xpNeeded = (i + 1) * 200;
+            var unlocked = (persistentData.seasonXp || 0) >= xpNeeded;
+            var claimed = persistentData.seasonRewardsClaimed && persistentData.seasonRewardsClaimed.includes(i);
+            var cls = 'season-node' + (claimed ? ' claimed' : unlocked ? ' unlocked' : '');
+            html += '<div class="' + cls + '" data-slvl="' + i + '">';
+            html += '<div class="sn-level">Nv ' + (i + 1) + '</div>';
+            html += '<div class="sn-icon">' + (r.icon || '🪙') + '</div>';
+            html += '<div class="sn-reward">' + (r.coins || (i+1)*50) + '</div>';
+            html += claimed ? '<div style="color:#0f0;font-size:10px;">✓</div>' : '';
+            html += '</div>';
+        }
+        html += '</div>';
+        el.innerHTML = html;
+        // Bind click to claim
+        document.querySelectorAll('[data-slvl]').forEach(function(node) {
+            node.addEventListener('click', function() {
+                var lvl = parseInt(node.dataset.slvl);
+                var xpNeeded = (lvl + 1) * 200;
+                if ((persistentData.seasonXp || 0) >= xpNeeded && !persistentData.seasonRewardsClaimed.includes(lvl)) {
+                    persistentData.seasonRewardsClaimed.push(lvl);
+                    var reward = (currentSeason.rewards && currentSeason.rewards[lvl]) || { coins: (lvl+1)*50 };
+                    awardCoins(reward.coins || (lvl+1)*50, 'Temporada Nv ' + (lvl+1));
+                    savePersistentData();
+                    renderSeasonPass();
+                }
+            });
+        });
+    }
+
+    // ---- v5.0 TOURNAMENT SYSTEM ----
+    let activeTournament = null;
+    let tournamentListener = null;
+
+    async function loadActiveTournament() {
+        try {
+            var snap = await db.collection('tournaments').where('status', '==', 'active').limit(1).get();
+            if (!snap.empty) {
+                activeTournament = { id: snap.docs[0].id, ...snap.docs[0].data() };
+            } else {
+                activeTournament = null;
+            }
+        } catch(e) { activeTournament = null; }
+    }
+
+    function renderTournamentView() {
+        var el = document.getElementById('tournamentContent');
+        if (!activeTournament) {
+            el.innerHTML = '<p style="text-align:center;color:#888;margin:20px 0;">No hay torneos activos en este momento.</p>';
+            return;
+        }
+        var t = activeTournament;
+        var pid = currentPlayerName ? getPlayerId(currentPlayerName) : null;
+        var isJoined = pid && t.players && t.players[pid];
+        var html = '<div style="text-align:center;margin-bottom:12px;">';
+        html += '<div style="font-size:20px;color:#e74c3c;font-weight:bold;">' + (t.name || 'Torneo') + '</div>';
+        html += '<div style="color:#888;font-size:12px;">Estado: ' + t.status + '</div>';
+        if (t.endTime) html += '<div style="color:#fa5;font-size:12px;">Termina: ' + new Date(t.endTime.seconds ? t.endTime.seconds * 1000 : t.endTime).toLocaleString() + '</div>';
+        html += '</div>';
+        if (!isJoined && currentPlayerName) {
+            html += '<div style="text-align:center;margin:12px 0;"><button class="comm-btn" id="tournamentJoinBtn">PARTICIPAR</button></div>';
+        } else if (isJoined) {
+            html += '<div style="text-align:center;color:#0f0;margin:8px 0;">✓ Participando — Tu mejor: ' + ((t.players[pid] && t.players[pid].score) || 0).toLocaleString() + '</div>';
+        }
+        // Leaderboard
+        var players = t.players || {};
+        var sorted = Object.keys(players).map(function(k) { return { name: players[k].name || k, score: players[k].score || 0 }; });
+        sorted.sort(function(a, b) { return b.score - a.score; });
+        html += '<div style="margin-top:12px;"><div style="color:#e74c3c;font-weight:bold;margin-bottom:6px;">CLASIFICACIÓN</div>';
+        sorted.forEach(function(p, i) {
+            var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.';
+            html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;">';
+            html += '<span>' + medal + ' ' + p.name + '</span><span style="color:#0f0;">' + p.score.toLocaleString() + '</span></div>';
+        });
+        if (sorted.length === 0) html += '<p style="color:#888;text-align:center;">Sin participantes aún</p>';
+        html += '</div>';
+        el.innerHTML = html;
+        var joinBtn = document.getElementById('tournamentJoinBtn');
+        if (joinBtn) {
+            joinBtn.addEventListener('click', async function() {
+                if (!currentPlayerName || !activeTournament) return;
+                var pid = getPlayerId(currentPlayerName);
+                try {
+                    var updateData = {};
+                    updateData['players.' + pid] = { name: currentPlayerName, score: 0, submittedAt: null };
+                    await db.collection('tournaments').doc(activeTournament.id).update(updateData);
+                    activeTournament.players = activeTournament.players || {};
+                    activeTournament.players[pid] = { name: currentPlayerName, score: 0 };
+                    renderTournamentView();
+                } catch(e) { console.warn('Tournament join error:', e); }
+            });
+        }
+    }
+
+    async function submitTournamentScore(finalScore) {
+        if (!activeTournament || !currentPlayerName) return;
+        var pid = getPlayerId(currentPlayerName);
+        if (!activeTournament.players || !activeTournament.players[pid]) return;
+        if (activeTournament.players[pid].score >= finalScore) return; // only best score
+        try {
+            var updateData = {};
+            updateData['players.' + pid + '.score'] = finalScore;
+            updateData['players.' + pid + '.submittedAt'] = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('tournaments').doc(activeTournament.id).update(updateData);
+            activeTournament.players[pid].score = finalScore;
+        } catch(e) { console.warn('Tournament score submit error:', e); }
+    }
+
+    // ---- v5.0 MAP EDITOR ----
+    const EDITOR_TOOLS = [
+        { id: 'wall', name: '🧱 Muro', value: 1 },
+        { id: 'path', name: '⬛ Camino', value: 0 },
+        { id: 'dot', name: '⚪ Orbe', value: 2 },
+        { id: 'power', name: '🔴 Poder', value: 3 },
+        { id: 'spawn', name: '😀 Spawn', value: 4 },
+        { id: 'ghost', name: '👻 Fantasma', value: 5 },
+    ];
+    const EDITOR_COLS = 21;
+    const EDITOR_ROWS = 27;
+    let editorMap = [];
+    let editorTool = 'wall';
+    let editorCtxRef = null;
+    let editorTab = 'explore';
+
+    function initEditorMap() {
+        editorMap = [];
+        for (var y = 0; y < EDITOR_ROWS; y++) {
+            editorMap[y] = [];
+            for (var x = 0; x < EDITOR_COLS; x++) {
+                editorMap[y][x] = (x === 0 || x === EDITOR_COLS-1 || y === 0 || y === EDITOR_ROWS-1) ? 1 : 0;
+            }
+        }
+    }
+
+    function renderEditorToolbar() {
+        var html = EDITOR_TOOLS.map(function(t) {
+            return '<button class="editor-tool' + (editorTool === t.id ? ' active' : '') + '" data-etool="' + t.id + '">' + t.name + '</button>';
+        }).join('');
+        document.getElementById('editorToolbar').innerHTML = html;
+        document.querySelectorAll('[data-etool]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                editorTool = btn.dataset.etool;
+                renderEditorToolbar();
+            });
+        });
+    }
+
+    function renderEditorGrid() {
+        var c = document.getElementById('editorCanvas');
+        if (!c) return;
+        var ectx = c.getContext('2d');
+        editorCtxRef = ectx;
+        var cellW = c.width / EDITOR_COLS;
+        var cellH = c.height / EDITOR_ROWS;
+        ectx.fillStyle = '#000';
+        ectx.fillRect(0, 0, c.width, c.height);
+        for (var y = 0; y < EDITOR_ROWS; y++) {
+            for (var x = 0; x < EDITOR_COLS; x++) {
+                var val = editorMap[y] ? editorMap[y][x] : 0;
+                if (val === 1) ectx.fillStyle = '#225';
+                else if (val === 2) { ectx.fillStyle = '#000'; ectx.fillRect(x*cellW, y*cellH, cellW, cellH); ectx.fillStyle = '#fff'; ectx.beginPath(); ectx.arc(x*cellW+cellW/2, y*cellH+cellH/2, 2, 0, Math.PI*2); ectx.fill(); continue; }
+                else if (val === 3) { ectx.fillStyle = '#000'; ectx.fillRect(x*cellW, y*cellH, cellW, cellH); ectx.fillStyle = '#f00'; ectx.beginPath(); ectx.arc(x*cellW+cellW/2, y*cellH+cellH/2, 4, 0, Math.PI*2); ectx.fill(); continue; }
+                else if (val === 4) ectx.fillStyle = '#ff0';
+                else if (val === 5) ectx.fillStyle = '#f0f';
+                else ectx.fillStyle = '#000';
+                ectx.fillRect(x*cellW, y*cellH, cellW, cellH);
+                // Grid lines
+                ectx.strokeStyle = '#1a1a2e';
+                ectx.strokeRect(x*cellW, y*cellH, cellW, cellH);
+            }
+        }
+    }
+
+    function handleEditorClick(e) {
+        var c = document.getElementById('editorCanvas');
+        if (!c) return;
+        var rect = c.getBoundingClientRect();
+        var scaleX = c.width / rect.width;
+        var scaleY = c.height / rect.height;
+        var mx = (e.clientX - rect.left) * scaleX;
+        var my = (e.clientY - rect.top) * scaleY;
+        var cellW = c.width / EDITOR_COLS;
+        var cellH = c.height / EDITOR_ROWS;
+        var gx = Math.floor(mx / cellW);
+        var gy = Math.floor(my / cellH);
+        if (gx < 0 || gx >= EDITOR_COLS || gy < 0 || gy >= EDITOR_ROWS) return;
+        var tool = EDITOR_TOOLS.find(function(t) { return t.id === editorTool; });
+        if (!tool) return;
+        editorMap[gy][gx] = tool.value;
+        renderEditorGrid();
+    }
+
+    function validateEditorMap() {
+        var spawns = 0, ghosts = 0, dots = 0, powers = 0;
+        for (var y = 0; y < EDITOR_ROWS; y++) {
+            for (var x = 0; x < EDITOR_COLS; x++) {
+                var v = editorMap[y][x];
+                if (v === 4) spawns++;
+                if (v === 5) ghosts++;
+                if (v === 2) dots++;
+                if (v === 3) powers++;
+            }
+        }
+        if (spawns !== 1) return 'Necesitas exactamente 1 punto de spawn del jugador';
+        if (ghosts < 1) return 'Necesitas al menos 1 punto de spawn de fantasma';
+        if (dots < 20) return 'Necesitas al menos 20 orbes';
+        if (powers < 1) return 'Necesitas al menos 1 orbe de poder';
+        return null;
+    }
+
+    async function saveEditorMap(name) {
+        if (!currentPlayerName) return { error: 'Necesitas un nombre de jugador' };
+        var err = validateEditorMap();
+        if (err) return { error: err };
+        if (!name || name.length < 2) return { error: 'Nombre de mapa muy corto' };
+        if (containsBadWord(name)) return { error: 'Nombre no permitido' };
+        try {
+            await db.collection('maps').add({
+                name: name, creator: getPlayerId(currentPlayerName), creatorName: currentPlayerName,
+                mapData: JSON.stringify(editorMap), plays: 0, likes: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true };
+        } catch(e) { return { error: 'Error al guardar: ' + e.message }; }
+    }
+
+    async function loadCommunityMaps() {
+        try {
+            var snap = await db.collection('maps').orderBy('likes', 'desc').limit(20).get();
+            return snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+        } catch(e) { return []; }
+    }
+
+    function renderMapList(maps) {
+        var el = document.getElementById('mapList');
+        if (!maps || maps.length === 0) {
+            el.innerHTML = '<p style="text-align:center;color:#888;margin:12px 0;">No hay mapas comunitarios aún. ¡Crea el primero!</p>';
+            return;
+        }
+        el.innerHTML = maps.map(function(m) {
+            var liked = persistentData.likedMaps && persistentData.likedMaps.includes(m.id);
+            return '<div class="map-list-item">' +
+                '<div class="map-info"><div class="map-name">' + m.name + '</div>' +
+                '<div class="map-author">por ' + (m.creatorName || 'Anónimo') + '</div>' +
+                '<div class="map-stats">❤️ ' + (m.likes || 0) + ' — 🎮 ' + (m.plays || 0) + ' jugadas</div></div>' +
+                '<button class="map-like-btn' + (liked ? ' liked' : '') + '" data-mapid="' + m.id + '">❤️</button>' +
+                '<button class="map-play-btn" data-mapdata=\'' + (m.mapData || '[]') + '\' data-mapid="' + m.id + '">JUGAR</button></div>';
+        }).join('');
+        // Bind play buttons
+        document.querySelectorAll('.map-play-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                try {
+                    var mapData = JSON.parse(btn.dataset.mapdata);
+                    playCustomMap(mapData, btn.dataset.mapid);
+                } catch(e) { alert('Error al cargar mapa'); }
+            });
+        });
+        // Bind like buttons
+        document.querySelectorAll('.map-like-btn').forEach(function(btn) {
+            btn.addEventListener('click', async function() {
+                var mid = btn.dataset.mapid;
+                if (persistentData.likedMaps.includes(mid)) return;
+                persistentData.likedMaps.push(mid);
+                savePersistentData();
+                try { await db.collection('maps').doc(mid).update({ likes: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
+                btn.classList.add('liked');
+            });
+        });
+    }
+
+    let customMapData = null;
+
+    function playCustomMap(mapData, mapId) {
+        customMapData = mapData;
+        // Close overlays
+        document.getElementById('editorOverlay').classList.remove('visible');
+        // Increment plays
+        if (mapId) {
+            try { db.collection('maps').doc(mapId).update({ plays: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
+        }
+        // If no player name, go to play view
+        if (!currentPlayerName) { showPlayView(); return; }
+        // Start game with custom map
+        document.getElementById('startScreen').style.display = 'none';
+        initGameWithCustomMap();
+    }
+
+    function initGameWithCustomMap() {
+        // This will be handled in initGame() — set a flag
+        if (!customMapData) return;
+        initGame();
+    }
+
+    // ---- v5.0 MULTIPLAYER (SIMPLIFIED) ----
+    let multiplayerSessionId = null;
+    let isHost = false;
+    let isSpectator = false;
+    let multiplayerListener = null;
+    let ghostPlayerDir = -1;
+
+    function generateSessionCode() {
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        var code = '';
+        for (var i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+        return code;
+    }
+
+    async function createMultiplayerSession() {
+        if (!currentPlayerName) return { error: 'Necesitas un nombre' };
+        var code = generateSessionCode();
+        try {
+            await db.collection('sessions').doc(code).set({
+                hostName: currentPlayerName, hostPid: getPlayerId(currentPlayerName),
+                state: {}, ghostInput: { dir: -1, timestamp: 0 },
+                spectators: [], status: 'waiting',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            multiplayerSessionId = code;
+            isHost = true;
+            return { success: true, code: code };
+        } catch(e) { return { error: 'Error: ' + e.message }; }
+    }
+
+    async function joinMultiplayerSession(code, asSpectator) {
+        if (!code || code.length < 4) return { error: 'Código inválido' };
+        try {
+            var doc = await db.collection('sessions').doc(code.toUpperCase()).get();
+            if (!doc.exists) return { error: 'Sala no encontrada' };
+            multiplayerSessionId = code.toUpperCase();
+            isSpectator = asSpectator || false;
+            isHost = false;
+            if (asSpectator) {
+                await db.collection('sessions').doc(multiplayerSessionId).update({
+                    spectators: firebase.firestore.FieldValue.arrayUnion(currentPlayerName || 'Anónimo')
+                });
+            }
+            return { success: true };
+        } catch(e) { return { error: 'Error: ' + e.message }; }
+    }
+
+    function syncGameStateToFirestore() {
+        if (!multiplayerSessionId || !isHost) return;
+        try {
+            db.collection('sessions').doc(multiplayerSessionId).update({
+                state: {
+                    score: typeof score !== 'undefined' ? score : 0,
+                    level: typeof level !== 'undefined' ? level : 1,
+                    lives: typeof lives !== 'undefined' ? lives : 25,
+                    gameState: typeof gameState !== 'undefined' ? gameState : 'start',
+                    playerX: typeof player !== 'undefined' ? player.x : 0,
+                    playerY: typeof player !== 'undefined' ? player.y : 0,
+                    timestamp: Date.now()
+                },
+                status: 'playing'
+            });
+        } catch(e) {}
+    }
+
+    function renderMultiplayerLobby() {
+        var el = document.getElementById('multiLobbyInfo');
+        if (!multiplayerSessionId) { document.getElementById('multiLobby').style.display = 'none'; document.getElementById('multiMenu').style.display = 'block'; return; }
+        document.getElementById('multiMenu').style.display = 'none';
+        document.getElementById('multiLobby').style.display = 'block';
+        el.innerHTML = '<div style="text-align:center;">' +
+            '<div style="font-size:14px;color:#888;">' + (isHost ? 'Tu sala' : isSpectator ? 'Modo Espectador' : 'Fantasma Amigo') + '</div>' +
+            '<div style="font-size:28px;color:#3498db;font-weight:bold;letter-spacing:4px;margin:10px 0;">' + multiplayerSessionId + '</div>' +
+            '<div style="color:#888;font-size:12px;">Comparte este código con tus amigos</div>' +
+            (isHost ? '<button class="comm-btn" id="multiStartGameBtn" style="margin-top:12px;">INICIAR JUEGO</button>' : '') +
+            '<button class="comm-btn-secondary" id="multiLeaveBtn" style="margin-top:8px;font-size:12px;">SALIR</button></div>';
+        var startBtn = document.getElementById('multiStartGameBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', function() {
+                document.getElementById('multiOverlay').classList.remove('visible');
+                showPlayView();
+            });
+        }
+        var leaveBtn = document.getElementById('multiLeaveBtn');
+        if (leaveBtn) {
+            leaveBtn.addEventListener('click', function() {
+                multiplayerSessionId = null; isHost = false; isSpectator = false;
+                if (multiplayerListener) { multiplayerListener(); multiplayerListener = null; }
+                document.getElementById('multiLobby').style.display = 'none';
+                document.getElementById('multiMenu').style.display = 'block';
+            });
+        }
+    }
+
+    // ---- v5.0 GAME OVER INTEGRATION ----
+    function onGameOver_v5(finalScore, finalLevel, ghostsEaten) {
+        // Award XP
+        var xpEarned = Math.floor(finalScore / 100) + finalLevel * 50 + ghostsEaten * 25;
+        awardXp(xpEarned);
+        // Award coins
+        var coinsEarned = Math.floor(finalScore / 500);
+        if (coinsEarned > 0) awardCoins(coinsEarned, 'Partida completada');
+        // Update missions
+        updateMissionProgress('scorePoints', finalScore);
+        updateMissionProgress('reachLevel', finalLevel);
+        updateMissionProgress('playGames', 1);
+        // Season XP
+        if (persistentData && currentSeason) {
+            persistentData.seasonXp = (persistentData.seasonXp || 0) + Math.floor(finalScore / 200);
+            savePersistentData();
+        }
+        // Tournament score
+        submitTournamentScore(finalScore);
+        // Update Firestore profile
+        if (currentPlayerName) {
+            var pid = getPlayerId(currentPlayerName);
+            var rank = getCurrentRank();
+            try {
+                scoresRef.doc(pid).update({
+                    rank: rank.id, xp: persistentData.xp || 0, pacCoins: persistentData.pacCoins || 0
+                });
+            } catch(e) {}
+        }
+    }
+
+    // ========================================
+    // ===== END v5.0 SYSTEMS =====
+    // ========================================
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -2509,11 +3880,13 @@
         if (audioCtx) return;
         audioCtx = new AudioCtx();
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.8;
+        masterGain.gain.value = persistentData ? persistentData.musicVolume : 0.5;
         masterGain.connect(audioCtx.destination);
         sfxGain = audioCtx.createGain();
         sfxGain.gain.value = 1.0;
         sfxGain.connect(masterGain);
+        // v5.0: Init SFX system
+        initSfxSystem();
         // Music layer gains
         const layerNames = ['kick','bass','hihat','melody','tension','power','fury'];
         layerNames.forEach(name => {
@@ -2723,6 +4096,7 @@
 
     function startMusic() {
         if (!audioCtx) return;
+        if (persistentData && !persistentData.musicEnabled) return;
         musicPlaying = true;
         musicBPM = getMusicBPM();
         beatInterval = 60 / musicBPM / 4; // 16th notes
@@ -3799,6 +5173,9 @@
         currentLevelDeaths = 0;
         levelStartScore = 0;
         currentGhostStreak = 0;
+        // v5.0: Reset session counters
+        sessionDotsEaten = 0; sessionGhostsEaten = 0; sessionFruitsEaten = 0;
+        trailPositions = []; deathParticles = []; victoryParticles = []; victoryTimer = 0;
         applyTheme();
         resetMap();
         resetPositions();
@@ -4072,6 +5449,9 @@
                 dotsEaten++;
                 updateStat('totalDotsEaten', 1);
                 playChomp();
+                playSfx('dotEat'); vibrate(10);
+                sessionDotsEaten++;
+                updateMissionProgress('eatDots', 1);
                 checkLifeMilestone();
                 spawnParticles(player.px + TILE/2, player.py + TILE/2, 3, currentTheme ? currentTheme.dotColor : '#ffa', 0.5, 2, 10, 20, 2);
             } else if (tile === 3) {
@@ -4086,6 +5466,7 @@
                     updateStat('totalDotsEaten', 1);
                     activatePowerMode();
                     playPowerUp();
+                    playSfx('powerPellet'); vibrate(50);
                     checkLifeMilestone();
                     spawnParticles(player.px + TILE/2, player.py + TILE/2, 8, currentTheme ? currentTheme.orbColor : '#fff', 1, 4, 15, 30, 3);
                 }
@@ -4124,6 +5505,8 @@
             if (fruit && player.x === fruit.x && player.y === fruit.y) {
                 score += FRUIT_POINTS;
                 updateStat('totalFruitsEaten', 1);
+                sessionFruitsEaten++;
+                updateMissionProgress('eatFruits', 1);
                 fruitMsg = '\u00a1' + fruit.type.name + '! +' + FRUIT_POINTS + ' ' + (fruit.type.effectDesc || '');
                 fruitMsgTimer = 120;
                 playFruitEat();
@@ -4183,6 +5566,8 @@
                     ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 50, text: '+10,000 PERFECTO!', timer: 100, maxTimer: 100, isCombo: true, color: '#ffd700' });
                 }
                 gameState = 'win';
+                playSfx('levelComplete'); vibrate([50,30,50,30,100]);
+                initVictoryEffect();
                 winTimer = 240;
                 messageText = '¡NIVEL COMPLETADO!';
                 playLevelComplete();
@@ -4409,6 +5794,9 @@
                     currentGhostStreak++;
                     updateStat('totalGhostsEaten', 1);
                     levelGhostsEaten++;
+                    sessionGhostsEaten++;
+                    playSfx('ghostEat'); vibrate(50);
+                    updateMissionProgress('eatGhosts', 1);
                     updateStat('bestStreak', currentGhostStreak, 'max');
                     checkLifeMilestone();
                     updateHUD();
@@ -4442,6 +5830,8 @@
                     gameState = 'dying';
                     deathTimer = 90;
                     playDeath();
+                    playSfx('death'); vibrate([100,50,100]);
+                    initDeathEffect(player.px + TILE/2, player.py + TILE/2);
                     triggerFlash('rgba(255,0,0,0.5)', 12);
                     spawnParticles(player.px + TILE/2, player.py + TILE/2, 20, getCurrentSkin().color, 1, 4, 15, 40, 2);
                     triggerShake(6, 15);
@@ -4659,8 +6049,8 @@
 
     function drawPlayer() {
         var skin = getCurrentSkin();
-        var pColor = skin.color;
-        var pGlow = skin.glow;
+        var pColor = (persistentData && persistentData.customColor) ? persistentData.customColor : skin.color;
+        var pGlow = (persistentData && persistentData.customColor) ? persistentData.customColor : skin.glow;
         const cx = player.px + TILE / 2;
         const cy = player.py + TILE / 2;
         const r = TILE / 2 - 1;
@@ -4828,6 +6218,12 @@
             });
             ctx.globalAlpha = 1;
         }
+        // v5.0: Custom trail effect
+        drawTrailEffect(ctx);
+        // v5.0: Death particles
+        drawDeathParticles(ctx);
+        // v5.0: Victory effects
+        drawVictoryEffect(ctx);
         if (gameState !== 'dying' || deathTimer > 45) {
             drawPlayer();
             drawLaser();
@@ -5681,6 +7077,12 @@
             // Trail aging
             playerTrail.forEach(t => t.age++);
             playerTrail = playerTrail.filter(t => t.age <= 6);
+            // v5.0: Custom trail + death particles
+            updateTrail();
+            updateDeathParticles();
+            updateVictoryEffect();
+            // v5.0: Multiplayer sync
+            if (multiplayerSessionId && isHost && animFrame % 60 === 0) syncGameStateToFirestore();
             // Fruit message timer
             if (fruitMsgTimer > 0) {
                 fruitMsgTimer--;
@@ -5952,6 +7354,9 @@
     function showLobbyView() {
         document.getElementById('lobbyView').style.display = 'flex';
         document.getElementById('playView').style.display = 'none';
+        // v5.0: Update lobby displays
+        updateLobbyInfo();
+        resetMissionsIfNeeded();
     }
     function showPlayView() {
         document.getElementById('lobbyView').style.display = 'none';
@@ -6197,6 +7602,164 @@
         document.getElementById('clanOverlay').classList.add('visible');
     });
 
+    // ---- v5.0 LOBBY EVENT LISTENERS ----
+    document.getElementById('lobbyShopBtn').addEventListener('click', function() {
+        renderShop();
+        document.getElementById('shopOverlay').classList.add('visible');
+    });
+    document.getElementById('shopCloseBtn').addEventListener('click', function() {
+        document.getElementById('shopOverlay').classList.remove('visible');
+    });
+    document.getElementById('shopOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('shopOverlay')) document.getElementById('shopOverlay').classList.remove('visible');
+    });
+
+    document.getElementById('lobbyMissionsBtn').addEventListener('click', function() {
+        renderMissions();
+        document.getElementById('missionsOverlay').classList.add('visible');
+    });
+    document.getElementById('missionsCloseBtn').addEventListener('click', function() {
+        document.getElementById('missionsOverlay').classList.remove('visible');
+    });
+    document.getElementById('missionsOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('missionsOverlay')) document.getElementById('missionsOverlay').classList.remove('visible');
+    });
+
+    document.getElementById('lobbySeasonBtn').addEventListener('click', async function() {
+        await loadCurrentSeason();
+        renderSeasonPass();
+        document.getElementById('seasonOverlay').classList.add('visible');
+    });
+    document.getElementById('seasonCloseBtn').addEventListener('click', function() {
+        document.getElementById('seasonOverlay').classList.remove('visible');
+    });
+    document.getElementById('seasonOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('seasonOverlay')) document.getElementById('seasonOverlay').classList.remove('visible');
+    });
+
+    document.getElementById('lobbyTournamentBtn').addEventListener('click', async function() {
+        await loadActiveTournament();
+        renderTournamentView();
+        document.getElementById('tournamentOverlay').classList.add('visible');
+    });
+    document.getElementById('tournamentCloseBtn').addEventListener('click', function() {
+        document.getElementById('tournamentOverlay').classList.remove('visible');
+    });
+    document.getElementById('tournamentOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('tournamentOverlay')) document.getElementById('tournamentOverlay').classList.remove('visible');
+    });
+
+    document.getElementById('lobbyEditorBtn').addEventListener('click', async function() {
+        document.getElementById('editorOverlay').classList.add('visible');
+        if (editorTab === 'explore') {
+            var maps = await loadCommunityMaps();
+            renderMapList(maps);
+        } else {
+            if (editorMap.length === 0) initEditorMap();
+            renderEditorToolbar();
+            renderEditorGrid();
+        }
+    });
+    document.getElementById('editorCloseBtn').addEventListener('click', function() {
+        document.getElementById('editorOverlay').classList.remove('visible');
+    });
+    document.getElementById('editorOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('editorOverlay')) document.getElementById('editorOverlay').classList.remove('visible');
+    });
+    // Editor tabs
+    document.querySelectorAll('[data-etab]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            editorTab = btn.dataset.etab;
+            document.querySelectorAll('[data-etab]').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            if (editorTab === 'explore') {
+                document.getElementById('editorExploreView').style.display = 'block';
+                document.getElementById('editorCreateView').style.display = 'none';
+                var maps = await loadCommunityMaps();
+                renderMapList(maps);
+            } else {
+                document.getElementById('editorExploreView').style.display = 'none';
+                document.getElementById('editorCreateView').style.display = 'block';
+                if (editorMap.length === 0) initEditorMap();
+                renderEditorToolbar();
+                renderEditorGrid();
+            }
+        });
+    });
+    // Editor canvas click
+    document.getElementById('editorCanvas').addEventListener('click', handleEditorClick);
+    document.getElementById('editorCanvas').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        handleEditorClick({ clientX: touch.clientX, clientY: touch.clientY });
+    });
+    // Editor save
+    document.getElementById('editorSaveBtn').addEventListener('click', async function() {
+        var name = document.getElementById('editorMapName').value.trim();
+        var result = await saveEditorMap(name);
+        if (result.success) {
+            document.getElementById('editorError').textContent = '';
+            alert('¡Mapa guardado exitosamente!');
+            initEditorMap();
+            renderEditorGrid();
+            document.getElementById('editorMapName').value = '';
+        } else {
+            document.getElementById('editorError').textContent = result.error;
+        }
+    });
+
+    document.getElementById('lobbyMultiBtn').addEventListener('click', function() {
+        renderMultiplayerLobby();
+        document.getElementById('multiOverlay').classList.add('visible');
+    });
+    document.getElementById('multiCloseBtn').addEventListener('click', function() {
+        document.getElementById('multiOverlay').classList.remove('visible');
+    });
+    document.getElementById('multiOverlay').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('multiOverlay')) document.getElementById('multiOverlay').classList.remove('visible');
+    });
+    document.getElementById('multiCreateBtn').addEventListener('click', async function() {
+        if (!currentPlayerName) { alert('Necesitas un nombre de jugador'); return; }
+        var result = await createMultiplayerSession();
+        if (result.success) renderMultiplayerLobby();
+        else alert(result.error);
+    });
+    document.getElementById('multiJoinBtn').addEventListener('click', async function() {
+        var code = document.getElementById('multiCodeInput').value.trim();
+        var result = await joinMultiplayerSession(code, false);
+        if (result.success) renderMultiplayerLobby();
+        else alert(result.error);
+    });
+    document.getElementById('multiSpectateBtn').addEventListener('click', async function() {
+        var code = document.getElementById('multiCodeInput').value.trim();
+        if (!code) { alert('Ingresa un código'); return; }
+        var result = await joinMultiplayerSession(code, true);
+        if (result.success) renderMultiplayerLobby();
+        else alert(result.error);
+    });
+
+    // Audio toggle buttons
+    document.getElementById('musicToggleBtn').addEventListener('click', function() {
+        if (!persistentData) return;
+        persistentData.musicEnabled = !persistentData.musicEnabled;
+        savePersistentData();
+        this.classList.toggle('muted', !persistentData.musicEnabled);
+        this.textContent = persistentData.musicEnabled ? '🎵' : '🔇';
+        if (!persistentData.musicEnabled && typeof stopMusic === 'function') stopMusic();
+        else if (persistentData.musicEnabled && gameState === 'playing' && typeof startMusic === 'function') startMusic();
+    });
+    document.getElementById('sfxToggleBtn').addEventListener('click', function() {
+        if (!persistentData) return;
+        persistentData.sfxEnabled = !persistentData.sfxEnabled;
+        savePersistentData();
+        this.classList.toggle('muted', !persistentData.sfxEnabled);
+        this.textContent = persistentData.sfxEnabled ? '🔊' : '🔈';
+    });
+
+    // Swipe controls for mobile
+    document.getElementById('game').addEventListener('touchstart', handleSwipeStart, { passive: true });
+    document.getElementById('game').addEventListener('touchend', handleSwipeEnd, { passive: true });
+
     // ---- SKIN SELECTOR EVENT LISTENERS ----
     document.getElementById('skinPrev').addEventListener('click', function() {
         skinPreviewIdx--;
@@ -6211,6 +7774,18 @@
 
     // Load persistent data on startup
     loadPersistentData();
+    // v5.0: Initialize lobby info and SFX system
+    updateLobbyInfo();
+    resetMissionsIfNeeded();
+    // Apply audio toggle states from saved data
+    if (persistentData && !persistentData.musicEnabled) {
+        document.getElementById('musicToggleBtn').classList.add('muted');
+        document.getElementById('musicToggleBtn').textContent = '🔇';
+    }
+    if (persistentData && !persistentData.sfxEnabled) {
+        document.getElementById('sfxToggleBtn').classList.add('muted');
+        document.getElementById('sfxToggleBtn').textContent = '🔈';
+    }
     // Set skin preview to saved skin
     for (var _si = 0; _si < PLAYER_SKINS.length; _si++) {
         if (PLAYER_SKINS[_si].id === selectedSkin) { skinPreviewIdx = _si; break; }
