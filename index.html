@@ -1037,9 +1037,22 @@
         <div class="loading-text">Cargando...</div>
     </div>
     <div id="startScreen">
+        <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
+        <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.5</span></h1>
+            <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
+            <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
+                <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
+                <p style="color:#aaa;font-size:12px;margin-bottom:16px;">Ingresa tu nombre de jugador para comenzar</p>
+                <input type="text" id="welcomeNameInput" maxlength="15" placeholder="Tu nombre..." autocomplete="off" style="width:90%;padding:10px 12px;font-size:16px;background:rgba(0,0,0,0.6);border:2px solid #0ff;border-radius:8px;color:#fff;font-family:'Courier New',monospace;text-align:center;outline:none;">
+                <div id="welcomeNameError" style="color:#ff4444;font-size:11px;min-height:16px;margin-top:8px;"></div>
+                <button id="welcomeEnterBtn" style="width:100%;padding:12px;margin-top:8px;font-size:16px;font-weight:bold;font-family:'Courier New',monospace;background:linear-gradient(135deg,#00e5ff,#0077ff);color:#000;border:none;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;">🎮 ENTRAR</button>
+            </div>
+            <p style="color:#555;font-size:10px;margin-top:8px;">Tu nombre se guardará para futuras visitas</p>
+        </div>
         <!-- LOBBY VIEW (pantalla principal) -->
-        <div id="lobbyView">
-            <h1>EDH-PAC <span class="version-tag">v5.4</span></h1>
+        <div id="lobbyView" style="display:none;">
+            <h1>EDH-PAC <span class="version-tag">v5.5</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1091,7 +1104,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.4</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.5</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1324,7 +1337,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.4</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.5</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2148,7 +2161,7 @@
         missions: { daily: [], weekly: null, lastDailyReset: 0, lastWeeklyReset: 0 },
         seasonId: null, seasonXp: 0, seasonRewardsClaimed: [],
         sfxVolume: 0.7, musicVolume: 0.5, sfxEnabled: true, musicEnabled: true,
-        likedMaps: [] };
+        likedMaps: [], playerName: '' };
     }
     function loadPersistentData() {
         try {
@@ -2180,6 +2193,8 @@
                 if (persistentData.sfxEnabled === undefined) persistentData.sfxEnabled = true;
                 if (persistentData.musicEnabled === undefined) persistentData.musicEnabled = true;
                 if (!persistentData.likedMaps) persistentData.likedMaps = [];
+                if (persistentData.playerName === undefined) persistentData.playerName = '';
+                if (persistentData.playerName) currentPlayerName = persistentData.playerName;
             } else { persistentData = getDefaultPersistentData(); }
         } catch(e) { persistentData = getDefaultPersistentData(); }
     }
@@ -7520,7 +7535,14 @@
         countdownTimer = 210;
     }
     // ---- v4.0 LOBBY NAVIGATION ----
+    function showWelcomeView() {
+        document.getElementById('welcomeView').style.display = 'flex';
+        document.getElementById('lobbyView').style.display = 'none';
+        document.getElementById('playView').style.display = 'none';
+        setTimeout(function() { document.getElementById('welcomeNameInput').focus(); }, 100);
+    }
     function showLobbyView() {
+        document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'flex';
         document.getElementById('playView').style.display = 'none';
         // Ocultar banner multijugador si no hay sesión activa
@@ -7533,6 +7555,7 @@
         resetMissionsIfNeeded();
     }
     function showPlayView() {
+        document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
         document.getElementById('playView').style.display = 'flex';
         document.getElementById('nameError').textContent = '';
@@ -7707,6 +7730,7 @@
         }
 
         currentPlayerName = name;
+        if (persistentData) { persistentData.playerName = name; savePersistentData(); }
         nameError.textContent = '';
         // Save selected skin
         var _skinSel = PLAYER_SKINS[skinPreviewIdx];
@@ -7742,6 +7766,54 @@
     // Stats close button
     document.getElementById('statsCloseBtn').addEventListener('click', function() {
         document.getElementById('statsOverlay').classList.remove('visible');
+    });
+
+    // ---- WELCOME SCREEN EVENT LISTENERS ----
+    async function handleWelcomeEnter() {
+        var nameInput = document.getElementById('welcomeNameInput');
+        var nameError = document.getElementById('welcomeNameError');
+        var enterBtn = document.getElementById('welcomeEnterBtn');
+        var name = nameInput.value.trim();
+
+        if (!name) {
+            nameError.textContent = 'Escribe tu nombre para jugar';
+            nameInput.focus();
+            return;
+        }
+        if (name.length < 2) {
+            nameError.textContent = 'El nombre debe tener al menos 2 letras';
+            nameInput.focus();
+            return;
+        }
+        if (containsBadWord(name)) {
+            nameError.textContent = getBadWordMessage();
+            nameInput.focus();
+            return;
+        }
+
+        enterBtn.disabled = true;
+        enterBtn.textContent = 'VERIFICANDO...';
+        var taken = await isNameTaken(name);
+        enterBtn.disabled = false;
+        enterBtn.textContent = '🎮 ENTRAR';
+
+        if (taken && !confirm('"' + name + '" ya existe en el ranking. ¿Eres tú? Si ganas más puntos se actualizará tu récord.')) {
+            nameError.textContent = 'Elige otro nombre';
+            nameInput.focus();
+            return;
+        }
+
+        currentPlayerName = name;
+        persistentData.playerName = name;
+        savePersistentData();
+        nameError.textContent = '';
+        // Pre-llenar input del play view
+        document.getElementById('nameInput').value = name;
+        showLobbyView();
+    }
+    document.getElementById('welcomeEnterBtn').addEventListener('click', handleWelcomeEnter);
+    document.getElementById('welcomeNameInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); handleWelcomeEnter(); }
     });
 
     // ---- v4.0 LOBBY EVENT LISTENERS ----
@@ -7975,6 +8047,13 @@
     }
     updateSkinPreview();
 
+    // v5.5: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    if (currentPlayerName) {
+        showLobbyView();
+    } else {
+        showWelcomeView();
+    }
+
     // ===== v4.0 COMMUNITY EVENT LISTENERS =====
 
     // Clan name form — CONTINUAR button
@@ -7995,6 +8074,7 @@
             return;
         }
         currentPlayerName = name;
+        if (persistentData) { persistentData.playerName = name; savePersistentData(); }
         // Also pre-fill the play view name input so it's ready if they go to JUGAR later
         document.getElementById('nameInput').value = name;
         btn.textContent = 'CARGANDO...';
