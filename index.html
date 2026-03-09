@@ -1321,6 +1321,13 @@
             <div id="multiContent">
                 <div id="multiMenu">
                     <p style="text-align:center;color:#888;margin:12px 0;">Juega con amigos</p>
+                    <div id="multiNamePrompt" style="display:none;max-width:260px;margin:0 auto 12px;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid #3498db;border-radius:10px;text-align:center;">
+                        <p style="color:#3498db;font-size:12px;margin:0 0 8px;">Ingresa tu nombre para jugar:</p>
+                        <div style="display:flex;gap:6px;">
+                            <input type="text" class="comm-input" id="multiNameInput" maxlength="15" placeholder="Tu nombre..." style="flex:1;">
+                            <button class="comm-btn" id="multiNameBtn" style="padding:8px 14px;font-size:12px;">OK</button>
+                        </div>
+                    </div>
                     <div style="display:flex;flex-direction:column;gap:10px;max-width:260px;margin:0 auto;">
                         <button class="comm-btn" id="multiCreateBtn">CREAR SALA</button>
                         <div style="display:flex;gap:6px;">
@@ -7901,6 +7908,7 @@
 
     document.getElementById('lobbyMultiBtn').addEventListener('click', function() {
         renderMultiplayerLobby();
+        updateMultiNamePrompt();
         document.getElementById('multiOverlay').classList.add('visible');
     });
     document.getElementById('multiCloseBtn').addEventListener('click', function() {
@@ -7909,13 +7917,26 @@
     document.getElementById('multiOverlay').addEventListener('click', function(e) {
         if (e.target === document.getElementById('multiOverlay')) document.getElementById('multiOverlay').classList.remove('visible');
     });
+    // Mostrar campo de nombre en multi si no hay nombre
+    function updateMultiNamePrompt() {
+        var prompt = document.getElementById('multiNamePrompt');
+        if (prompt) prompt.style.display = currentPlayerName ? 'none' : 'block';
+    }
+    document.getElementById('multiNameBtn').addEventListener('click', function() {
+        var name = document.getElementById('multiNameInput').value.trim();
+        if (!name) return;
+        currentPlayerName = name;
+        if (persistentData) { persistentData.playerName = name; savePersistentData(); }
+        document.getElementById('multiNamePrompt').style.display = 'none';
+    });
     document.getElementById('multiCreateBtn').addEventListener('click', async function() {
-        if (!currentPlayerName) { alert('Necesitas un nombre de jugador'); return; }
+        if (!currentPlayerName) { updateMultiNamePrompt(); return; }
         var result = await createMultiplayerSession();
         if (result.success) renderMultiplayerLobby();
         else alert(result.error);
     });
     document.getElementById('multiJoinBtn').addEventListener('click', async function() {
+        if (!currentPlayerName) { updateMultiNamePrompt(); return; }
         var code = document.getElementById('multiCodeInput').value.trim();
         var result = await joinMultiplayerSession(code, false);
         if (result.success) renderMultiplayerLobby();
