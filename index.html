@@ -8032,6 +8032,8 @@
     resetMissionsIfNeeded();
     // v5.0: Cargar temporada activa al inicio para que el XP se otorgue desde la primera partida
     loadCurrentSeason();
+    // v5.5: Cargar torneo activo al inicio para que el score se envíe automáticamente al jugar
+    loadActiveTournament();
     // Apply audio toggle states from saved data
     if (persistentData && !persistentData.musicEnabled) {
         document.getElementById('musicToggleBtn').classList.add('muted');
