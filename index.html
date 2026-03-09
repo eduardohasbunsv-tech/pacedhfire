@@ -607,11 +607,6 @@
             box-shadow: 0 0 10px rgba(155,89,182,0.2);
         }
         .lobby-btn-season:hover { background: #9b59b6; color: #000; text-shadow: none; }
-        .lobby-btn-editor {
-            color: #2ecc71; border-color: #2ecc71; text-shadow: 0 0 8px #2ecc71;
-            box-shadow: 0 0 10px rgba(46,204,113,0.2);
-        }
-        .lobby-btn-editor:hover { background: #2ecc71; color: #000; text-shadow: none; }
         .lobby-btn-multi {
             color: #3498db; border-color: #3498db; text-shadow: 0 0 8px #3498db;
             box-shadow: 0 0 10px rgba(52,152,219,0.2);
@@ -780,39 +775,6 @@
         .season-node .sn-level { color: #888; font-weight: bold; }
         .season-node .sn-icon { font-size: 20px; margin: 4px 0; }
         .season-node .sn-reward { color: #ffd700; font-size: 10px; }
-
-        /* v5.0 MAP EDITOR OVERLAY */
-        #editorOverlay {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.88); z-index: 55; justify-content: center;
-            align-items: flex-start; padding: 20px 10px; overflow-y: auto;
-        }
-        #editorOverlay.visible { display: flex; }
-        #editorPanel {
-            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-            background: #0a0a1a; border: 2px solid #2ecc71; border-radius: 12px;
-            padding: 16px; position: relative; animation: lbSlideIn 0.3s ease;
-        }
-        .map-list-item {
-            background: #111; border: 1px solid #333; border-radius: 8px;
-            padding: 10px; margin: 6px 0; display: flex; align-items: center;
-            justify-content: space-between;
-        }
-        .map-list-item:hover { border-color: #2ecc71; }
-        .map-info { flex: 1; }
-        .map-name { color: #fff; font-size: 13px; font-weight: bold; }
-        .map-author { color: #888; font-size: 11px; }
-        .map-stats { color: #888; font-size: 11px; }
-        .map-play-btn {
-            padding: 6px 14px; background: #2ecc71; color: #000; border: none;
-            border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;
-            font-weight: bold; cursor: pointer;
-        }
-        .map-like-btn {
-            padding: 4px 8px; background: transparent; border: 1px solid #f55;
-            border-radius: 4px; color: #f55; font-size: 14px; cursor: pointer; margin-right: 6px;
-        }
-        .map-like-btn.liked { background: #f55; color: #fff; }
 
         /* v5.0 MULTIPLAYER OVERLAY */
         #multiOverlay {
@@ -1021,7 +983,7 @@
     <div id="startScreen">
         <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
         <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
-            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.8</span></h1>
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.8.1</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
                 <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
@@ -1034,7 +996,7 @@
         </div>
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.8</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.8.1</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1064,9 +1026,6 @@
                 <button class="lobby-btn lobby-btn-season" id="lobbySeasonBtn">
                     <span class="lobby-btn-icon">🏆</span> TEMPORADA
                 </button>
-                <button class="lobby-btn lobby-btn-editor" id="lobbyEditorBtn">
-                    <span class="lobby-btn-icon">🗺️</span> MAPAS
-                </button>
                 <button class="lobby-btn lobby-btn-multi" id="lobbyMultiBtn">
                     <span class="lobby-btn-icon">👻</span> MULTIJUGADOR
                 </button>
@@ -1083,7 +1042,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.8</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.8.1</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1264,16 +1223,6 @@
             <div id="seasonContent"><p style="text-align:center;color:#888;margin:20px 0;">Próximamente...</p></div>
         </div>
     </div>
-    <!-- v5.0: MAP EDITOR OVERLAY -->
-    <div id="editorOverlay">
-        <div id="editorPanel">
-            <button class="comm-close" id="editorCloseBtn">X</button>
-            <h3 class="comm-title">🗺️ MAPAS</h3>
-            <div id="editorExploreView">
-                <div id="mapList"><p style="text-align:center;color:#888;margin:12px 0;">Cargando mapas...</p></div>
-            </div>
-        </div>
-    </div>
     <!-- v5.0: MULTIPLAYER OVERLAY -->
     <div id="multiOverlay">
         <div id="multiPanel">
@@ -1308,7 +1257,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.8</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.8.1</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -3048,74 +2997,6 @@
                 }
             });
         });
-    }
-
-    // ---- v5.0 MAP EDITOR ----
-    async function loadCommunityMaps() {
-        try {
-            var snap = await db.collection('maps').orderBy('likes', 'desc').limit(20).get();
-            return snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
-        } catch(e) { return []; }
-    }
-
-    function renderMapList(maps) {
-        var el = document.getElementById('mapList');
-        if (!maps || maps.length === 0) {
-            el.innerHTML = '<p style="text-align:center;color:#888;margin:12px 0;">No hay mapas comunitarios aún. ¡Crea el primero!</p>';
-            return;
-        }
-        el.innerHTML = maps.map(function(m) {
-            var liked = persistentData.likedMaps && persistentData.likedMaps.includes(m.id);
-            return '<div class="map-list-item">' +
-                '<div class="map-info"><div class="map-name">' + m.name + '</div>' +
-                '<div class="map-author">por ' + (m.creatorName || 'Anónimo') + '</div>' +
-                '<div class="map-stats">❤️ ' + (m.likes || 0) + ' — 🎮 ' + (m.plays || 0) + ' jugadas</div></div>' +
-                '<button class="map-like-btn' + (liked ? ' liked' : '') + '" data-mapid="' + m.id + '">❤️</button>' +
-                '<button class="map-play-btn" data-mapdata=\'' + (m.mapData || '[]') + '\' data-mapid="' + m.id + '">JUGAR</button></div>';
-        }).join('');
-        // Bind play buttons
-        document.querySelectorAll('.map-play-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                try {
-                    var mapData = JSON.parse(btn.dataset.mapdata);
-                    playCustomMap(mapData, btn.dataset.mapid);
-                } catch(e) { alert('Error al cargar mapa'); }
-            });
-        });
-        // Bind like buttons
-        document.querySelectorAll('.map-like-btn').forEach(function(btn) {
-            btn.addEventListener('click', async function() {
-                var mid = btn.dataset.mapid;
-                if (persistentData.likedMaps.includes(mid)) return;
-                persistentData.likedMaps.push(mid);
-                savePersistentData();
-                try { await db.collection('maps').doc(mid).update({ likes: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
-                btn.classList.add('liked');
-            });
-        });
-    }
-
-    let customMapData = null;
-
-    function playCustomMap(mapData, mapId) {
-        customMapData = mapData;
-        // Close overlays
-        document.getElementById('editorOverlay').classList.remove('visible');
-        // Increment plays
-        if (mapId) {
-            try { db.collection('maps').doc(mapId).update({ plays: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
-        }
-        // If no player name, go to play view
-        if (!currentPlayerName) { showPlayView(); return; }
-        // Start game with custom map
-        document.getElementById('startScreen').style.display = 'none';
-        initGameWithCustomMap();
-    }
-
-    function initGameWithCustomMap() {
-        // This will be handled in initGame() — set a flag
-        if (!customMapData) return;
-        initGame();
     }
 
     // ---- v5.0 MULTIPLAYER (SIMPLIFIED) ----
@@ -7770,18 +7651,6 @@
         if (e.target === document.getElementById('seasonOverlay')) document.getElementById('seasonOverlay').classList.remove('visible');
     });
 
-    document.getElementById('lobbyEditorBtn').addEventListener('click', async function() {
-        document.getElementById('editorOverlay').classList.add('visible');
-        var maps = await loadCommunityMaps();
-        renderMapList(maps);
-    });
-    document.getElementById('editorCloseBtn').addEventListener('click', function() {
-        document.getElementById('editorOverlay').classList.remove('visible');
-    });
-    document.getElementById('editorOverlay').addEventListener('click', function(e) {
-        if (e.target === document.getElementById('editorOverlay')) document.getElementById('editorOverlay').classList.remove('visible');
-    });
-
     document.getElementById('lobbyMultiBtn').addEventListener('click', function() {
         renderMultiplayerLobby();
         updateMultiNamePrompt();
@@ -7922,7 +7791,7 @@
     }
     updateSkinPreview();
 
-    // v5.8: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    // v5.8.1: Decidir si mostrar welcome o lobby según si hay nombre guardado
     if (currentPlayerName) {
         showLobbyView();
     } else {
