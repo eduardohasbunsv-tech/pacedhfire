@@ -308,6 +308,8 @@
             cursor: pointer;
             min-width: 220px;
         }
+        #goButtons .btn-continue { background: #ff0; color: #000; }
+        #goButtons .btn-continue:active { background: #cc0; }
         #goButtons .btn-replay { background: #0ff; color: #000; }
         #goButtons .btn-replay:active { background: #0aa; }
         #goButtons .btn-change { background: transparent; color: #888; border: 1px solid #555; font-size: 13px; }
@@ -951,7 +953,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.07</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v4.08</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -975,6 +977,7 @@
                 <button class="dpad-btn dpad-down" data-dir="3">&#9660;</button>
             </div>
             <div id="goButtons">
+                <button class="btn-continue" id="btnContinue">▶ CONTINUAR (Puntos a 0)</button>
                 <button class="btn-replay" id="btnReplay">JUGAR DE NUEVO</button>
                 <button class="btn-change" id="btnChange">CAMBIAR JUGADOR</button>
                 <button class="btn-share" id="btnShare">COMPARTIR PUNTAJE</button>
@@ -5934,6 +5937,17 @@
         gameState = 'countdown';
         countdownTimer = 210;
     }
+    function doContinue() {
+        stopMusic();
+        lbOverlay.classList.remove('visible');
+        score = 0;
+        document.getElementById('score').textContent = '0';
+        lives = 25;
+        document.getElementById('lives').textContent = '25';
+        resetPositions();
+        gameState = 'countdown';
+        countdownTimer = 210;
+    }
     // ---- v4.0 LOBBY NAVIGATION ----
     function showLobbyView() {
         document.getElementById('lobbyView').style.display = 'flex';
@@ -6054,6 +6068,7 @@
     }
 
     // Touch/click buttons for game over
+    document.getElementById('btnContinue').addEventListener('click', doContinue);
     document.getElementById('btnReplay').addEventListener('click', doReplay);
     document.getElementById('btnChange').addEventListener('click', doChangePlayer);
     document.getElementById('btnShare').addEventListener('click', shareScore);
