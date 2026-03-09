@@ -641,6 +641,32 @@
             border-radius: 3px; transition: width 0.5s ease;
         }
 
+        /* v6.1 LEVEL SELECT */
+        #levelGrid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            width: 100%; max-width: 340px; max-height: 52vh; overflow-y: auto;
+            padding: 4px;
+        }
+        .level-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 8px 4px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+            border: 2px solid #333; background: rgba(0,255,255,0.03); min-height: 78px;
+            position: relative; font-family: 'Courier New', monospace;
+        }
+        .level-card:hover:not(.lv-done) { border-color: #0ff; box-shadow: 0 0 12px rgba(0,255,255,0.3); transform: scale(1.05); }
+        .lv-done { border-color: #222; background: rgba(255,255,255,0.01); opacity: 0.45; cursor: not-allowed; }
+        .lv-done::after { content: '\2713'; position: absolute; top: 3px; right: 5px; color: #0f0; font-size: 14px; font-weight: bold; }
+        .lv-boss { border-color: #f44; background: rgba(255,68,68,0.05); }
+        .lv-boss:hover:not(.lv-done) { border-color: #f66; box-shadow: 0 0 12px rgba(255,68,68,0.3); }
+        .lv-num { font-size: 20px; font-weight: bold; color: #0ff; }
+        .lv-boss .lv-num { color: #f55; }
+        .lv-done .lv-num { color: #555; }
+        .lv-name { font-size: 9px; color: #aaa; margin-top: 2px; text-align: center; }
+        .lv-stars { margin-top: 2px; font-size: 10px; letter-spacing: 1px; }
+        .lv-boss-tag { font-size: 7px; color: #f55; font-weight: bold; margin-top: 1px; text-transform: uppercase; letter-spacing: 1px; }
+        .lv-diff { display: flex; gap: 2px; margin-top: 2px; }
+        .lv-diff span { width: 4px; height: 4px; border-radius: 50%; }
+
         /* v5.0 COIN NOTIFICATION */
         .coin-notification {
             position: fixed; top: 20px; right: 20px; z-index: 100;
@@ -983,7 +1009,7 @@
     <div id="startScreen">
         <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
         <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
-            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v6.01</span></h1>
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v6.1</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
                 <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
@@ -996,7 +1022,7 @@
         </div>
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v6.01</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v6.1</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1040,9 +1066,20 @@
                 </button>
             </div>
         </div>
+        <!-- LEVEL SELECT VIEW -->
+        <div id="levelSelectView" style="display:none;flex-direction:column;align-items:center;padding:16px;width:100%;">
+            <h1 style="font-size:22px;color:#0ff;text-shadow:0 0 10px #0ff;margin:0 0 4px;">ELIGE TU NIVEL</h1>
+            <p style="color:#888;font-size:10px;margin:0 0 12px;">Niveles completados quedan bloqueados</p>
+            <div id="levelGrid"></div>
+            <div id="allCompletedMsg" style="display:none;text-align:center;margin-top:10px;">
+                <p style="color:#ffd700;font-size:13px;margin:0 0 8px;">🏆 ¡TODOS LOS NIVELES COMPLETADOS!</p>
+                <button id="resetProgressBtn" class="lobby-btn" style="font-size:11px;padding:8px 16px;background:rgba(255,50,50,0.15);border-color:#f55;color:#f55;">REINICIAR PROGRESO</button>
+            </div>
+            <button id="levelSelectBackBtn" class="lobby-btn" style="margin-top:12px;padding:10px 24px;background:rgba(255,255,255,0.05);border-color:#888;color:#888;">⬅ VOLVER</button>
+        </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v6.01</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v6.1</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1257,7 +1294,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v6.01</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v6.1</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2081,7 +2118,7 @@
         missions: { daily: [], weekly: null, lastDailyReset: 0, lastWeeklyReset: 0 },
         seasonId: null, seasonXp: 0, seasonRewardsClaimed: [],
         sfxVolume: 0.7, musicVolume: 0.5, sfxEnabled: true, musicEnabled: true,
-        likedMaps: [], playerName: '' };
+        likedMaps: [], playerName: '', completedLevels: [] };
     }
     function loadPersistentData() {
         try {
@@ -2114,6 +2151,7 @@
                 if (persistentData.musicEnabled === undefined) persistentData.musicEnabled = true;
                 if (!persistentData.likedMaps) persistentData.likedMaps = [];
                 if (persistentData.playerName === undefined) persistentData.playerName = '';
+                if (!persistentData.completedLevels) persistentData.completedLevels = [];
                 if (persistentData.playerName) currentPlayerName = persistentData.playerName;
             } else { persistentData = getDefaultPersistentData(); }
         } catch(e) { persistentData = getDefaultPersistentData(); }
@@ -3184,6 +3222,29 @@
         { id: 'final_specter', name: 'El Espectro Final', color: '#ffd700', glowColor: '#fff', hitsToKill: 3, points: 100000, speed: 3, pattern: 'combined' },
     ];
 
+    const LEVEL_META = [
+        { num: 1,  name: 'Jardin',    diff: 1 },
+        { num: 2,  name: 'Catedral',  diff: 1 },
+        { num: 3,  name: 'Plaza',     diff: 1 },
+        { num: 4,  name: 'Colmena',   diff: 2 },
+        { num: 5,  name: 'Puente',    diff: 2, boss: 'El Guardian' },
+        { num: 6,  name: 'Espiral',   diff: 2 },
+        { num: 7,  name: 'Diamante',  diff: 2 },
+        { num: 8,  name: 'Serpiente', diff: 3 },
+        { num: 9,  name: 'Cruceta',   diff: 3 },
+        { num: 10, name: 'Tablero',   diff: 3, boss: 'La Sombra Reina' },
+        { num: 11, name: 'Tunel',     diff: 3 },
+        { num: 12, name: 'Fortaleza', diff: 4 },
+        { num: 13, name: 'Laberinto', diff: 4 },
+        { num: 14, name: 'Ruinas',    diff: 4 },
+        { num: 15, name: 'Trampa',    diff: 4, boss: 'El Devorador' },
+        { num: 16, name: 'Arana',     diff: 5 },
+        { num: 17, name: 'Prision',   diff: 5 },
+        { num: 18, name: 'Infierno',  diff: 5 },
+        { num: 19, name: 'Abismo',    diff: 5 },
+        { num: 20, name: 'Final',     diff: 5, boss: 'El Espectro Final' },
+    ];
+
     const BOSS_ARENA_MAP = [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
@@ -3918,6 +3979,8 @@
     let score = 0;
     let lives = 25;
     let level = 1;
+    let levelSelectMode = false;
+    let selectedLevel = 0;
     let totalDots = 0;
     let dotsEaten = 0;
     let gameState = 'start';
@@ -5542,6 +5605,8 @@
     }
 
     function initGame() {
+        levelSelectMode = false;
+        selectedLevel = 0;
         score = 0;
         lives = 25 + pendingGiftLives;
         pendingGiftLives = 0;
@@ -5580,6 +5645,69 @@
         powerupMsg = '';
         levelGhostsEaten = 0;
         // v3.0 resets
+        comboChain = 0;
+        comboTimer = 0;
+        comboMultiplier = 1;
+        doubleDotTimer = 0;
+        ghostSlowTimer = 0;
+        bossActive = false;
+        boss = null;
+        bossIdx = 0;
+        bossOrbTimers = [];
+        bossDefeated = [];
+        bossDeathTimer = 0;
+        miniGhosts = [];
+        bossPowerMode = false;
+        bossPowerTimer = 0;
+        bossChargeState = 'idle';
+        bossChargeDir = null;
+        bossChargePause = 0;
+        bossTeleportTimer = 0;
+        bossPhaseTimer = 0;
+        cutsceneTimer = 0;
+        cutsceneIdx = 0;
+        updateHUD();
+    }
+
+    function initGameForLevel(lvl) {
+        score = 0;
+        lives = 25 + pendingGiftLives;
+        pendingGiftLives = 0;
+        level = lvl;
+        levelSelectMode = true;
+        selectedLevel = lvl;
+        updateStat('gamesPlayed', 1);
+        gameStartTime = Date.now();
+        currentLevelDeaths = 0;
+        levelStartScore = 0;
+        currentGhostStreak = 0;
+        sessionDotsEaten = 0; sessionGhostsEaten = 0; sessionFruitsEaten = 0;
+        trailPositions = []; deathParticles = []; victoryParticles = []; victoryTimer = 0;
+        applyTheme();
+        resetMap();
+        resetPositions();
+        fruit = null;
+        fruitMsgTimer = 0;
+        ghostMessages = [];
+        lastGhostMsgFrame = 0;
+        lastPacmanMsgFrame = 0;
+        furyMode = false;
+        furyEndTime = 0;
+        endlessMode = false;
+        endlessLevel = 0;
+        playerTrail = [];
+        awardedMilestones = [];
+        nextLifeAt = 5000;
+        bonusStartTime = 0;
+        bonusFruitTimer = 0;
+        activePowerup = null;
+        magnetTimer = 0;
+        speedTimer = 0;
+        shieldActive = false;
+        freezeTimer = 0;
+        powerupMsgTimer = 0;
+        powerupMsg = '';
+        levelGhostsEaten = 0;
         comboChain = 0;
         comboTimer = 0;
         comboMultiplier = 1;
@@ -5779,7 +5907,12 @@
         gameState = 'start';
         document.getElementById('goButtons').classList.remove('visible');
         document.getElementById('startScreen').style.display = 'flex';
-        showLobbyView();
+        if (levelSelectMode) {
+            levelSelectMode = false;
+            showLevelSelectView();
+        } else {
+            showLobbyView();
+        }
     });
 
     function movePlayer() {
@@ -7621,6 +7754,9 @@
                     transitionCallback = function() { initBossFight(bIdx); };
                     ghostMessages = [];
                     playerTrail = [];
+                } else if (levelSelectMode) {
+                    // v6.1: Level select — nivel completado, volver a selección
+                    returnToLevelSelect();
                 } else {
                     // Normal level transition
                     playWhoosh();
@@ -7727,7 +7863,13 @@
             }
             if (bossDeathTimer <= 0) {
                 bossActive = false;
-                if (bossIdx < 3) {
+                updateStat('bossesDefeated', 1);
+                if (levelSelectMode) {
+                    // v6.1: Boss derrotado en level select — cutscene breve y volver
+                    gameState = 'cutscene';
+                    cutsceneIdx = BOSS_LEVELS.indexOf(level);
+                    cutsceneTimer = 210;
+                } else if (bossIdx < 3) {
                     // Cutscene after boss 0,1,2
                     gameState = 'cutscene';
                     cutsceneIdx = bossIdx;
@@ -7748,14 +7890,19 @@
         if (gameState === 'cutscene') {
             cutsceneTimer--;
             if (cutsceneTimer <= 0) {
-                // After cutscene, go to next level
-                level++;
-                applyTheme();
-                resetMap();
-                resetPositions();
-                gameState = 'countdown';
-                countdownTimer = 210;
-                updateHUD();
+                if (levelSelectMode) {
+                    // v6.1: Después de cutscene en level select, volver a selección
+                    returnToLevelSelect();
+                } else {
+                    // After cutscene, go to next level
+                    level++;
+                    applyTheme();
+                    resetMap();
+                    resetPositions();
+                    gameState = 'countdown';
+                    countdownTimer = 210;
+                    updateHUD();
+                }
             }
         }
         // Shop state (just draw, handled by input)
@@ -7809,32 +7956,57 @@
     function doReplay() {
         stopMusic();
         lbOverlay.classList.remove('visible');
-        initGame();
-        gameState = 'countdown';
-        countdownTimer = 210;
+        if (levelSelectMode) {
+            // v6.1: Volver a level select (game over, no completado)
+            levelSelectMode = false;
+            gameState = 'start';
+            document.getElementById('goButtons').classList.remove('visible');
+            document.getElementById('startScreen').style.display = 'flex';
+            showLevelSelectView();
+        } else {
+            initGame();
+            gameState = 'countdown';
+            countdownTimer = 210;
+        }
     }
     function doContinue() {
         stopMusic();
         lbOverlay.classList.remove('visible');
-        score = 0;
-        document.getElementById('score').textContent = '0';
-        lives = 25;
-        document.getElementById('lives').textContent = '25';
-        resetPositions();
-        gameState = 'countdown';
-        countdownTimer = 210;
+        if (levelSelectMode) {
+            // v6.1: Reintentar mismo nivel
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            lives = 25;
+            document.getElementById('lives').textContent = '25';
+            currentLevelDeaths = 0;
+            levelStartScore = 0;
+            resetMap();
+            resetPositions();
+            gameState = 'countdown';
+            countdownTimer = 210;
+        } else {
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            lives = 25;
+            document.getElementById('lives').textContent = '25';
+            resetPositions();
+            gameState = 'countdown';
+            countdownTimer = 210;
+        }
     }
     // ---- v4.0 LOBBY NAVIGATION ----
     function showWelcomeView() {
         document.getElementById('welcomeView').style.display = 'flex';
         document.getElementById('lobbyView').style.display = 'none';
         document.getElementById('playView').style.display = 'none';
+        document.getElementById('levelSelectView').style.display = 'none';
         setTimeout(function() { document.getElementById('welcomeNameInput').focus(); }, 100);
     }
     function showLobbyView() {
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'flex';
         document.getElementById('playView').style.display = 'none';
+        document.getElementById('levelSelectView').style.display = 'none';
         // Ocultar banner multijugador si no hay sesión activa
         if (!multiplayerSessionId) {
             var banner = document.getElementById('multiplayerBanner');
@@ -7847,6 +8019,7 @@
     function showPlayView() {
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
+        document.getElementById('levelSelectView').style.display = 'none';
         document.getElementById('playView').style.display = 'flex';
         document.getElementById('nameError').textContent = '';
         if (currentPlayerName) {
@@ -7857,10 +8030,124 @@
         }
     }
 
+    // v6.1 Level Select functions
+    function showLevelSelectView() {
+        document.getElementById('welcomeView').style.display = 'none';
+        document.getElementById('lobbyView').style.display = 'none';
+        document.getElementById('playView').style.display = 'none';
+        document.getElementById('levelSelectView').style.display = 'flex';
+        renderLevelGrid();
+    }
+
+    function renderLevelGrid() {
+        var grid = document.getElementById('levelGrid');
+        var completed = persistentData ? (persistentData.completedLevels || []) : [];
+        var starRatings = persistentData ? (persistentData.stats.levelsStarRating || {}) : {};
+        grid.innerHTML = '';
+        var allDone = true;
+        for (var i = 0; i < 20; i++) {
+            var lvl = i + 1;
+            var meta = LEVEL_META[i];
+            var isDone = completed.indexOf(lvl) !== -1;
+            var isBoss = BOSS_LEVELS.indexOf(lvl) !== -1;
+            var stars = starRatings[lvl] || 0;
+            if (!isDone) allDone = false;
+            var card = document.createElement('div');
+            card.className = 'level-card';
+            if (isDone) card.classList.add('lv-done');
+            if (isBoss) card.classList.add('lv-boss');
+            // Number
+            var numEl = document.createElement('div');
+            numEl.className = 'lv-num';
+            numEl.textContent = lvl;
+            card.appendChild(numEl);
+            // Name
+            var nameEl = document.createElement('div');
+            nameEl.className = 'lv-name';
+            nameEl.textContent = meta.name;
+            card.appendChild(nameEl);
+            // Stars
+            var starsEl = document.createElement('div');
+            starsEl.className = 'lv-stars';
+            var starStr = '';
+            for (var s = 0; s < 3; s++) starStr += s < stars ? '\u2605' : '\u2606';
+            starsEl.textContent = starStr;
+            starsEl.style.color = stars > 0 ? '#ffd700' : '#333';
+            card.appendChild(starsEl);
+            // Boss tag
+            if (isBoss) {
+                var bt = document.createElement('div');
+                bt.className = 'lv-boss-tag';
+                bt.textContent = '\u2694 JEFE';
+                card.appendChild(bt);
+            }
+            // Difficulty dots
+            var diffEl = document.createElement('div');
+            diffEl.className = 'lv-diff';
+            for (var d = 0; d < 5; d++) {
+                var dot = document.createElement('span');
+                dot.style.background = d < meta.diff ? (isBoss ? '#f55' : '#0ff') : '#333';
+                diffEl.appendChild(dot);
+            }
+            card.appendChild(diffEl);
+            // Click handler
+            if (!isDone) {
+                (function(sl) {
+                    card.addEventListener('click', function() { startLevelFromSelect(sl); });
+                })(lvl);
+            }
+            grid.appendChild(card);
+        }
+        document.getElementById('allCompletedMsg').style.display = allDone ? 'block' : 'none';
+    }
+
+    function startLevelFromSelect(lvl) {
+        // Save skin
+        var _skinSel = PLAYER_SKINS[skinPreviewIdx];
+        if (isSkinUnlocked(_skinSel)) {
+            selectedSkin = _skinSel.id;
+            if (persistentData) { persistentData.selectedSkin = selectedSkin; savePersistentData(); }
+        }
+        // Hide UI, start game
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('playerTag').textContent = 'Jugador: ' + currentPlayerName;
+        initAudio();
+        initGameForLevel(lvl);
+        gameState = 'countdown';
+        countdownTimer = 210;
+        canvas.focus();
+    }
+
+    function returnToLevelSelect() {
+        // Mark level completed
+        if (persistentData && persistentData.completedLevels.indexOf(selectedLevel) === -1) {
+            persistentData.completedLevels.push(selectedLevel);
+        }
+        updateStat('bestScore', score, 'max');
+        updateStat('bestLevel', selectedLevel, 'max');
+        savePersistentData();
+        // Award coins
+        var coinsEarned = 50 + selectedLevel * 10;
+        if (typeof awardCoins === 'function') awardCoins(coinsEarned, 'Nivel ' + selectedLevel + ' completado');
+        // Save to leaderboard
+        if (currentPlayerName && score > 0) {
+            saveScoreToStorage(currentPlayerName, score, selectedLevel).catch(function(){});
+        }
+        checkAchievements();
+        // Return to level select
+        stopMusic();
+        levelSelectMode = false;
+        gameState = 'start';
+        document.getElementById('goButtons').classList.remove('visible');
+        document.getElementById('startScreen').style.display = 'flex';
+        showLevelSelectView();
+    }
+
     // Change player function
     function doChangePlayer() {
         stopMusic();
         lbOverlay.classList.remove('visible');
+        levelSelectMode = false;
         gameState = 'start';
         document.getElementById('goButtons').classList.remove('visible');
         document.getElementById('startScreen').style.display = 'flex';
@@ -8108,10 +8395,21 @@
 
     // ---- v4.0 LOBBY EVENT LISTENERS ----
     document.getElementById('lobbyPlayBtn').addEventListener('click', function() {
-        showPlayView();
+        showLevelSelectView();
     });
     document.getElementById('backToLobbyBtn').addEventListener('click', function() {
         showLobbyView();
+    });
+    // v6.1 Level Select listeners
+    document.getElementById('levelSelectBackBtn').addEventListener('click', function() {
+        showLobbyView();
+    });
+    document.getElementById('resetProgressBtn').addEventListener('click', function() {
+        if (confirm('\u00bfReiniciar progreso de niveles? Los puntajes y estrellas se mantienen.')) {
+            persistentData.completedLevels = [];
+            savePersistentData();
+            renderLevelGrid();
+        }
     });
     document.getElementById('lobbyTopBtn').addEventListener('click', async function() {
         await loadScoresFromFirestore();
@@ -8313,7 +8611,7 @@
     }
     updateSkinPreview();
 
-    // v6.01: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    // v6.1: Decidir si mostrar welcome o lobby según si hay nombre guardado
     if (currentPlayerName) {
         showLobbyView();
     } else {
