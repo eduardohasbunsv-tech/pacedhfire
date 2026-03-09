@@ -811,16 +811,6 @@
             background: #0a0a1a; border: 2px solid #2ecc71; border-radius: 12px;
             padding: 16px; position: relative; animation: lbSlideIn 0.3s ease;
         }
-        .editor-toolbar {
-            display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0;
-        }
-        .editor-tool {
-            padding: 6px 10px; background: #111; border: 2px solid #333; border-radius: 6px;
-            color: #888; font-family: 'Courier New', monospace; font-size: 11px;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .editor-tool.active { border-color: #2ecc71; color: #2ecc71; background: #0a1a0e; }
-        #editorCanvas { border: 1px solid #333; border-radius: 4px; cursor: crosshair; }
         .map-list-item {
             background: #111; border: 1px solid #333; border-radius: 8px;
             padding: 10px; margin: 6px 0; display: flex; align-items: center;
@@ -1295,21 +1285,8 @@
         <div id="editorPanel">
             <button class="comm-close" id="editorCloseBtn">X</button>
             <h3 class="comm-title">🗺️ MAPAS</h3>
-            <div class="shop-tabs" id="editorTabs">
-                <button class="shop-tab active" data-etab="explore">EXPLORAR</button>
-                <button class="shop-tab" data-etab="create">CREAR</button>
-            </div>
             <div id="editorExploreView">
                 <div id="mapList"><p style="text-align:center;color:#888;margin:12px 0;">Cargando mapas...</p></div>
-            </div>
-            <div id="editorCreateView" style="display:none;">
-                <div class="editor-toolbar" id="editorToolbar"></div>
-                <canvas id="editorCanvas" width="420" height="465"></canvas>
-                <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
-                    <input type="text" class="comm-input" id="editorMapName" maxlength="20" placeholder="Nombre del mapa..." style="flex:1;">
-                    <button class="comm-btn" id="editorSaveBtn">GUARDAR</button>
-                </div>
-                <div class="comm-error" id="editorError"></div>
             </div>
         </div>
     </div>
@@ -3166,123 +3143,6 @@
     }
 
     // ---- v5.0 MAP EDITOR ----
-    const EDITOR_TOOLS = [
-        { id: 'wall', name: '🧱 Muro', value: 1 },
-        { id: 'path', name: '⬛ Camino', value: 0 },
-        { id: 'dot', name: '⚪ Orbe', value: 2 },
-        { id: 'power', name: '🔴 Poder', value: 3 },
-        { id: 'spawn', name: '😀 Spawn', value: 4 },
-        { id: 'ghost', name: '👻 Fantasma', value: 5 },
-    ];
-    const EDITOR_COLS = 28;
-    const EDITOR_ROWS = 31;
-    let editorMap = [];
-    let editorTool = 'wall';
-    let editorCtxRef = null;
-    let editorTab = 'explore';
-
-    function initEditorMap() {
-        editorMap = [];
-        for (var y = 0; y < EDITOR_ROWS; y++) {
-            editorMap[y] = [];
-            for (var x = 0; x < EDITOR_COLS; x++) {
-                editorMap[y][x] = (x === 0 || x === EDITOR_COLS-1 || y === 0 || y === EDITOR_ROWS-1) ? 1 : 0;
-            }
-        }
-    }
-
-    function renderEditorToolbar() {
-        var html = EDITOR_TOOLS.map(function(t) {
-            return '<button class="editor-tool' + (editorTool === t.id ? ' active' : '') + '" data-etool="' + t.id + '">' + t.name + '</button>';
-        }).join('');
-        document.getElementById('editorToolbar').innerHTML = html;
-        document.querySelectorAll('[data-etool]').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                editorTool = btn.dataset.etool;
-                renderEditorToolbar();
-            });
-        });
-    }
-
-    function renderEditorGrid() {
-        var c = document.getElementById('editorCanvas');
-        if (!c) return;
-        var ectx = c.getContext('2d');
-        editorCtxRef = ectx;
-        var cellW = c.width / EDITOR_COLS;
-        var cellH = c.height / EDITOR_ROWS;
-        ectx.fillStyle = '#000';
-        ectx.fillRect(0, 0, c.width, c.height);
-        for (var y = 0; y < EDITOR_ROWS; y++) {
-            for (var x = 0; x < EDITOR_COLS; x++) {
-                var val = editorMap[y] ? editorMap[y][x] : 0;
-                if (val === 1) ectx.fillStyle = '#225';
-                else if (val === 2) { ectx.fillStyle = '#000'; ectx.fillRect(x*cellW, y*cellH, cellW, cellH); ectx.fillStyle = '#fff'; ectx.beginPath(); ectx.arc(x*cellW+cellW/2, y*cellH+cellH/2, 2, 0, Math.PI*2); ectx.fill(); continue; }
-                else if (val === 3) { ectx.fillStyle = '#000'; ectx.fillRect(x*cellW, y*cellH, cellW, cellH); ectx.fillStyle = '#f00'; ectx.beginPath(); ectx.arc(x*cellW+cellW/2, y*cellH+cellH/2, 4, 0, Math.PI*2); ectx.fill(); continue; }
-                else if (val === 4) ectx.fillStyle = '#ff0';
-                else if (val === 5) ectx.fillStyle = '#f0f';
-                else ectx.fillStyle = '#000';
-                ectx.fillRect(x*cellW, y*cellH, cellW, cellH);
-                // Grid lines
-                ectx.strokeStyle = '#1a1a2e';
-                ectx.strokeRect(x*cellW, y*cellH, cellW, cellH);
-            }
-        }
-    }
-
-    function handleEditorClick(e) {
-        var c = document.getElementById('editorCanvas');
-        if (!c) return;
-        var rect = c.getBoundingClientRect();
-        var scaleX = c.width / rect.width;
-        var scaleY = c.height / rect.height;
-        var mx = (e.clientX - rect.left) * scaleX;
-        var my = (e.clientY - rect.top) * scaleY;
-        var cellW = c.width / EDITOR_COLS;
-        var cellH = c.height / EDITOR_ROWS;
-        var gx = Math.floor(mx / cellW);
-        var gy = Math.floor(my / cellH);
-        if (gx < 0 || gx >= EDITOR_COLS || gy < 0 || gy >= EDITOR_ROWS) return;
-        var tool = EDITOR_TOOLS.find(function(t) { return t.id === editorTool; });
-        if (!tool) return;
-        editorMap[gy][gx] = tool.value;
-        renderEditorGrid();
-    }
-
-    function validateEditorMap() {
-        var spawns = 0, ghosts = 0, dots = 0, powers = 0;
-        for (var y = 0; y < EDITOR_ROWS; y++) {
-            for (var x = 0; x < EDITOR_COLS; x++) {
-                var v = editorMap[y][x];
-                if (v === 4) spawns++;
-                if (v === 5) ghosts++;
-                if (v === 2) dots++;
-                if (v === 3) powers++;
-            }
-        }
-        if (spawns !== 1) return 'Necesitas exactamente 1 punto de spawn del jugador';
-        if (ghosts < 1) return 'Necesitas al menos 1 punto de spawn de fantasma';
-        if (dots < 20) return 'Necesitas al menos 20 orbes';
-        if (powers < 1) return 'Necesitas al menos 1 orbe de poder';
-        return null;
-    }
-
-    async function saveEditorMap(name) {
-        if (!currentPlayerName) return { error: 'Necesitas un nombre de jugador' };
-        var err = validateEditorMap();
-        if (err) return { error: err };
-        if (!name || name.length < 2) return { error: 'Nombre de mapa muy corto' };
-        if (containsBadWord(name)) return { error: 'Nombre no permitido' };
-        try {
-            await db.collection('maps').add({
-                name: name, creator: getPlayerId(currentPlayerName), creatorName: currentPlayerName,
-                mapData: JSON.stringify(editorMap), plays: 0, likes: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return { success: true };
-        } catch(e) { return { error: 'Error al guardar: ' + e.message }; }
-    }
-
     async function loadCommunityMaps() {
         try {
             var snap = await db.collection('maps').orderBy('likes', 'desc').limit(20).get();
@@ -3475,7 +3335,9 @@
             var rank = getCurrentRank();
             try {
                 scoresRef.doc(pid).update({
-                    rank: rank.id, xp: persistentData.xp || 0, pacCoins: persistentData.pacCoins || 0
+                    rank: rank.id, xp: persistentData.xp || 0, pacCoins: persistentData.pacCoins || 0,
+                    seasonXp: persistentData.seasonXp || 0,
+                    seasonRewardsClaimed: persistentData.seasonRewardsClaimed || []
                 });
             } catch(e) {}
         }
@@ -6117,8 +5979,8 @@
         spawnParticles(boss.px + TILE, boss.py + TILE, 8, '#0ff', 2, 5, 10, 20, 2);
         ghostScorePopups.push({ x: boss.px + TILE, y: boss.py, text: '-1 HP LASER!', timer: 60, maxTimer: 60, isCombo: true, color: '#0ff' });
         if (boss.hp <= 0) {
-            gameState = 'bossdeath';
-            bossDeathTimer = 120;
+            gameState = 'bossexplode';
+            bossDeathTimer = 90;
             score += BOSS_DEFS[bossIdx].points;
             updateStat('bossesDefeated', 1);
             bossDefeated.push(bossIdx);
@@ -6128,6 +5990,17 @@
             lives++;
             updateHUD();
             checkAchievements();
+            // Spawn 8 mini-ghosts asustados desde la posición del boss
+            miniGhosts = [];
+            for (var _mg = 0; _mg < 8; _mg++) {
+                miniGhosts.push({
+                    x: boss.x, y: boss.y,
+                    px: boss.px + (Math.random() - 0.5) * TILE * 2,
+                    py: boss.py + (Math.random() - 0.5) * TILE * 2,
+                    dir: Math.floor(Math.random() * 4),
+                    timer: 9999, scared: true
+                });
+            }
         } else {
             boss.x = 14; boss.y = 8; boss.px = 14 * TILE; boss.py = 8 * TILE;
             bossChargeState = 'idle';
@@ -6397,7 +6270,7 @@
         }
         drawFruit();
         drawPowerup();
-        if (gameState !== 'bonus' && gameState !== 'bossfight' && gameState !== 'bossintro' && gameState !== 'bossdeath') {
+        if (gameState !== 'bonus' && gameState !== 'bossfight' && gameState !== 'bossintro' && gameState !== 'bossdeath' && gameState !== 'bossexplode') {
             ghosts.forEach((g, gi) => drawGhost(g, gi));
         }
         // Dibujar mensajes de amenaza de fantasmas
@@ -6711,7 +6584,58 @@
         if (gameState === 'bossfight' || gameState === 'bossintro') {
             drawBossOverlay();
         }
-        // Boss death overlay
+        // Boss explode — explosion animation with mini-ghosts scattering
+        if (gameState === 'bossexplode') {
+            if (boss) drawBossOverlay();
+            ctx.fillStyle = 'rgba(255,100,0,0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 20px Courier New';
+            ctx.fillText('💥 BOSS DESTRUIDO! 💥', canvas.width / 2, 30);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '14px Courier New';
+            ctx.fillText('¡' + miniGhosts.length + ' fantasmas liberados!', canvas.width / 2, 52);
+            // Draw scattered mini-ghosts
+            miniGhosts.forEach(function(mg) {
+                var mgcx = mg.px + TILE / 2;
+                var mgcy = mg.py + TILE / 2;
+                ctx.fillStyle = '#22a';
+                ctx.beginPath();
+                ctx.arc(mgcx, mgcy - 3, 6, Math.PI, 0);
+                ctx.lineTo(mgcx + 6, mgcy + 6);
+                for (var wi = 0; wi < 4; wi++) ctx.lineTo(mgcx + 6 - (wi + 1) * 3, mgcy + 6 + ((wi % 2 === 0) ? 2 : -2));
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(mgcx - 2, mgcy - 4, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(mgcx + 2, mgcy - 4, 2, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+        // Boss hunt — player chases 8 scared mini-ghosts
+        if (gameState === 'bosshunt') {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0ff';
+            ctx.font = 'bold 14px Courier New';
+            ctx.fillText('🎯 ¡ELIMINA LOS ' + miniGhosts.length + ' FANTASMAS!', canvas.width / 2, 25);
+            // Draw scared mini-ghosts
+            miniGhosts.forEach(function(mg) {
+                var mgcx = mg.px + TILE / 2;
+                var mgcy = mg.py + TILE / 2;
+                var flickerBlue = (animFrame % 10 < 5);
+                ctx.fillStyle = flickerBlue ? '#22a' : '#fff';
+                ctx.beginPath();
+                ctx.arc(mgcx, mgcy - 3, 6, Math.PI, 0);
+                ctx.lineTo(mgcx + 6, mgcy + 6);
+                for (var wi = 0; wi < 4; wi++) ctx.lineTo(mgcx + 6 - (wi + 1) * 3, mgcy + 6 + ((wi % 2 === 0) ? 2 : -2));
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = flickerBlue ? '#fff' : '#f00';
+                ctx.beginPath(); ctx.arc(mgcx - 2, mgcy - 4, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(mgcx + 2, mgcy - 4, 2, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+        // Boss death overlay — victory
         if (gameState === 'bossdeath') {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -6721,7 +6645,7 @@
             ctx.fillText('JEFE DERROTADO!', canvas.width / 2, canvas.height / 2 - 20);
             ctx.fillStyle = '#fff';
             ctx.font = '16px Courier New';
-            if (boss) ctx.fillText('+' + BOSS_DEFS[bossIdx].points + ' puntos', canvas.width / 2, canvas.height / 2 + 10);
+            ctx.fillText('+' + BOSS_DEFS[bossIdx].points + ' puntos', canvas.width / 2, canvas.height / 2 + 10);
         }
         // Cutscene overlay
         if (gameState === 'cutscene') {
@@ -6915,9 +6839,9 @@
                 spawnParticles(boss.px + TILE, boss.py + TILE, 20, BOSS_DEFS[bossIdx].color, 2, 6, 15, 30, 3);
                 ghostScorePopups.push({ x: boss.px + TILE, y: boss.py, text: '-1 HP!', timer: 60, maxTimer: 60, isCombo: true });
                 if (boss.hp <= 0) {
-                    // Boss defeated!
-                    gameState = 'bossdeath';
-                    bossDeathTimer = 120;
+                    // Boss defeated — explode into 8 mini-ghosts!
+                    gameState = 'bossexplode';
+                    bossDeathTimer = 90;
                     score += BOSS_DEFS[bossIdx].points;
                     updateStat('bossesDefeated', 1);
                     bossDefeated.push(bossIdx);
@@ -6927,6 +6851,16 @@
                     lives++;
                     updateHUD();
                     checkAchievements();
+                    miniGhosts = [];
+                    for (var _mg2 = 0; _mg2 < 8; _mg2++) {
+                        miniGhosts.push({
+                            x: boss.x, y: boss.y,
+                            px: boss.px + (Math.random() - 0.5) * TILE * 2,
+                            py: boss.py + (Math.random() - 0.5) * TILE * 2,
+                            dir: Math.floor(Math.random() * 4),
+                            timer: 9999, scared: true
+                        });
+                    }
                 } else {
                     // Teleport boss away
                     boss.x = 14; boss.y = 8; boss.px = 14 * TILE; boss.py = 8 * TILE;
@@ -7452,7 +7386,31 @@
             playerTrail = playerTrail.filter(function(t) { return t.age <= 6; });
             updateHUD();
         }
-        // Boss death state
+        // Boss explode state — explosion animation then hunt 8 mini-ghosts
+        if (gameState === 'bossexplode') {
+            bossDeathTimer--;
+            if (animFrame % 3 === 0 && boss) {
+                spawnParticles(boss.px + TILE + (Math.random() - 0.5) * 60, boss.py + TILE + (Math.random() - 0.5) * 60, 8, BOSS_DEFS[bossIdx].color, 1, 5, 15, 35, 3);
+            }
+            if (bossDeathTimer <= 0) {
+                // Explosion done — switch to hunt phase
+                boss = null;
+                gameState = 'bosshunt';
+            }
+        }
+        // Boss hunt state — player must eat 8 scared mini-ghosts
+        if (gameState === 'bosshunt') {
+            movePlayer();
+            updateMiniGhosts();
+            updateParticles();
+            if (miniGhosts.length === 0) {
+                // All 8 mini-ghosts eliminated — boss fully defeated
+                gameState = 'bossdeath';
+                bossDeathTimer = 60;
+                ghostScorePopups.push({ x: canvas.width / 2 - TILE, y: canvas.height / 2, text: '¡FANTASMAS ELIMINADOS!', timer: 60, maxTimer: 60, isCombo: true, color: '#ffd700' });
+            }
+        }
+        // Boss death state — victory message then continue
         if (gameState === 'bossdeath') {
             bossDeathTimer--;
             if (animFrame % 4 === 0 && boss) {
@@ -7863,61 +7821,14 @@
 
     document.getElementById('lobbyEditorBtn').addEventListener('click', async function() {
         document.getElementById('editorOverlay').classList.add('visible');
-        if (editorTab === 'explore') {
-            var maps = await loadCommunityMaps();
-            renderMapList(maps);
-        } else {
-            if (editorMap.length === 0) initEditorMap();
-            renderEditorToolbar();
-            renderEditorGrid();
-        }
+        var maps = await loadCommunityMaps();
+        renderMapList(maps);
     });
     document.getElementById('editorCloseBtn').addEventListener('click', function() {
         document.getElementById('editorOverlay').classList.remove('visible');
     });
     document.getElementById('editorOverlay').addEventListener('click', function(e) {
         if (e.target === document.getElementById('editorOverlay')) document.getElementById('editorOverlay').classList.remove('visible');
-    });
-    // Editor tabs
-    document.querySelectorAll('[data-etab]').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-            editorTab = btn.dataset.etab;
-            document.querySelectorAll('[data-etab]').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            if (editorTab === 'explore') {
-                document.getElementById('editorExploreView').style.display = 'block';
-                document.getElementById('editorCreateView').style.display = 'none';
-                var maps = await loadCommunityMaps();
-                renderMapList(maps);
-            } else {
-                document.getElementById('editorExploreView').style.display = 'none';
-                document.getElementById('editorCreateView').style.display = 'block';
-                if (editorMap.length === 0) initEditorMap();
-                renderEditorToolbar();
-                renderEditorGrid();
-            }
-        });
-    });
-    // Editor canvas click
-    document.getElementById('editorCanvas').addEventListener('click', handleEditorClick);
-    document.getElementById('editorCanvas').addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        var touch = e.touches[0];
-        handleEditorClick({ clientX: touch.clientX, clientY: touch.clientY });
-    });
-    // Editor save
-    document.getElementById('editorSaveBtn').addEventListener('click', async function() {
-        var name = document.getElementById('editorMapName').value.trim();
-        var result = await saveEditorMap(name);
-        if (result.success) {
-            document.getElementById('editorError').textContent = '';
-            alert('¡Mapa guardado exitosamente!');
-            initEditorMap();
-            renderEditorGrid();
-            document.getElementById('editorMapName').value = '';
-        } else {
-            document.getElementById('editorError').textContent = result.error;
-        }
     });
 
     document.getElementById('lobbyMultiBtn').addEventListener('click', function() {
@@ -8043,6 +7954,8 @@
     // v5.0: Initialize lobby info and SFX system
     updateLobbyInfo();
     resetMissionsIfNeeded();
+    // v5.0: Cargar temporada activa al inicio para que el XP se otorgue desde la primera partida
+    loadCurrentSeason();
     // Apply audio toggle states from saved data
     if (persistentData && !persistentData.musicEnabled) {
         document.getElementById('musicToggleBtn').classList.add('muted');
