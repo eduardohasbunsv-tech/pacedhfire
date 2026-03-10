@@ -5670,7 +5670,7 @@
     }
 
     function initGameForLevel(lvl) {
-        score = 0;
+        // score NO se resetea aquí — se acumula entre niveles en level select
         lives = 25 + pendingGiftLives;
         pendingGiftLives = 0;
         level = lvl;
@@ -5679,7 +5679,7 @@
         updateStat('gamesPlayed', 1);
         gameStartTime = Date.now();
         currentLevelDeaths = 0;
-        levelStartScore = 0;
+        levelStartScore = score; // estrellas se calculan sobre puntos ganados EN este nivel
         currentGhostStreak = 0;
         sessionDotsEaten = 0; sessionGhostsEaten = 0; sessionFruitsEaten = 0;
         trailPositions = []; deathParticles = []; victoryParticles = []; victoryTimer = 0;
@@ -7958,6 +7958,7 @@
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
             // v5.9.3: Volver a level select (game over, no completado)
+            score = 0; // Game over → puntaje a cero
             levelSelectMode = false;
             gameState = 'start';
             document.getElementById('goButtons').classList.remove('visible');
@@ -8395,6 +8396,7 @@
 
     // ---- v4.0 LOBBY EVENT LISTENERS ----
     document.getElementById('lobbyPlayBtn').addEventListener('click', function() {
+        score = 0; // Nueva sesión desde lobby → puntaje a cero
         showLevelSelectView();
     });
     document.getElementById('backToLobbyBtn').addEventListener('click', function() {
