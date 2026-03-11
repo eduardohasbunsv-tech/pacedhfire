@@ -3977,7 +3977,7 @@
 
     let map = [];
     let score = 0;
-    let lives = 25;
+    let lives = 20;
     let level = 1;
     let levelSelectMode = false;
     let selectedLevel = 0;
@@ -5608,7 +5608,7 @@
         levelSelectMode = false;
         selectedLevel = 0;
         score = 0;
-        lives = 25 + pendingGiftLives;
+        lives = 20 + pendingGiftLives;
         pendingGiftLives = 0;
         level = 1;
         updateStat('gamesPlayed', 1);
@@ -7970,7 +7970,7 @@
         if (levelSelectMode) {
             // v5.9.9.1: Volver a level select (game over, no completado)
             score = 0; // Game over → puntaje a cero
-            lives = 25 + pendingGiftLives; pendingGiftLives = 0; // Resetear vidas en game over
+            lives = 20 + pendingGiftLives; pendingGiftLives = 0; // Resetear vidas en game over
             if (persistentData) { persistentData.completedLevels = []; savePersistentData(); }
             levelSelectMode = false;
             gameState = 'start';
@@ -7990,7 +7990,7 @@
             // v5.9.9.1: Reintentar mismo nivel
             score = 0;
             document.getElementById('score').textContent = '0';
-            lives = 25;
+            lives = 20;
             document.getElementById('lives').textContent = '25';
             currentLevelDeaths = 0;
             levelStartScore = 0;
@@ -8001,7 +8001,7 @@
         } else {
             score = 0;
             document.getElementById('score').textContent = '0';
-            lives = 25;
+            lives = 20;
             document.getElementById('lives').textContent = '25';
             resetPositions();
             gameState = 'countdown';
@@ -8410,7 +8410,7 @@
     // ---- v4.0 LOBBY EVENT LISTENERS ----
     document.getElementById('lobbyPlayBtn').addEventListener('click', function() {
         score = 0; // Nueva sesión desde lobby → puntaje a cero
-        lives = 25 + pendingGiftLives; pendingGiftLives = 0; // Vidas se resetean solo al iniciar nueva sesión
+        lives = 20 + pendingGiftLives; pendingGiftLives = 0; // Vidas se resetean solo al iniciar nueva sesión
         if (persistentData) { persistentData.completedLevels = []; savePersistentData(); }
         showLevelSelectView();
     });
