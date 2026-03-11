@@ -6301,6 +6301,8 @@
                         score += 15000;
                         ghostScorePopups.push({ x: canvas.width/2, y: canvas.height/2 - 30, text: '+15,000 PERFECTO!', timer: 90, maxTimer: 90, isCombo: true, color: '#ffd700' });
                     }
+                    // Terminar power mode al comer todos los fantasmas disponibles
+                    if (allEaten) { powerMode = false; powerTimer = 0; }
                     currentGhostStreak++;
                     updateStat('totalGhostsEaten', 1);
                     levelGhostsEaten++;
