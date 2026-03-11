@@ -3181,9 +3181,9 @@
     // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
-    const GHOST_BASE_RATE = 18;   // v5.9.9.1: equilibrio con Pacman (~78% velocidad player)
+    const GHOST_BASE_RATE = 22;   // v5.9.9.1: -25% dificultad adicional (era 18)
     const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
-    const GHOST_SCARED_RATE = 30;  // v5.9.9.1: asustados ~50% velocidad player (como original)
+    const GHOST_SCARED_RATE = 38;  // v5.9.9.1: -25% dificultad adicional (era 30)
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -6093,7 +6093,7 @@
         currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
-        const durationMs = Math.max(10000, 36000 - (level - 1) * 300); // v5.9.9.1: -40% dificultad adicional
+        const durationMs = Math.max(12500, 45000 - (level - 1) * 225); // v5.9.9.1: -25% dificultad adicional
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -6115,7 +6115,7 @@
         if (ghost.eaten) return { x: 14, y: 13 };
         if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
         const modeTimer = animFrame % 800;
-        const isChase = modeTimer < 200; // v5.9.9.1: -40% dificultad adicional (era 330)
+        const isChase = modeTimer < 150; // v5.9.9.1: -25% dificultad adicional (era 200)
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
@@ -6196,10 +6196,10 @@
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) {
             // 50% más lento que su velocidad normal en el nivel actual
-            const normalRate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 0.70));
+            const normalRate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.53));
             rate = Math.round(normalRate * 2);
         }
-        else rate = Math.max(5, GHOST_BASE_RATE - Math.floor((level - 1) * 0.70));
+        else rate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.53));
         // Apply per-ghost speed multiplier
         if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
@@ -7640,9 +7640,9 @@
                 }
             }
             // Fury mode: random trigger (~every 30 seconds)
-            if (!powerMode && !furyMode && Math.random() < 1/5300) { // v5.9.9.1: -40% dificultad adicional
+            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.1: -25% dificultad adicional
                 furyMode = true;
-                furyEndTime = Date.now() + 2700; // v5.9.9.1: -40% dificultad adicional (era 4500)
+                furyEndTime = Date.now() + 2000; // v5.9.9.1: -25% dificultad adicional (era 2700)
                 fruitMsg = '¡MODO FURIA!';
                 fruitMsgTimer = 120;
                 playFuryActivation();
