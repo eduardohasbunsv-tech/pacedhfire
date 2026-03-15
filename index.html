@@ -3181,9 +3181,9 @@
     // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
-    const GHOST_BASE_RATE = 22;   // v5.9.9.3: -25% dificultad adicional (era 18)
+    const GHOST_BASE_RATE = 18;   // v5.9.9.3: +20% dificultad (era 22)
     const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
-    const GHOST_SCARED_RATE = 38;  // v5.9.9.3: -25% dificultad adicional (era 30)
+    const GHOST_SCARED_RATE = 30;  // v5.9.9.3: +20% dificultad (era 38)
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -5462,7 +5462,7 @@
         currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
-        const durationMs = Math.max(12500, 45000 - (level - 1) * 225); // v5.9.9.3: -25% dificultad adicional
+        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.3: +20% dificultad (menos duración power)
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -5565,10 +5565,10 @@
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) {
             // 50% más lento que su velocidad normal en el nivel actual
-            const normalRate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.53));
+            const normalRate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.64));
             rate = Math.round(normalRate * 2);
         }
-        else rate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.53));
+        else rate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.64));
         // Apply per-ghost speed multiplier
         if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
