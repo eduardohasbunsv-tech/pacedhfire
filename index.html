@@ -345,8 +345,8 @@
             #header { font-size: 13px; padding: 6px 2px; }
             #topbar { display: none; }
             #message { font-size: 13px; }
-            .dpad-btn { width: 64px; height: 64px; font-size: 24px; }
-            .dpad-center { width: 64px; height: 64px; }
+            .dpad-btn { width: 50px; height: 50px; font-size: 20px; }
+            .dpad-center { width: 50px; height: 50px; }
             #gameWrapper { width: 100vw; }
             canvas { border-width: 1px; }
         }
@@ -355,8 +355,8 @@
             #startScreen h1 { font-size: 26px; }
             .lobby-btn { font-size: 14px; padding: 10px 14px; }
             .lobby-buttons { max-width: 240px; gap: 10px; }
-            .dpad-btn { width: 56px; height: 56px; font-size: 22px; }
-            .dpad-center { width: 56px; height: 56px; }
+            .dpad-btn { width: 44px; height: 44px; font-size: 18px; }
+            .dpad-center { width: 44px; height: 44px; }
             #header { font-size: 12px; }
         }
         @media (max-height: 500px) and (orientation: landscape) {
@@ -445,20 +445,20 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            margin-top: 10px;
+            gap: 2px;
+            margin-top: 6px;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
         }
-        .dpad-mid { display: flex; gap: 4px; }
+        .dpad-mid { display: flex; gap: 2px; }
         .dpad-btn {
-            width: 72px; height: 72px;
+            width: 54px; height: 54px;
             background: rgba(0,255,255,0.12);
             border: 2px solid rgba(0,255,255,0.35);
-            border-radius: 12px;
+            border-radius: 10px;
             color: rgba(0,255,255,0.8);
-            font-size: 28px;
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -466,7 +466,7 @@
             -webkit-tap-highlight-color: transparent;
         }
         .dpad-btn:active { background: rgba(0,255,255,0.35); }
-        .dpad-center { width: 72px; height: 72px; }
+        .dpad-center { width: 54px; height: 54px; }
         /* ---- AUDIO + DPAD WRAPPER ---- */
         .dpad-audio-row {
             display: flex;
