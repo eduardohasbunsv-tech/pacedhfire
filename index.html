@@ -641,7 +641,7 @@
             border-radius: 3px; transition: width 0.5s ease;
         }
 
-        /* v5.9.9.6 LEVEL SELECT */
+        /* v5.9.9.7 LEVEL SELECT */
         #levelGrid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
             width: 100%; max-width: 340px; max-height: 52vh; overflow-y: auto;
@@ -1004,10 +1004,13 @@
         }
         .daily-table .sticky-col {
             position: sticky;
-            left: 0;
             background: #0a0a1a;
             z-index: 1;
         }
+        .daily-table .player-rank { left: 0; }
+        .daily-table .player-name { left: 28px; }
+        .daily-table .f1-col { left: 138px; text-align: center; color: #0ff; min-width: 42px; }
+        .daily-table .prize-col { left: 180px; text-align: center; color: #0f0; min-width: 50px; border-right: 2px solid #333; }
         .daily-table thead .sticky-col { z-index: 3; }
         .daily-table .player-rank { color: #888; width: 28px; text-align: center; }
         .daily-table .player-name { color: #fff; min-width: 90px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
@@ -1064,7 +1067,7 @@
     <div id="startScreen">
         <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
         <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
-            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.7</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
                 <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
@@ -1077,7 +1080,7 @@
         </div>
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.7</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1134,7 +1137,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.7</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1356,7 +1359,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.6</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.7</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2103,7 +2106,7 @@
             }
             await loadScoresFromFirestore();
             renderLeaderboard();
-            // v5.9.9.6: Daily score tracking
+            // v5.9.9.7: Daily score tracking
             saveDailyScore(name, finalScore, finalLevel).catch(function(e){ console.warn('Daily save error:', e); });
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
@@ -2114,7 +2117,7 @@
         }
     }
 
-    // ---- v5.9.9.6: DEVICE FINGERPRINT & DAILY TOP 100 ----
+    // ---- v5.9.9.7: DEVICE FINGERPRINT & DAILY TOP 100 ----
     function getDeviceFingerprint() {
         var stored = localStorage.getItem('pac_device_fp');
         if (stored) return stored;
@@ -2152,9 +2155,24 @@
         return days;
     }
 
+    function getDeviceType() {
+        var ua = navigator.userAgent || '';
+        if (/iPad|tablet|Nexus\s?(7|9|10)/i.test(ua) || (navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) > 600)) return 'tablet';
+        if (/iPhone|iPod|Android.*Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'phone';
+        if (/Android/i.test(ua)) return 'tablet';
+        if (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024) return 'phone';
+        return 'desktop';
+    }
+    function getDeviceIcon(type) {
+        if (type === 'tablet') return '📲';
+        if (type === 'phone') return '📱';
+        return '💻';
+    }
+
     async function saveDailyScore(name, finalScore, finalLevel) {
         var today = getTodayStr();
         var deviceId = getDeviceFingerprint();
+        var deviceType = getDeviceType();
         var playerId = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
         var docId = today + '_' + playerId + '_' + deviceId;
         try {
@@ -2163,13 +2181,14 @@
             if (existing.exists) {
                 var data = existing.data();
                 if (finalScore > data.score) {
-                    await docRef.update({ score: finalScore, level: finalLevel, updatedAt: Date.now() });
+                    await docRef.update({ score: finalScore, level: finalLevel, deviceType: deviceType, updatedAt: Date.now() });
                 }
             } else {
                 await docRef.set({
                     name: name,
                     playerId: playerId,
                     deviceId: deviceId,
+                    deviceType: deviceType,
                     dateStr: today,
                     score: finalScore,
                     level: finalLevel,
@@ -2205,21 +2224,39 @@
                 byDay[d].forEach(function(entry) {
                     var key = entry.playerId + '|' + entry.deviceId;
                     if (!playerMap[key]) {
-                        playerMap[key] = { name: entry.name, deviceId: entry.deviceId, playerId: entry.playerId, totalScore: 0, days: {} };
+                        playerMap[key] = { name: entry.name, deviceId: entry.deviceId, playerId: entry.playerId, deviceType: entry.deviceType || 'phone', totalScore: 0, days: {} };
                     }
                     playerMap[key].days[d] = { score: entry.score, rank: entry.dayRank };
                     playerMap[key].totalScore += entry.score;
-                    // Keep latest name
+                    // Keep latest deviceType and name
+                    if (entry.deviceType) playerMap[key].deviceType = entry.deviceType;
                     if (!playerMap[key].lastUpdate || entry.updatedAt > playerMap[key].lastUpdate) {
                         playerMap[key].name = entry.name;
                         playerMap[key].lastUpdate = entry.updatedAt;
                     }
                 });
             });
-            // Convert to array, sort by total score, limit 100
+            // F1 point system: assign points per day based on daily rank
+            var F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]; // Top 10 get points
+            var PRIZE_POOL = [75, 50, 35, 25, 20, 17, 15, 13, 11, 10, 8, 7, 6, 5, 3]; // $300 split among top 15
+            // Calculate F1 points for each player per day
+            Object.values(playerMap).forEach(function(p) {
+                p.totalF1 = 0;
+                Object.keys(p.days).forEach(function(d) {
+                    var rank = p.days[d].rank;
+                    var f1 = rank <= 10 ? F1_POINTS[rank - 1] : 0;
+                    p.days[d].f1pts = f1;
+                    p.totalF1 += f1;
+                });
+            });
+            // Convert to array, sort by F1 points (tiebreak: total score), limit 100
             var players = Object.values(playerMap);
-            players.sort(function(a, b) { return b.totalScore - a.totalScore; });
+            players.sort(function(a, b) { return b.totalF1 - a.totalF1 || b.totalScore - a.totalScore; });
             players = players.slice(0, 100);
+            // Assign prizes to top 15
+            players.forEach(function(p, idx) {
+                p.prize = idx < 15 ? PRIZE_POOL[idx] : 0;
+            });
             cachedDailyData = { days: days, players: players };
         } catch (e) {
             console.warn('Load daily scores error:', e);
@@ -2241,40 +2278,66 @@
         var html = '<table class="daily-table"><thead><tr>';
         html += '<th class="sticky-col player-rank">#</th>';
         html += '<th class="sticky-col player-name">JUGADOR</th>';
+        html += '<th class="sticky-col f1-col">PTS F1</th>';
+        html += '<th class="sticky-col prize-col">PREMIO</th>';
         days.forEach(function(d) {
             var parts = d.split('-');
             html += '<th>' + parts[2] + '/' + parts[1] + '</th>';
         });
-        html += '<th style="color:#0f0;">TOTAL</th>';
         html += '</tr></thead><tbody>';
         players.forEach(function(p, idx) {
             var rank = idx + 1;
             var rankCls = rank <= 3 ? ' rank-' + rank : '';
             var isYou = currentPlayerName && p.playerId === currentPlayerName.toLowerCase().replace(/[^a-z0-9]/g, '_') && p.deviceId === deviceFp;
-            var rowStyle = isYou ? ' style="background:rgba(0,255,255,0.08);"' : '';
+            var rowBg = '';
+            if (isYou) rowBg = 'background:rgba(0,255,255,0.08);';
+            else if (rank === 1) rowBg = 'background:rgba(255,215,0,0.06);';
+            else if (rank === 2) rowBg = 'background:rgba(192,192,192,0.05);';
+            else if (rank === 3) rowBg = 'background:rgba(205,127,50,0.05);';
+            var rowStyle = rowBg ? ' style="' + rowBg + '"' : '';
             html += '<tr' + rowStyle + '>';
-            html += '<td class="sticky-col player-rank' + rankCls + '">' + rank + '</td>';
+            // Rank
+            var rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank + '°';
+            html += '<td class="sticky-col player-rank' + rankCls + '">' + rankLabel + '</td>';
+            // Name + device icon
+            var devIcon = getDeviceIcon(p.deviceType || 'phone');
             var devTag = p.deviceId ? p.deviceId.slice(-4) : '????';
             var isSameName = players.some(function(other) { return other !== p && other.playerId === p.playerId; });
-            var deviceLabel = isSameName ? ' <span style="color:#666;font-size:8px;">[' + devTag + ']</span>' : '';
-            html += '<td class="sticky-col player-name">' + p.name + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + deviceLabel + '</td>';
+            var deviceSuffix = isSameName ? ' <span style="color:#666;font-size:8px;">[' + devTag + ']</span>' : '';
+            html += '<td class="sticky-col player-name">' + p.name + ' <span style="font-size:10px;">' + devIcon + '</span>' + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + deviceSuffix + '</td>';
+            // F1 Points
+            var f1Color = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : '#0ff';
+            html += '<td class="sticky-col f1-col" style="color:' + f1Color + ';font-weight:bold;">' + p.totalF1 + '</td>';
+            // Prize
+            var prizeStr = p.prize > 0 ? '$' + p.prize.toFixed(2) : '-';
+            var prizeColor = rank === 1 ? '#ffd700' : rank === 2 ? '#e0e0e0' : rank === 3 ? '#cd7f32' : '#0f0';
+            html += '<td class="sticky-col prize-col" style="color:' + (p.prize > 0 ? prizeColor : '#333') + ';font-weight:bold;">' + prizeStr + '</td>';
+            // Day columns
             days.forEach(function(d) {
                 if (p.days[d]) {
                     var s = p.days[d].score;
                     var r = p.days[d].rank;
-                    var scoreStr = s >= 1000 ? Math.floor(s / 1000) + 'k' : s;
-                    html += '<td class="day-cell">' + scoreStr + ' <span class="day-rank">(#' + r + ')</span></td>';
+                    var f1 = p.days[d].f1pts || 0;
+                    var scoreStr = s >= 1000000 ? (s / 1000000).toFixed(1) + 'M' : s >= 1000 ? Math.floor(s / 1000) + 'k' : s;
+                    var rankColor = r === 1 ? '#ffd700' : r === 2 ? '#c0c0c0' : r === 3 ? '#cd7f32' : r <= 10 ? '#fa5' : '#666';
+                    html += '<td class="day-cell">' + scoreStr + ' <span class="day-rank" style="color:' + rankColor + ';">(#' + r + (f1 > 0 ? ' +' + f1 : '') + ')</span></td>';
                 } else {
-                    html += '<td class="day-cell no-score">-</td>';
+                    html += '<td class="day-cell no-score">—</td>';
                 }
             });
-            html += '<td class="day-cell" style="color:#0f0;font-weight:bold;">' + p.totalScore.toLocaleString() + '</td>';
             html += '</tr>';
         });
         html += '</tbody></table>';
+        // F1 info footer
+        html += '<div style="text-align:center;padding:10px 8px 4px;font-size:9px;color:#888;line-height:1.6;">';
+        html += '<span style="color:#0ff;">⚡ Puntos F1 por día:</span> 1°=25 · 2°=18 · 3°=15 · 4°=12 · 5°=10 · 6°=8 · 7°=6 · 8°=4 · 9°=2 · 10°=1<br>';
+        html += '<span style="color:#f80;">🏆 Pozo $300:</span> Top 15 reciben premios al finalizar el periodo de 15 días<br>';
+        html += 'No jugar un día = 0 puntos · Mismo jugador en 2 dispositivos = 2 entradas separadas';
+        html += '</div>';
         wrap.innerHTML = html;
         // Show device fingerprint
-        document.getElementById('dailyDeviceId').textContent = 'Tu dispositivo: ' + deviceFp;
+        var myDevType = getDeviceType();
+        document.getElementById('dailyDeviceId').textContent = 'Tu dispositivo: ' + getDeviceIcon(myDevType) + ' ' + myDevType + ' (' + deviceFp.slice(-6) + ')';
     }
 
     async function isNameTaken(name) {
@@ -3409,9 +3472,9 @@
     // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
-    const GHOST_BASE_RATE = 18;   // v5.9.9.6: +20% dificultad (era 22)
-    const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
-    const GHOST_SCARED_RATE = 30;  // v5.9.9.6: +20% dificultad (era 38)
+    const GHOST_BASE_RATE = 14;   // v5.9.9.7: +40% dificultad total (original 22 → 18 → 14)
+    const GHOST_SPEED_MULT = [1.10, 1.00, 0.88, 1.05, 0.95];
+    const GHOST_SCARED_RATE = 24;  // v5.9.9.7: +40% dificultad total (original 38 → 30 → 24)
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -3532,37 +3595,37 @@
     // 0=empty, 1=wall, 2=dot, 3=power orb, 4=ghost house door
     // CLASSIC PAC-MAN ARCADE MAP — usado para todos los niveles
     const CLASSIC_MAP = [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
-        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
-        [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
-        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
-        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
-        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
-        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
-        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
-        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
-        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
-        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
-        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
-        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
-        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
-        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
-        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
-        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
-        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
-        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
-        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
-        [1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1],
-        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
-        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
-        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
-        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
-        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
-        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // 0
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1], // 1
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1], // 2
+        [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1], // 3
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1], // 4
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1], // 5
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1], // 6
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1], // 7
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1], // 8
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1], // 9
+        [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0], // 10
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0], // 11
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0], // 12
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1], // 13
+        [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0], // 14 tunnel
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1], // 15
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0], // 16
+        [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0], // 17
+        [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0], // 18
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1], // 19
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1], // 20
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1], // 21
+        [1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1], // 22 pac-man start
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1], // 23
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1], // 24
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1], // 25
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1], // 26
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1], // 27
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1], // 28
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // 29 (was dots, now wall)
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // 30
     ];
 
     // Todos los mapas usan el diseño clásico del Pac-Man original arcade
@@ -5177,9 +5240,9 @@
     }
 
     function resetPlayer() {
-        player.x = 14; player.y = 23;
+        player.x = 14; player.y = 22;
         player.dir = 0; player.nextDir = 0;
-        player.px = 14 * TILE; player.py = 23 * TILE;
+        player.px = 14 * TILE; player.py = 22 * TILE;
         player.moving = false;
     }
 
@@ -5690,7 +5753,7 @@
         currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
-        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.6: +20% dificultad (menos duración power)
+        const durationMs = Math.max(8000, 28800 - (level - 1) * 320); // v5.9.9.7: +40% dificultad total (power dura menos)
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -5712,7 +5775,7 @@
         if (ghost.eaten) return { x: 14, y: 13 };
         if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
         const modeTimer = animFrame % 800;
-        const isChase = modeTimer < 150; // v5.9.9.6: -25% dificultad adicional (era 200)
+        const isChase = modeTimer < 180; // v5.9.9.7: +40% dificultad total (más tiempo en chase)
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
@@ -5793,10 +5856,10 @@
         if (ghost.eaten) rate = GHOST_EATEN_RATE;
         else if (ghost.scared) {
             // 50% más lento que su velocidad normal en el nivel actual
-            const normalRate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.64));
+            const normalRate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.77));
             rate = Math.round(normalRate * 2);
         }
-        else rate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.64));
+        else rate = Math.max(6, GHOST_BASE_RATE - Math.floor((level - 1) * 0.77));
         // Apply per-ghost speed multiplier
         if (idx < GHOST_SPEED_MULT.length) rate = Math.max(2, Math.round(rate * GHOST_SPEED_MULT[idx]));
         if (furyMode && !ghost.eaten && !ghost.scared) rate = Math.max(2, rate - 3);
@@ -6705,7 +6768,7 @@
         // Reset power orb positions in arena (4 corners-ish)
         bossOrbTimers = [0, 0, 0, 0];
         // Player start
-        player.x = 14; player.y = 23; player.px = 14 * TILE; player.py = 23 * TILE;
+        player.x = 14; player.y = 22; player.px = 14 * TILE; player.py = 22 * TILE;
         player.dir = 2; player.nextDir = 2; player.moving = false;
         // Create boss
         boss = { x: 14, y: 8, px: 14 * TILE, py: 8 * TILE, hp: def.hitsToKill, maxHp: def.hitsToKill, scared: false, dir: 3 };
@@ -7239,9 +7302,9 @@
                 }
             }
             // Fury mode: random trigger (~every 30 seconds)
-            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.6: -25% dificultad adicional
+            if (!powerMode && !furyMode && Math.random() < 1/5500) { // v5.9.9.7: +40% dificultad total (fury más frecuente)
                 furyMode = true;
-                furyEndTime = Date.now() + 2000; // v5.9.9.6: -25% dificultad adicional (era 2700)
+                furyEndTime = Date.now() + 2400; // v5.9.9.7: +40% dificultad total (fury dura más)
                 fruitMsg = '¡MODO FURIA!';
                 fruitMsgTimer = 120;
                 playFuryActivation();
@@ -7302,7 +7365,7 @@
                     }
                 } else if (bossActive) {
                     // Boss fight: reset player AND boss positions to avoid instant death loop
-                    player.x = 14; player.y = 23; player.px = 14 * TILE; player.py = 23 * TILE;
+                    player.x = 14; player.y = 22; player.px = 14 * TILE; player.py = 22 * TILE;
                     player.dir = 2; player.nextDir = 2; player.moving = false;
                     // Reset boss to starting position
                     if (boss && boss.hp > 0) {
@@ -7365,7 +7428,7 @@
                     ghostMessages = [];
                     playerTrail = [];
                 } else if (levelSelectMode) {
-                    // v5.9.9.6: Level select — nivel completado, volver a selección
+                    // v5.9.9.7: Level select — nivel completado, volver a selección
                     returnToLevelSelect();
                 } else {
                     // Normal level transition
@@ -7475,7 +7538,7 @@
                 bossActive = false;
                 updateStat('bossesDefeated', 1);
                 if (levelSelectMode) {
-                    // v5.9.9.6: Boss derrotado en level select — cutscene breve y volver
+                    // v5.9.9.7: Boss derrotado en level select — cutscene breve y volver
                     gameState = 'cutscene';
                     cutsceneIdx = BOSS_LEVELS.indexOf(level);
                     cutsceneTimer = 210;
@@ -7501,7 +7564,7 @@
             cutsceneTimer--;
             if (cutsceneTimer <= 0) {
                 if (levelSelectMode) {
-                    // v5.9.9.6: Después de cutscene en level select, volver a selección
+                    // v5.9.9.7: Después de cutscene en level select, volver a selección
                     returnToLevelSelect();
                 } else {
                     // After cutscene, go to next level
@@ -7567,7 +7630,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.6: Volver a level select (game over, no completado)
+            // v5.9.9.7: Volver a level select (game over, no completado)
             score = 0; // Game over → puntaje a cero
             lives = 20 + pendingGiftLives; pendingGiftLives = 0; // Resetear vidas en game over
             if (persistentData) { persistentData.completedLevels = []; savePersistentData(); }
@@ -7586,7 +7649,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.6: Reintentar mismo nivel
+            // v5.9.9.7: Reintentar mismo nivel
             score = 0;
             document.getElementById('score').textContent = '0';
             lives = 20;
@@ -7643,7 +7706,7 @@
         }
     }
 
-    // v5.9.9.6 Level Select functions
+    // v5.9.9.7 Level Select functions
     function showLevelSelectView() {
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
@@ -8016,7 +8079,7 @@
     document.getElementById('backToLobbyBtn').addEventListener('click', function() {
         showLobbyView();
     });
-    // v5.9.9.6 Level Select listeners
+    // v5.9.9.7 Level Select listeners
     document.getElementById('levelSelectBackBtn').addEventListener('click', function() {
         showLobbyView();
     });
@@ -8227,7 +8290,7 @@
     }
     updateSkinPreview();
 
-    // v5.9.9.6: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    // v5.9.9.7: Decidir si mostrar welcome o lobby según si hay nombre guardado
     if (currentPlayerName) {
         showLobbyView();
     } else {
@@ -8409,7 +8472,7 @@
         renderClanLeaderboard();
     });
 
-    // v5.9.9.6: Mobile-only block
+    // v5.9.9.7: Mobile-only block
     function isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
             || (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
