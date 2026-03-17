@@ -2299,12 +2299,8 @@
             // Rank
             var rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank + '°';
             html += '<td class="sticky-col player-rank' + rankCls + '">' + rankLabel + '</td>';
-            // Name + device icon
-            var devIcon = getDeviceIcon(p.deviceType || 'phone');
-            var devTag = p.deviceId ? p.deviceId.slice(-4) : '????';
-            var isSameName = players.some(function(other) { return other !== p && other.playerId === p.playerId; });
-            var deviceSuffix = isSameName ? ' <span style="color:#666;font-size:8px;">[' + devTag + ']</span>' : '';
-            html += '<td class="sticky-col player-name">' + p.name + ' <span style="font-size:10px;">' + devIcon + '</span>' + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + deviceSuffix + '</td>';
+            // Name
+            html += '<td class="sticky-col player-name">' + p.name + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + '</td>';
             // F1 Points
             var f1Color = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : '#0ff';
             html += '<td class="sticky-col f1-col" style="color:' + f1Color + ';font-weight:bold;">' + p.totalF1 + '</td>';
