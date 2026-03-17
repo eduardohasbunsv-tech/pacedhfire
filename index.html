@@ -1405,7 +1405,7 @@
                 <button id="pauseExitBtn">🏠 SALIR AL LOBBY</button>
             </div>
             <canvas id="game" width="560" height="620"></canvas>
-            <div class="dpad-audio-row">
+            <div class="dpad-audio-row" id="dpadAudioRow" style="display:none;">
                 <div id="dpad">
                     <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
                     <div class="dpad-mid">
@@ -5544,9 +5544,16 @@
         }
     });
 
-    // D-pad for mobile
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        document.getElementById('dpad').style.display = 'flex';
+    // D-pad + audio: show only during gameplay
+    var isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    function showGameControls() {
+        if (isTouchDevice) {
+            document.getElementById('dpad').style.display = 'flex';
+            document.getElementById('dpadAudioRow').style.display = 'flex';
+        }
+    }
+    function hideGameControls() {
+        document.getElementById('dpadAudioRow').style.display = 'none';
     }
     // D-pad button handlers
     document.querySelectorAll('.dpad-btn[data-dir]').forEach(function(btn) {
@@ -7708,6 +7715,7 @@
         setTimeout(function() { document.getElementById('welcomeNameInput').focus(); }, 100);
     }
     function showLobbyView() {
+        hideGameControls();
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'flex';
         document.getElementById('playView').style.display = 'none';
@@ -7722,6 +7730,7 @@
         resetMissionsIfNeeded();
     }
     function showPlayView() {
+        hideGameControls();
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
         document.getElementById('levelSelectView').style.display = 'none';
@@ -7737,6 +7746,7 @@
 
     // V1.0 Level Select functions
     function showLevelSelectView() {
+        hideGameControls();
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
         document.getElementById('playView').style.display = 'none';
@@ -7816,6 +7826,7 @@
         // Hide UI, start game
         document.getElementById('startScreen').style.display = 'none';
         document.getElementById('playerTag').textContent = 'Jugador: ' + currentPlayerName;
+        showGameControls();
         initAudio();
         initGameForLevel(lvl);
         gameState = 'countdown';
@@ -8031,6 +8042,7 @@
         startBtn.textContent = 'JUGAR';
         document.getElementById('startScreen').style.display = 'none';
         document.getElementById('playerTag').textContent = 'Jugador: ' + name;
+        showGameControls();
         renderLeaderboard();
         initAudio();
         initGame();
