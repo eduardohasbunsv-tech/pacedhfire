@@ -641,7 +641,7 @@
             border-radius: 3px; transition: width 0.5s ease;
         }
 
-        /* v5.9.9.5 LEVEL SELECT */
+        /* v5.9.9.6 LEVEL SELECT */
         #levelGrid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
             width: 100%; max-width: 340px; max-height: 52vh; overflow-y: auto;
@@ -1053,10 +1053,18 @@
         </div>
         <div class="loading-text">Cargando...</div>
     </div>
+    <!-- BLOQUEO DESKTOP: solo móviles -->
+    <div id="desktopBlock" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a1a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;">
+        <div style="font-size:60px;margin-bottom:20px;">📱</div>
+        <h1 style="color:#ff0;font-size:24px;font-family:'Courier New',monospace;margin-bottom:12px;">EDH-PAC</h1>
+        <p style="color:#fff;font-size:16px;font-family:'Courier New',monospace;margin-bottom:8px;">Este juego solo está disponible en dispositivos móviles</p>
+        <p style="color:#888;font-size:13px;font-family:'Courier New',monospace;">Abre este enlace desde tu celular o tablet para jugar</p>
+        <div style="margin-top:24px;padding:12px 20px;border:2px solid #0ff;border-radius:8px;color:#0ff;font-family:'Courier New',monospace;font-size:12px;">eduardohasbunsv-tech.github.io/pacedhfire</div>
+    </div>
     <div id="startScreen">
         <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
         <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
-            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
                 <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
@@ -1069,7 +1077,7 @@
         </div>
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1126,7 +1134,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.6</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1348,7 +1356,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.5</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.6</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2095,7 +2103,7 @@
             }
             await loadScoresFromFirestore();
             renderLeaderboard();
-            // v5.9.9.5: Daily score tracking
+            // v5.9.9.6: Daily score tracking
             saveDailyScore(name, finalScore, finalLevel).catch(function(e){ console.warn('Daily save error:', e); });
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
@@ -2106,7 +2114,7 @@
         }
     }
 
-    // ---- v5.9.9.5: DEVICE FINGERPRINT & DAILY TOP 100 ----
+    // ---- v5.9.9.6: DEVICE FINGERPRINT & DAILY TOP 100 ----
     function getDeviceFingerprint() {
         var stored = localStorage.getItem('pac_device_fp');
         if (stored) return stored;
@@ -3401,9 +3409,9 @@
     // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
-    const GHOST_BASE_RATE = 18;   // v5.9.9.5: +20% dificultad (era 22)
+    const GHOST_BASE_RATE = 18;   // v5.9.9.6: +20% dificultad (era 22)
     const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
-    const GHOST_SCARED_RATE = 30;  // v5.9.9.5: +20% dificultad (era 38)
+    const GHOST_SCARED_RATE = 30;  // v5.9.9.6: +20% dificultad (era 38)
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -5682,7 +5690,7 @@
         currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
-        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.5: +20% dificultad (menos duración power)
+        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.6: +20% dificultad (menos duración power)
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -5704,7 +5712,7 @@
         if (ghost.eaten) return { x: 14, y: 13 };
         if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
         const modeTimer = animFrame % 800;
-        const isChase = modeTimer < 150; // v5.9.9.5: -25% dificultad adicional (era 200)
+        const isChase = modeTimer < 150; // v5.9.9.6: -25% dificultad adicional (era 200)
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
@@ -7231,9 +7239,9 @@
                 }
             }
             // Fury mode: random trigger (~every 30 seconds)
-            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.5: -25% dificultad adicional
+            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.6: -25% dificultad adicional
                 furyMode = true;
-                furyEndTime = Date.now() + 2000; // v5.9.9.5: -25% dificultad adicional (era 2700)
+                furyEndTime = Date.now() + 2000; // v5.9.9.6: -25% dificultad adicional (era 2700)
                 fruitMsg = '¡MODO FURIA!';
                 fruitMsgTimer = 120;
                 playFuryActivation();
@@ -7357,7 +7365,7 @@
                     ghostMessages = [];
                     playerTrail = [];
                 } else if (levelSelectMode) {
-                    // v5.9.9.5: Level select — nivel completado, volver a selección
+                    // v5.9.9.6: Level select — nivel completado, volver a selección
                     returnToLevelSelect();
                 } else {
                     // Normal level transition
@@ -7467,7 +7475,7 @@
                 bossActive = false;
                 updateStat('bossesDefeated', 1);
                 if (levelSelectMode) {
-                    // v5.9.9.5: Boss derrotado en level select — cutscene breve y volver
+                    // v5.9.9.6: Boss derrotado en level select — cutscene breve y volver
                     gameState = 'cutscene';
                     cutsceneIdx = BOSS_LEVELS.indexOf(level);
                     cutsceneTimer = 210;
@@ -7493,7 +7501,7 @@
             cutsceneTimer--;
             if (cutsceneTimer <= 0) {
                 if (levelSelectMode) {
-                    // v5.9.9.5: Después de cutscene en level select, volver a selección
+                    // v5.9.9.6: Después de cutscene en level select, volver a selección
                     returnToLevelSelect();
                 } else {
                     // After cutscene, go to next level
@@ -7559,7 +7567,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.5: Volver a level select (game over, no completado)
+            // v5.9.9.6: Volver a level select (game over, no completado)
             score = 0; // Game over → puntaje a cero
             lives = 20 + pendingGiftLives; pendingGiftLives = 0; // Resetear vidas en game over
             if (persistentData) { persistentData.completedLevels = []; savePersistentData(); }
@@ -7578,7 +7586,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.5: Reintentar mismo nivel
+            // v5.9.9.6: Reintentar mismo nivel
             score = 0;
             document.getElementById('score').textContent = '0';
             lives = 20;
@@ -7635,7 +7643,7 @@
         }
     }
 
-    // v5.9.9.5 Level Select functions
+    // v5.9.9.6 Level Select functions
     function showLevelSelectView() {
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
@@ -8008,7 +8016,7 @@
     document.getElementById('backToLobbyBtn').addEventListener('click', function() {
         showLobbyView();
     });
-    // v5.9.9.5 Level Select listeners
+    // v5.9.9.6 Level Select listeners
     document.getElementById('levelSelectBackBtn').addEventListener('click', function() {
         showLobbyView();
     });
@@ -8219,7 +8227,7 @@
     }
     updateSkinPreview();
 
-    // v5.9.9.5: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    // v5.9.9.6: Decidir si mostrar welcome o lobby según si hay nombre guardado
     if (currentPlayerName) {
         showLobbyView();
     } else {
@@ -8400,6 +8408,18 @@
         await loadClanLeaderboard();
         renderClanLeaderboard();
     });
+
+    // v5.9.9.6: Mobile-only block
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+    }
+    if (!isMobileDevice()) {
+        document.getElementById('desktopBlock').style.display = 'flex';
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('game').style.display = 'none';
+    }
 
     // Init
     initGame();
