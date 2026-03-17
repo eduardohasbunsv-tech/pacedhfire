@@ -641,7 +641,7 @@
             border-radius: 3px; transition: width 0.5s ease;
         }
 
-        /* v5.9.9.4 LEVEL SELECT */
+        /* v5.9.9.5 LEVEL SELECT */
         #levelGrid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
             width: 100%; max-width: 340px; max-height: 52vh; overflow-y: auto;
@@ -1056,7 +1056,7 @@
     <div id="startScreen">
         <!-- WELCOME VIEW (pedir nombre antes del lobby) -->
         <div id="welcomeView" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;">
-            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.4</span></h1>
+            <h1 style="font-size:28px;color:#ff0;text-shadow:0 0 10px #ff0,0 0 20px #ff0;">EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <div style="margin:24px 0 16px;padding:20px;background:rgba(0,255,255,0.05);border:2px solid rgba(0,255,255,0.3);border-radius:12px;max-width:300px;width:100%;">
                 <p style="color:#0ff;font-size:16px;margin-bottom:4px;">👋 ¡Bienvenido!</p>
@@ -1069,7 +1069,7 @@
         </div>
         <!-- LOBBY VIEW (pantalla principal) -->
         <div id="lobbyView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.4</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
             <p class="credit">Hecho por <strong>EDHFIRE</strong></p>
             <p class="dedication">Dedicado a Jóvenes Iglesia sobre la Roca</p>
             <h2>Un juego arcade de laberintos</h2>
@@ -1126,7 +1126,7 @@
         </div>
         <!-- PLAY VIEW (ingresar nombre y jugar) -->
         <div id="playView" style="display:none;">
-            <h1>EDH-PAC <span class="version-tag">v5.9.9.4</span></h1>
+            <h1>EDH-PAC <span class="version-tag">v5.9.9.5</span></h1>
             <div class="controls">
                 Flechas / WASD — Mover<br>
                 Come todos los orbes para ganar<br>
@@ -1348,7 +1348,7 @@
     <div id="gameWrapper">
         <div id="playerTag"></div>
         <div id="topbar">
-            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.4</div>
+            <div class="credit-bar">Hecho por <strong>EDHFIRE</strong> — v5.9.9.5</div>
         </div>
         <div id="header">
             <div>PUNTAJE: <span id="score">0</span></div>
@@ -2095,7 +2095,7 @@
             }
             await loadScoresFromFirestore();
             renderLeaderboard();
-            // v5.9.9.4: Daily score tracking
+            // v5.9.9.5: Daily score tracking
             saveDailyScore(name, finalScore, finalLevel).catch(function(e){ console.warn('Daily save error:', e); });
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
@@ -2106,7 +2106,7 @@
         }
     }
 
-    // ---- v5.9.9.4: DEVICE FINGERPRINT & DAILY TOP 100 ----
+    // ---- v5.9.9.5: DEVICE FINGERPRINT & DAILY TOP 100 ----
     function getDeviceFingerprint() {
         var stored = localStorage.getItem('pac_device_fp');
         if (stored) return stored;
@@ -2148,7 +2148,7 @@
         var today = getTodayStr();
         var deviceId = getDeviceFingerprint();
         var playerId = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        var docId = today + '_' + playerId;
+        var docId = today + '_' + playerId + '_' + deviceId;
         try {
             var docRef = dailyScoresRef.doc(docId);
             var existing = await docRef.get();
@@ -2191,20 +2191,20 @@
                 byDay[d].sort(function(a, b) { return b.score - a.score; });
                 byDay[d].forEach(function(entry, idx) { entry.dayRank = idx + 1; });
             });
-            // Build player map: aggregate total score across all days
+            // Build player map: aggregate by playerId+deviceId (same name on different devices = separate entries)
             var playerMap = {};
             days.forEach(function(d) {
                 byDay[d].forEach(function(entry) {
-                    if (!playerMap[entry.playerId]) {
-                        playerMap[entry.playerId] = { name: entry.name, deviceId: entry.deviceId, playerId: entry.playerId, totalScore: 0, days: {} };
+                    var key = entry.playerId + '|' + entry.deviceId;
+                    if (!playerMap[key]) {
+                        playerMap[key] = { name: entry.name, deviceId: entry.deviceId, playerId: entry.playerId, totalScore: 0, days: {} };
                     }
-                    playerMap[entry.playerId].days[d] = { score: entry.score, rank: entry.dayRank };
-                    playerMap[entry.playerId].totalScore += entry.score;
-                    // Keep latest name/deviceId
-                    if (!playerMap[entry.playerId].lastUpdate || entry.updatedAt > playerMap[entry.playerId].lastUpdate) {
-                        playerMap[entry.playerId].name = entry.name;
-                        playerMap[entry.playerId].deviceId = entry.deviceId;
-                        playerMap[entry.playerId].lastUpdate = entry.updatedAt;
+                    playerMap[key].days[d] = { score: entry.score, rank: entry.dayRank };
+                    playerMap[key].totalScore += entry.score;
+                    // Keep latest name
+                    if (!playerMap[key].lastUpdate || entry.updatedAt > playerMap[key].lastUpdate) {
+                        playerMap[key].name = entry.name;
+                        playerMap[key].lastUpdate = entry.updatedAt;
                     }
                 });
             });
@@ -2242,11 +2242,14 @@
         players.forEach(function(p, idx) {
             var rank = idx + 1;
             var rankCls = rank <= 3 ? ' rank-' + rank : '';
-            var isYou = currentPlayerName && p.playerId === currentPlayerName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            var isYou = currentPlayerName && p.playerId === currentPlayerName.toLowerCase().replace(/[^a-z0-9]/g, '_') && p.deviceId === deviceFp;
             var rowStyle = isYou ? ' style="background:rgba(0,255,255,0.08);"' : '';
             html += '<tr' + rowStyle + '>';
             html += '<td class="sticky-col player-rank' + rankCls + '">' + rank + '</td>';
-            html += '<td class="sticky-col player-name">' + p.name + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + '</td>';
+            var devTag = p.deviceId ? p.deviceId.slice(-4) : '????';
+            var isSameName = players.some(function(other) { return other !== p && other.playerId === p.playerId; });
+            var deviceLabel = isSameName ? ' <span style="color:#666;font-size:8px;">[' + devTag + ']</span>' : '';
+            html += '<td class="sticky-col player-name">' + p.name + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + deviceLabel + '</td>';
             days.forEach(function(d) {
                 if (p.days[d]) {
                     var s = p.days[d].score;
@@ -3398,9 +3401,9 @@
     // ---- SPEED CONTROL ---- (-12% dificultad)
     // Nivel 1 es 50% más lento, se incrementa gradualmente
     const PLAYER_MOVE_RATE = 14;  // base lento (nivel 1) — ligeramente mas rapido
-    const GHOST_BASE_RATE = 18;   // v5.9.9.4: +20% dificultad (era 22)
+    const GHOST_BASE_RATE = 18;   // v5.9.9.5: +20% dificultad (era 22)
     const GHOST_SPEED_MULT = [1.05, 0.95, 0.82, 1.0, 0.90];
-    const GHOST_SCARED_RATE = 30;  // v5.9.9.4: +20% dificultad (era 38)
+    const GHOST_SCARED_RATE = 30;  // v5.9.9.5: +20% dificultad (era 38)
     const GHOST_EATEN_RATE = 4;
     const LERP_SPEED = 0.18;
 
@@ -5679,7 +5682,7 @@
         currentGhostStreak = 0;
         powerMode = true;
         // Duración en milisegundos (+50%): nivel 1 = 19.5s, nivel 20 = 5.25s
-        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.4: +20% dificultad (menos duración power)
+        const durationMs = Math.max(10000, 36000 - (level - 1) * 270); // v5.9.9.5: +20% dificultad (menos duración power)
         powerEndTime = Date.now() + durationMs;
         powerTimer = durationMs; // para parpadeo visual
         ghostsEatenInPower = 0;
@@ -5701,7 +5704,7 @@
         if (ghost.eaten) return { x: 14, y: 13 };
         if (ghost.scared) return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
         const modeTimer = animFrame % 800;
-        const isChase = modeTimer < 150; // v5.9.9.4: -25% dificultad adicional (era 200)
+        const isChase = modeTimer < 150; // v5.9.9.5: -25% dificultad adicional (era 200)
         if (!isChase) return { x: ghost.targetX, y: ghost.targetY };
         switch(idx) {
             case 0: return { x: player.x, y: player.y };
@@ -7228,9 +7231,9 @@
                 }
             }
             // Fury mode: random trigger (~every 30 seconds)
-            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.4: -25% dificultad adicional
+            if (!powerMode && !furyMode && Math.random() < 1/7000) { // v5.9.9.5: -25% dificultad adicional
                 furyMode = true;
-                furyEndTime = Date.now() + 2000; // v5.9.9.4: -25% dificultad adicional (era 2700)
+                furyEndTime = Date.now() + 2000; // v5.9.9.5: -25% dificultad adicional (era 2700)
                 fruitMsg = '¡MODO FURIA!';
                 fruitMsgTimer = 120;
                 playFuryActivation();
@@ -7354,7 +7357,7 @@
                     ghostMessages = [];
                     playerTrail = [];
                 } else if (levelSelectMode) {
-                    // v5.9.9.4: Level select — nivel completado, volver a selección
+                    // v5.9.9.5: Level select — nivel completado, volver a selección
                     returnToLevelSelect();
                 } else {
                     // Normal level transition
@@ -7464,7 +7467,7 @@
                 bossActive = false;
                 updateStat('bossesDefeated', 1);
                 if (levelSelectMode) {
-                    // v5.9.9.4: Boss derrotado en level select — cutscene breve y volver
+                    // v5.9.9.5: Boss derrotado en level select — cutscene breve y volver
                     gameState = 'cutscene';
                     cutsceneIdx = BOSS_LEVELS.indexOf(level);
                     cutsceneTimer = 210;
@@ -7490,7 +7493,7 @@
             cutsceneTimer--;
             if (cutsceneTimer <= 0) {
                 if (levelSelectMode) {
-                    // v5.9.9.4: Después de cutscene en level select, volver a selección
+                    // v5.9.9.5: Después de cutscene en level select, volver a selección
                     returnToLevelSelect();
                 } else {
                     // After cutscene, go to next level
@@ -7556,7 +7559,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.4: Volver a level select (game over, no completado)
+            // v5.9.9.5: Volver a level select (game over, no completado)
             score = 0; // Game over → puntaje a cero
             lives = 20 + pendingGiftLives; pendingGiftLives = 0; // Resetear vidas en game over
             if (persistentData) { persistentData.completedLevels = []; savePersistentData(); }
@@ -7575,7 +7578,7 @@
         stopMusic();
         lbOverlay.classList.remove('visible');
         if (levelSelectMode) {
-            // v5.9.9.4: Reintentar mismo nivel
+            // v5.9.9.5: Reintentar mismo nivel
             score = 0;
             document.getElementById('score').textContent = '0';
             lives = 20;
@@ -7632,7 +7635,7 @@
         }
     }
 
-    // v5.9.9.4 Level Select functions
+    // v5.9.9.5 Level Select functions
     function showLevelSelectView() {
         document.getElementById('welcomeView').style.display = 'none';
         document.getElementById('lobbyView').style.display = 'none';
@@ -8005,7 +8008,7 @@
     document.getElementById('backToLobbyBtn').addEventListener('click', function() {
         showLobbyView();
     });
-    // v5.9.9.4 Level Select listeners
+    // v5.9.9.5 Level Select listeners
     document.getElementById('levelSelectBackBtn').addEventListener('click', function() {
         showLobbyView();
     });
@@ -8216,7 +8219,7 @@
     }
     updateSkinPreview();
 
-    // v5.9.9.4: Decidir si mostrar welcome o lobby según si hay nombre guardado
+    // v5.9.9.5: Decidir si mostrar welcome o lobby según si hay nombre guardado
     if (currentPlayerName) {
         showLobbyView();
     } else {
