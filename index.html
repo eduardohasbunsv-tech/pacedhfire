@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EDH-PAC — Juego Arcade | suntrader.shop</title>
     <meta name="description" content="EDH-PAC - Juego arcade de laberintos. Hecho por EDHFIRE, dedicado a Jóvenes Iglesia sobre la Roca.">
     <meta name="author" content="EDHFIRE">
@@ -24,16 +24,27 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
         body {
             background: #111;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
             font-family: 'Courier New', monospace;
             color: #fff;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 10px 0;
+            -webkit-overflow-scrolling: touch;
         }
         #gameWrapper {
             width: 560px;
@@ -333,8 +344,9 @@
             #header { font-size: 13px; padding: 6px 2px; }
             #topbar { display: none; }
             #message { font-size: 13px; }
-            .dpad-btn { width: 54px; height: 54px; font-size: 20px; }
-            .dpad-center { width: 54px; height: 54px; }
+            .joystick-base { width: 120px; height: 120px; }
+            .joystick-ball { width: 44px; height: 44px; bottom: calc(50% + 34px); }
+            .joystick-stick { height: 42px; width: 14px; }
             #gameWrapper { width: 100vw; }
             canvas { border-width: 1px; }
         }
@@ -343,8 +355,9 @@
             #startScreen h1 { font-size: 26px; }
             .lobby-btn { font-size: 14px; padding: 10px 14px; }
             .lobby-buttons { max-width: 240px; gap: 10px; }
-            .dpad-btn { width: 46px; height: 46px; font-size: 18px; }
-            .dpad-center { width: 46px; height: 46px; }
+            .joystick-base { width: 110px; height: 110px; }
+            .joystick-ball { width: 40px; height: 40px; bottom: calc(50% + 30px); }
+            .joystick-stick { height: 38px; width: 12px; }
             #header { font-size: 12px; }
         }
         @media (max-height: 500px) and (orientation: landscape) {
@@ -431,30 +444,66 @@
         /* ---- D-PAD ---- */
         #dpad {
             display: none;
-            flex-direction: column;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
             margin-top: 10px;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
+            touch-action: none;
         }
-        .dpad-mid { display: flex; gap: 2px; }
-        .dpad-btn {
-            width: 60px; height: 60px;
-            background: rgba(0,255,255,0.12);
-            border: 2px solid rgba(0,255,255,0.35);
-            border-radius: 10px;
-            color: rgba(0,255,255,0.7);
-            font-size: 22px;
+        .joystick-base {
+            width: 140px; height: 140px;
+            background: radial-gradient(circle at 50% 55%, #2a2a2a 0%, #1a1a1a 60%, #0d0d0d 100%);
+            border-radius: 50%;
+            border: 3px solid #444;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8), inset 0 2px 8px rgba(255,255,255,0.05);
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        .joystick-stick {
+            width: 16px; height: 50px;
+            background: linear-gradient(90deg, #666 0%, #999 40%, #888 60%, #555 100%);
+            border-radius: 4px;
+            position: absolute;
+            bottom: 50%;
+            transform-origin: bottom center;
+            z-index: 2;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.4);
+        }
+        .joystick-ball {
+            width: 52px; height: 52px;
+            background: radial-gradient(circle at 35% 35%, #ff4444 0%, #cc0000 50%, #880000 100%);
+            border-radius: 50%;
+            position: absolute;
+            bottom: calc(50% + 40px);
+            z-index: 3;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(0,0,0,0.3), inset 0 3px 6px rgba(255,150,150,0.3);
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none;
         }
-        .dpad-btn:active { background: rgba(0,255,255,0.35); }
-        .dpad-center { width: 60px; height: 60px; }
+        .joystick-ball.tilt-left { transform: translateX(-18px); }
+        .joystick-ball.tilt-right { transform: translateX(18px); }
+        .joystick-ball.tilt-up { transform: translateY(-18px); }
+        .joystick-ball.tilt-down { transform: translateY(18px); }
+        .joystick-stick.tilt-left { transform: rotate(15deg); }
+        .joystick-stick.tilt-right { transform: rotate(-15deg); }
+        .joystick-stick.tilt-up { transform: rotate(0deg) scaleY(1.1); }
+        .joystick-stick.tilt-down { transform: rotate(0deg) scaleY(0.85); }
+        /* Direction indicators */
+        .joy-dir {
+            position: absolute;
+            width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: rgba(255,255,255,0.15);
+            pointer-events: none;
+        }
+        .joy-dir-up { top: 8px; }
+        .joy-dir-down { bottom: 8px; }
+        .joy-dir-left { left: 8px; }
+        .joy-dir-right { right: 8px; }
         /* ---- PAUSE BUTTON ---- */
         #pauseBtn {
             display: none;
@@ -1381,13 +1430,14 @@
                 <button class="audio-btn" id="sfxToggleBtn" title="Efectos">🔊</button>
             </div>
             <div id="dpad">
-                <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
-                <div class="dpad-mid">
-                    <button class="dpad-btn dpad-left" data-dir="0">&#9664;</button>
-                    <div class="dpad-center"></div>
-                    <button class="dpad-btn dpad-right" data-dir="1">&#9654;</button>
+                <div class="joystick-base" id="joystickBase">
+                    <span class="joy-dir joy-dir-up">▲</span>
+                    <span class="joy-dir joy-dir-down">▼</span>
+                    <span class="joy-dir joy-dir-left">◀</span>
+                    <span class="joy-dir joy-dir-right">▶</span>
+                    <div class="joystick-stick" id="joystickStick"></div>
+                    <div class="joystick-ball" id="joystickBall"></div>
                 </div>
-                <button class="dpad-btn dpad-down" data-dir="3">&#9660;</button>
             </div>
             <div id="goButtons">
                 <button class="btn-continue" id="btnContinue">▶ CONTINUAR (Puntos a 0)</button>
@@ -5517,20 +5567,76 @@
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
         document.getElementById('dpad').style.display = 'flex';
     }
-    document.querySelectorAll('.dpad-btn[data-dir]').forEach(function(btn) {
-        var dir = parseInt(btn.getAttribute('data-dir'));
-        var interval = null;
-        btn.addEventListener('touchstart', function(e) {
-            e.preventDefault();
+    // Arcade Joystick touch handling
+    (function() {
+        var base = document.getElementById('joystickBase');
+        var ball = document.getElementById('joystickBall');
+        var stick = document.getElementById('joystickStick');
+        var joystickInterval = null;
+        var currentTilt = '';
+
+        function clearTilt() {
+            ball.className = 'joystick-ball';
+            stick.className = 'joystick-stick';
+            currentTilt = '';
+        }
+
+        function setDirection(dir, tiltClass) {
             player.nextDir = dir;
-            clearInterval(interval);
-            interval = setInterval(function() { player.nextDir = dir; }, 80);
+            if (currentTilt !== tiltClass) {
+                ball.className = 'joystick-ball ' + tiltClass;
+                stick.className = 'joystick-stick ' + tiltClass;
+                currentTilt = tiltClass;
+            }
+        }
+
+        function handleJoystick(touchX, touchY) {
+            var rect = base.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
+            var dx = touchX - cx;
+            var dy = touchY - cy;
+            if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) setDirection(1, 'tilt-right'); // right
+                else setDirection(0, 'tilt-left'); // left
+            } else {
+                if (dy > 0) setDirection(3, 'tilt-down'); // down
+                else setDirection(2, 'tilt-up'); // up
+            }
+        }
+
+        base.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            var t = e.touches[0];
+            handleJoystick(t.clientX, t.clientY);
+            clearInterval(joystickInterval);
+            joystickInterval = setInterval(function() {
+                player.nextDir = player.nextDir;
+            }, 80);
+        }, { passive: false });
+
+        base.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            var t = e.touches[0];
+            handleJoystick(t.clientX, t.clientY);
+        }, { passive: false });
+
+        base.addEventListener('touchend', function() {
+            clearInterval(joystickInterval);
+            clearTilt();
         });
-        btn.addEventListener('touchend', function() { clearInterval(interval); });
-        btn.addEventListener('touchcancel', function() { clearInterval(interval); });
-        // Also handle mouse for testing on desktop
-        btn.addEventListener('mousedown', function(e) { e.preventDefault(); player.nextDir = dir; });
-    });
+        base.addEventListener('touchcancel', function() {
+            clearInterval(joystickInterval);
+            clearTilt();
+        });
+
+        // Mouse for desktop testing
+        base.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            handleJoystick(e.clientX, e.clientY);
+        });
+    })();
 
     // Pause button
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -8467,6 +8573,13 @@
         await loadClanLeaderboard();
         renderClanLeaderboard();
     });
+
+    // V1.0: Prevent double-tap zoom and scroll bounce
+    document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(e) {
+        if (e.target.closest('.daily-table-wrap, #lbPlayersContent, #lbClansContent, .lobby-buttons, #startScreen, #levelSelectView')) return;
+        e.preventDefault();
+    }, { passive: false });
 
     // V1.0: Mobile-only block
     function isMobileDevice() {
