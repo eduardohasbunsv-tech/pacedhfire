@@ -817,7 +817,7 @@
 
         /* v5.0 AUDIO CONTROLS */
         .audio-controls {
-            position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 5;
+            display: flex; gap: 6px; justify-content: center; margin-top: 8px;
         }
         .audio-btn {
             width: 36px; height: 36px; background: rgba(0,0,0,0.6);
@@ -1365,10 +1365,6 @@
             <div>PUNTAJE: <span id="score">0</span></div>
             <div>NIVEL: <span id="level">1</span></div>
             <div>VIDAS: <span id="lives">3</span></div>
-            <div class="audio-controls">
-                <button class="audio-btn" id="musicToggleBtn" title="Música">🎵</button>
-                <button class="audio-btn" id="sfxToggleBtn" title="Efectos">🔊</button>
-            </div>
         </div>
         <div id="multiplayerBanner" style="display:none;background:linear-gradient(90deg,#3498db,#2c3e50);color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-family:'Press Start 2P',monospace;letter-spacing:1px;border-radius:6px;margin:4px auto;max-width:560px;">
             👻 MODO MULTIJUGADOR — Sala: <span id="multiBannerCode"></span>
@@ -1380,6 +1376,10 @@
                 <button id="pauseExitBtn">🏠 SALIR AL LOBBY</button>
             </div>
             <canvas id="game" width="560" height="620"></canvas>
+            <div class="audio-controls">
+                <button class="audio-btn" id="musicToggleBtn" title="Música">🎵</button>
+                <button class="audio-btn" id="sfxToggleBtn" title="Efectos">🔊</button>
+            </div>
             <div id="dpad">
                 <button class="dpad-btn dpad-up" data-dir="2">&#9650;</button>
                 <div class="dpad-mid">
