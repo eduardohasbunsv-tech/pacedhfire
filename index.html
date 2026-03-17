@@ -227,7 +227,7 @@
         #lbOverlay.visible { display: flex; }
         #leaderboard {
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             max-height: 85vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -970,9 +970,56 @@
             font-size: 12px; font-weight: bold; cursor: pointer; background: #111;
             border: 1px solid #333; color: #888; transition: all 0.2s; }
         .lb-tab:first-child { border-radius: 6px 0 0 6px; }
+        .lb-tab:nth-child(2) { border-radius: 0; }
         .lb-tab:last-child { border-radius: 0 6px 6px 0; }
         .lb-tab.active { background: #0a2a2e; color: #0ff; border-color: #0ff; }
         .lb-tab:hover:not(.active) { color: #eee; }
+
+        /* Daily Top 100 Table */
+        #lbDailyContent { display: none; }
+        .daily-table-wrap {
+            max-height: 60vh;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid #333;
+            border-radius: 6px;
+        }
+        .daily-table {
+            border-collapse: collapse;
+            font-size: 11px;
+            min-width: 600px;
+        }
+        .daily-table th, .daily-table td {
+            padding: 5px 6px;
+            white-space: nowrap;
+            border: 1px solid #1a1a2e;
+        }
+        .daily-table thead th {
+            position: sticky;
+            top: 0;
+            background: #0a1a2e;
+            color: #0ff;
+            font-size: 10px;
+            z-index: 2;
+        }
+        .daily-table .sticky-col {
+            position: sticky;
+            left: 0;
+            background: #0a0a1a;
+            z-index: 1;
+        }
+        .daily-table thead .sticky-col { z-index: 3; }
+        .daily-table .player-rank { color: #888; width: 28px; text-align: center; }
+        .daily-table .player-name { color: #fff; min-width: 90px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+        .daily-table .day-cell { text-align: center; color: #0f0; font-size: 10px; }
+        .daily-table .day-cell .day-rank { color: #fa5; font-size: 9px; }
+        .daily-table .day-cell.no-score { color: #333; }
+        .daily-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.02); }
+        .daily-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.2); }
+        .daily-table .rank-1 { color: #ffd700; }
+        .daily-table .rank-2 { color: #c0c0c0; }
+        .daily-table .rank-3 { color: #cd7f32; }
+        .daily-device-id { font-size: 9px; color: #555; text-align: center; margin-top: 8px; word-break: break-all; }
 
         .clan-lb-row { display: flex; align-items: center; padding: 6px 4px;
             border-bottom: 1px solid #1a1a2e; font-size: 13px; }
@@ -1109,7 +1156,8 @@
         <div id="leaderboard">
             <button id="lbCloseBtn">X</button>
             <div class="lb-tabs">
-                <button class="lb-tab active" id="lbTabPlayers">JUGADORES</button>
+                <button class="lb-tab active" id="lbTabPlayers">TOP</button>
+                <button class="lb-tab" id="lbTabDaily">DIARIO</button>
                 <button class="lb-tab" id="lbTabClans">CLANES</button>
             </div>
             <div id="lbPlayersContent">
@@ -1124,6 +1172,12 @@
                     <tr><td colspan="4" class="empty-msg">Aún no hay puntajes</td></tr>
                 </tbody>
             </table>
+            </div>
+            <div id="lbDailyContent" style="display:none;">
+                <div class="daily-table-wrap" id="dailyTableWrap">
+                    <p style="color:#888;text-align:center;font-size:12px;padding:20px;">Cargando datos diarios...</p>
+                </div>
+                <div class="daily-device-id" id="dailyDeviceId"></div>
             </div>
             <div id="lbClansContent" style="display:none;">
                 <div id="lbClanBody"><p style="color:#888;text-align:center;font-size:12px;">No hay clanes aún</p></div>
@@ -1379,6 +1433,7 @@
     const db = firebase.firestore();
     const scoresRef = db.collection('scores');
     const clansRef = db.collection('clans');
+    const dailyScoresRef = db.collection('dailyScores');
 
     // ---- v4.0 FILTRO DE MALAS PALABRAS (español) ----
     const BLOCKED_WORDS = [
@@ -2040,6 +2095,8 @@
             }
             await loadScoresFromFirestore();
             renderLeaderboard();
+            // v5.9.9.3: Daily score tracking
+            saveDailyScore(name, finalScore, finalLevel).catch(function(e){ console.warn('Daily save error:', e); });
             // v4.0: Community integration on score save
             onGameOver_community(finalScore).catch(function(){});
             // v5.0: Coins, XP, missions
@@ -2047,6 +2104,166 @@
         } catch (e) {
             console.warn('Firestore write error:', e);
         }
+    }
+
+    // ---- v5.9.9.3: DEVICE FINGERPRINT & DAILY TOP 100 ----
+    function getDeviceFingerprint() {
+        var stored = localStorage.getItem('pac_device_fp');
+        if (stored) return stored;
+        var raw = [
+            navigator.userAgent || '',
+            screen.width + 'x' + screen.height,
+            screen.colorDepth,
+            navigator.language || '',
+            navigator.hardwareConcurrency || 0,
+            new Date().getTimezoneOffset(),
+            navigator.platform || ''
+        ].join('|');
+        var hash = 0;
+        for (var i = 0; i < raw.length; i++) {
+            hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+            hash |= 0;
+        }
+        var fp = 'dev_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
+        localStorage.setItem('pac_device_fp', fp);
+        return fp;
+    }
+
+    function getTodayStr() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function getLast15Days() {
+        var days = [];
+        for (var i = 0; i < 15; i++) {
+            var d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+        }
+        return days;
+    }
+
+    async function saveDailyScore(name, finalScore, finalLevel) {
+        var today = getTodayStr();
+        var deviceId = getDeviceFingerprint();
+        var playerId = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        var docId = today + '_' + playerId;
+        try {
+            var docRef = dailyScoresRef.doc(docId);
+            var existing = await docRef.get();
+            if (existing.exists) {
+                var data = existing.data();
+                if (finalScore > data.score) {
+                    await docRef.update({ score: finalScore, level: finalLevel, updatedAt: Date.now() });
+                }
+            } else {
+                await docRef.set({
+                    name: name,
+                    playerId: playerId,
+                    deviceId: deviceId,
+                    dateStr: today,
+                    score: finalScore,
+                    level: finalLevel,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                });
+            }
+        } catch (e) { console.warn('Daily score save error:', e); }
+    }
+
+    var cachedDailyData = null;
+    async function loadDailyScores() {
+        var days = getLast15Days();
+        var oldest = days[days.length - 1];
+        try {
+            var snap = await dailyScoresRef.where('dateStr', '>=', oldest).get();
+            var byDay = {};
+            days.forEach(function(d) { byDay[d] = []; });
+            snap.forEach(function(doc) {
+                var data = doc.data();
+                if (byDay[data.dateStr]) {
+                    byDay[data.dateStr].push(data);
+                }
+            });
+            // Sort each day by score desc and assign ranks
+            days.forEach(function(d) {
+                byDay[d].sort(function(a, b) { return b.score - a.score; });
+                byDay[d].forEach(function(entry, idx) { entry.dayRank = idx + 1; });
+            });
+            // Build player map: aggregate total score across all days
+            var playerMap = {};
+            days.forEach(function(d) {
+                byDay[d].forEach(function(entry) {
+                    if (!playerMap[entry.playerId]) {
+                        playerMap[entry.playerId] = { name: entry.name, deviceId: entry.deviceId, playerId: entry.playerId, totalScore: 0, days: {} };
+                    }
+                    playerMap[entry.playerId].days[d] = { score: entry.score, rank: entry.dayRank };
+                    playerMap[entry.playerId].totalScore += entry.score;
+                    // Keep latest name/deviceId
+                    if (!playerMap[entry.playerId].lastUpdate || entry.updatedAt > playerMap[entry.playerId].lastUpdate) {
+                        playerMap[entry.playerId].name = entry.name;
+                        playerMap[entry.playerId].deviceId = entry.deviceId;
+                        playerMap[entry.playerId].lastUpdate = entry.updatedAt;
+                    }
+                });
+            });
+            // Convert to array, sort by total score, limit 100
+            var players = Object.values(playerMap);
+            players.sort(function(a, b) { return b.totalScore - a.totalScore; });
+            players = players.slice(0, 100);
+            cachedDailyData = { days: days, players: players };
+        } catch (e) {
+            console.warn('Load daily scores error:', e);
+            cachedDailyData = { days: days, players: [] };
+        }
+        return cachedDailyData;
+    }
+
+    function renderDailyLeaderboard() {
+        var wrap = document.getElementById('dailyTableWrap');
+        if (!cachedDailyData || cachedDailyData.players.length === 0) {
+            wrap.innerHTML = '<p style="color:#888;text-align:center;font-size:12px;padding:20px;">No hay datos diarios aún. ¡Juega para aparecer!</p>';
+            return;
+        }
+        var days = cachedDailyData.days;
+        var players = cachedDailyData.players;
+        var deviceFp = getDeviceFingerprint();
+        // Build header
+        var html = '<table class="daily-table"><thead><tr>';
+        html += '<th class="sticky-col player-rank">#</th>';
+        html += '<th class="sticky-col player-name">JUGADOR</th>';
+        days.forEach(function(d) {
+            var parts = d.split('-');
+            html += '<th>' + parts[2] + '/' + parts[1] + '</th>';
+        });
+        html += '<th style="color:#0f0;">TOTAL</th>';
+        html += '</tr></thead><tbody>';
+        players.forEach(function(p, idx) {
+            var rank = idx + 1;
+            var rankCls = rank <= 3 ? ' rank-' + rank : '';
+            var isYou = currentPlayerName && p.playerId === currentPlayerName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            var rowStyle = isYou ? ' style="background:rgba(0,255,255,0.08);"' : '';
+            html += '<tr' + rowStyle + '>';
+            html += '<td class="sticky-col player-rank' + rankCls + '">' + rank + '</td>';
+            html += '<td class="sticky-col player-name">' + p.name + (isYou ? ' <span style="color:#0ff;font-size:9px;">(Tú)</span>' : '') + '</td>';
+            days.forEach(function(d) {
+                if (p.days[d]) {
+                    var s = p.days[d].score;
+                    var r = p.days[d].rank;
+                    var scoreStr = s >= 1000 ? Math.floor(s / 1000) + 'k' : s;
+                    html += '<td class="day-cell">' + scoreStr + ' <span class="day-rank">(#' + r + ')</span></td>';
+                } else {
+                    html += '<td class="day-cell no-score">-</td>';
+                }
+            });
+            html += '<td class="day-cell" style="color:#0f0;font-weight:bold;">' + p.totalScore.toLocaleString() + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+        // Show device fingerprint
+        document.getElementById('dailyDeviceId').textContent = 'Tu dispositivo: ' + deviceFp;
     }
 
     async function isNameTaken(name) {
@@ -8153,16 +8370,29 @@
     });
 
     // Leaderboard tabs
-    document.getElementById('lbTabPlayers').addEventListener('click', function() {
-        document.getElementById('lbTabPlayers').classList.add('active');
+    function hidAllLbTabs() {
+        document.getElementById('lbTabPlayers').classList.remove('active');
+        document.getElementById('lbTabDaily').classList.remove('active');
         document.getElementById('lbTabClans').classList.remove('active');
-        document.getElementById('lbPlayersContent').style.display = 'block';
+        document.getElementById('lbPlayersContent').style.display = 'none';
+        document.getElementById('lbDailyContent').style.display = 'none';
         document.getElementById('lbClansContent').style.display = 'none';
+    }
+    document.getElementById('lbTabPlayers').addEventListener('click', function() {
+        hidAllLbTabs();
+        document.getElementById('lbTabPlayers').classList.add('active');
+        document.getElementById('lbPlayersContent').style.display = 'block';
+    });
+    document.getElementById('lbTabDaily').addEventListener('click', async function() {
+        hidAllLbTabs();
+        document.getElementById('lbTabDaily').classList.add('active');
+        document.getElementById('lbDailyContent').style.display = 'block';
+        await loadDailyScores();
+        renderDailyLeaderboard();
     });
     document.getElementById('lbTabClans').addEventListener('click', async function() {
+        hidAllLbTabs();
         document.getElementById('lbTabClans').classList.add('active');
-        document.getElementById('lbTabPlayers').classList.remove('active');
-        document.getElementById('lbPlayersContent').style.display = 'none';
         document.getElementById('lbClansContent').style.display = 'block';
         await loadClanLeaderboard();
         renderClanLeaderboard();
