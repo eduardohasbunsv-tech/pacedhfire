@@ -1151,12 +1151,15 @@
                 <button class="lobby-btn lobby-btn-shop" id="lobbyShopBtn">
                     <span class="lobby-btn-icon">🏪</span> TIENDA
                 </button>
+                <button class="lobby-btn" id="lobbyResetBtn" style="border-color:#f55;color:#f55;background:rgba(255,85,85,0.08);">
+                    <span class="lobby-btn-icon">🔄</span> REINICIAR SESIÓN
+                </button>
             </div>
         </div>
         <!-- LEVEL SELECT VIEW -->
         <div id="levelSelectView" style="display:none;flex-direction:column;align-items:center;padding:16px;width:100%;">
             <h1 style="font-size:22px;color:#0ff;text-shadow:0 0 10px #0ff;margin:0 0 4px;">ELIGE TU NIVEL</h1>
-            <p style="color:#888;font-size:10px;margin:0 0 12px;">Niveles completados quedan bloqueados</p>
+            <p style="color:#888;font-size:10px;margin:0 0 12px;">Selecciona un nivel para jugar</p>
             <div id="levelGrid"></div>
             <div id="allCompletedMsg" style="display:none;text-align:center;margin-top:10px;">
                 <p style="color:#ffd700;font-size:13px;margin:0 0 8px;">🏆 ¡TODOS LOS NIVELES COMPLETADOS!</p>
@@ -7805,12 +7808,10 @@
                 diffEl.appendChild(dot);
             }
             card.appendChild(diffEl);
-            // Click handler
-            if (!isDone) {
-                (function(sl) {
-                    card.addEventListener('click', function() { startLevelFromSelect(sl); });
-                })(lvl);
-            }
+            // Click handler - all levels always playable
+            (function(sl) {
+                card.addEventListener('click', function() { startLevelFromSelect(sl); });
+            })(lvl);
             grid.appendChild(card);
         }
         document.getElementById('allCompletedMsg').style.display = allDone ? 'block' : 'none';
@@ -8170,6 +8171,13 @@
         if (e.target === document.getElementById('shopOverlay')) document.getElementById('shopOverlay').classList.remove('visible');
     });
 
+    document.getElementById('lobbyResetBtn').addEventListener('click', function() {
+        if (confirm('¿Reiniciar sesión? Volverás a la pantalla de nombre de usuario.')) {
+            currentPlayerName = '';
+            document.getElementById('welcomeNameInput').value = '';
+            showWelcomeView();
+        }
+    });
     document.getElementById('lobbyMissionsBtn').addEventListener('click', function() {
         renderMissions();
         document.getElementById('missionsOverlay').classList.add('visible');
