@@ -8522,12 +8522,13 @@
         e.preventDefault();
     }, { passive: false });
 
-    // V1.0: Mobile-only block
+    // V1.0: Mobile-only block (bypass: ?dev=1 en la URL)
     function isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
             || (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
     }
-    if (!isMobileDevice()) {
+    var devBypass = new URLSearchParams(window.location.search).get('dev') === '1';
+    if (!isMobileDevice() && !devBypass) {
         document.getElementById('desktopBlock').style.display = 'flex';
         document.getElementById('loadingScreen').style.display = 'none';
         document.getElementById('startScreen').style.display = 'none';
